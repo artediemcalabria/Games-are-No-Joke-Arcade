@@ -177,36 +177,53 @@ export default function CastleRushGame() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-4">
-        <div className="arcade-border glass-panel rounded-xl p-3 md:p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase">Level {level}/10</p>
-              <h2 className="text-sm font-arcade text-cyan-300">Castle Maze</h2>
-            </div>
-            <AngerBar anger={anger} timeLeft={timeLeft} />
-          </div>
+      <section className="grid grid-cols-1 xl:grid-cols-[1fr_260px] gap-4">
+        <div className="arcade-border glass-panel rounded-xl p-2 md:p-3 bg-black/80">
+          <div className="relative mx-auto w-full max-w-[1120px] overflow-hidden rounded-xl border-[6px] border-stone-950 bg-stone-950 shadow-[0_0_28px_rgba(0,242,255,.2)]">
+            <div className="relative aspect-[16/9] min-h-[520px] overflow-hidden bg-[#191816]">
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,.42)_1px,transparent_1px),linear-gradient(rgba(0,0,0,.42)_1px,transparent_1px)] bg-[size:34px_24px] opacity-45" />
+              <div className="absolute inset-x-0 top-0 z-30 h-10 border-b-4 border-black bg-stone-800/95">
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,.12)_1px,transparent_1px)] bg-[size:44px_100%]" />
+                <div className="relative flex h-full items-center justify-between px-3 md:px-5 text-white [text-shadow:2px_2px_0_#000]">
+                  <span className="hidden sm:block text-[10px] md:text-sm font-arcade">TRAINER ANGER</span>
+                  <h2 className="text-[11px] sm:text-base md:text-xl font-arcade tracking-wide">Residenza Antico Borgo in Filadelfia</h2>
+                  <span className="text-[10px] md:text-sm font-arcade">LEVEL: {level}/10</span>
+                </div>
+              </div>
 
-          <div className="mx-auto w-full max-w-[720px]">
-            <div
-              className="relative grid rounded-xl overflow-hidden border-4 border-stone-600 bg-stone-950 shadow-[0_0_24px_rgba(0,242,255,.18)]"
-              style={{
-                gridTemplateColumns: `repeat(${tileCount}, minmax(0, 1fr))`,
-                aspectRatio: '1 / 1',
-              }}
-            >
-              {maze.grid.map((row, y) =>
-                row.map((cell, x) => (
-                  <Tile
-                    key={`${x}-${y}`}
-                    cell={cell}
-                    isPlayer={player.x === x && player.y === y}
-                    isExit={maze.exit.x === x && maze.exit.y === y}
-                    tick={tick}
-                  />
-                )),
-              )}
-              <ActivityRoomOverlay exit={maze.exit} tileCount={tileCount} tick={tick} />
+              <VerticalAngerBar anger={anger} timeLeft={timeLeft} />
+              <RoccoSpeech />
+
+              <div className="absolute inset-x-[4%] bottom-[5%] top-[13%] overflow-hidden border-4 border-black bg-[#8b8774] shadow-[inset_0_0_0_4px_rgba(255,255,255,.18)]">
+                <div
+                  className="relative grid h-full w-full"
+                  style={{
+                    gridTemplateColumns: `repeat(${tileCount}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {maze.grid.map((row, y) =>
+                    row.map((cell, x) => (
+                      <Tile
+                        key={`${x}-${y}`}
+                        cell={cell}
+                        isPlayer={player.x === x && player.y === y}
+                        isExit={maze.exit.x === x && maze.exit.y === y}
+                        tick={tick}
+                      />
+                    )),
+                  )}
+                  <ActivityRoomOverlay exit={maze.exit} tileCount={tileCount} tick={tick} />
+                </div>
+              </div>
+
+              <div className="absolute bottom-3 right-3 z-40 hidden sm:flex gap-2">
+                <div className="grid h-14 w-14 place-items-center border-4 border-black bg-stone-300 text-stone-900 shadow-[4px_4px_0_#000]">
+                  <Gamepad2 className="w-7 h-7" />
+                </div>
+                <div className="grid h-14 w-14 place-items-center border-4 border-black bg-green-400 text-black shadow-[4px_4px_0_#000]">
+                  <span className="text-3xl font-black">✓</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -285,52 +302,137 @@ export default function CastleRushGame() {
 function Tile({ cell, isPlayer, isExit, tick }: { key?: string; cell: Cell; isPlayer: boolean; isExit: boolean; tick: number }) {
   const isWall = cell === 'wall';
   return (
-    <div className={`relative min-w-0 min-h-0 ${isWall ? 'bg-stone-600 border border-stone-500' : 'bg-stone-900 border border-stone-800'}`}>
-      {!isWall && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.07),transparent_65%)]" />}
-      {cell === 'rug' && <div className="absolute inset-x-[15%] inset-y-[32%] rounded bg-red-700/70 border border-yellow-400/50" />}
-      {cell === 'wrong' && <div className="absolute inset-[18%] rounded border-2 border-purple-400/70 bg-purple-500/15" />}
-      {cell === 'torch' && <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-300 shadow-[0_0_10px_#fb923c]" />}
-      {isExit && <div className="absolute inset-0 bg-green-400/20 border-2 border-green-400 shadow-[0_0_18px_rgba(57,255,20,.55)] z-10" />}
-      {isPlayer && <div className="absolute inset-[18%] rounded-full bg-cyan-300 border-2 border-white shadow-[0_0_12px_rgba(0,242,255,.95)] z-20" />}
+    <div className={`relative min-w-0 min-h-0 ${isWall ? 'bg-[#5f5a4d]' : 'bg-[#8b8774]'}`}>
+      {isWall ? (
+        <>
+          <div className="absolute inset-0 border border-black/70 shadow-[inset_0_2px_0_rgba(255,255,255,.28),inset_0_-3px_0_rgba(0,0,0,.35)]" />
+          <div className="absolute inset-x-0 top-1/2 h-px bg-black/45" />
+          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-black/35" />
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-0 border border-black/25" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_35%,rgba(255,255,255,.14),transparent_22%),radial-gradient(circle_at_72%_68%,rgba(0,0,0,.18),transparent_20%)]" />
+          <div className="absolute left-[12%] top-[18%] h-[12%] w-[28%] bg-black/20" />
+          <div className="absolute right-[10%] bottom-[16%] h-[10%] w-[22%] bg-white/10" />
+        </>
+      )}
+      {cell === 'start' && <div className="absolute left-[8%] top-[8%] z-20 border-2 border-black bg-white px-1 text-[7px] font-black uppercase text-black">Start</div>}
+      {cell === 'rug' && <div className="absolute inset-x-[10%] inset-y-[34%] bg-red-800/75 border-2 border-yellow-600/70" />}
+      {cell === 'wrong' && <div className="absolute inset-[18%] border-2 border-purple-900 bg-purple-500/20 shadow-[inset_0_0_0_2px_rgba(255,255,255,.12)]" />}
+      {cell === 'torch' && <Torch tick={tick} />}
+      {isExit && <div className="absolute inset-0 bg-green-400/10 border-2 border-green-300 shadow-[0_0_18px_rgba(57,255,20,.55)] z-10" />}
+      {isPlayer && <PlayerSprite />}
     </div>
   );
 }
 
 function ActivityRoomOverlay({ exit, tileCount, tick }: { exit: Point; tileCount: number; tick: number }) {
-  const emanuelOffset = tick % 2 === 0 ? 'left-[12%]' : 'left-[70%]';
+  const emanuelOffset = tick % 2 === 0 ? 'left-[16%]' : 'left-[72%]';
   const cell = 100 / tileCount;
-  const size = cell * 3;
-  const left = Math.max(0, Math.min(100 - size, (exit.x - 1) * cell));
-  const top = Math.max(0, Math.min(100 - size, (exit.y - 1) * cell));
+  const width = cell * 4;
+  const height = cell * 3.4;
+  const left = Math.max(0, Math.min(100 - width, (exit.x - 2) * cell));
+  const top = Math.max(0, Math.min(100 - height, (exit.y - 1.2) * cell));
   return (
     <div
-      className="absolute bg-green-400/15 border-2 border-green-400 shadow-[0_0_22px_rgba(57,255,20,.65)] z-10 pointer-events-none rounded"
-      style={{ left: `${left}%`, top: `${top}%`, width: `${size}%`, height: `${size}%` }}
+      className="absolute z-10 pointer-events-none border-4 border-[#3b2119] bg-[#8f5944] shadow-[inset_0_0_0_4px_rgba(255,221,160,.18),0_0_22px_rgba(57,255,20,.4)]"
+      style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
     >
-      <p className="absolute left-1 top-1 text-[7px] font-black uppercase text-green-100 bg-black/50 px-1 rounded">Activity Room</p>
-      <div className="absolute left-[12%] right-[12%] top-[18%] grid grid-cols-7 gap-[2px]">
-        {Array.from({ length: 21 }).map((_, index) => (
-          <span key={index} className="aspect-square rounded-full bg-white/90 border border-cyan-200" />
+      <div className="absolute inset-[10%] rounded-sm border-4 border-[#2d1a13] bg-[#a9744d]" />
+      <div className="absolute left-[18%] right-[18%] top-[34%] h-[24%] border-2 border-black bg-[#b77743]" />
+      <div className="absolute left-[14%] right-[14%] top-[16%] grid grid-cols-7 gap-[3px]">
+        {Array.from({ length: 14 }).map((_, index) => (
+          <ParticipantDot key={index} index={index} />
         ))}
       </div>
-      <div className={`absolute ${emanuelOffset} bottom-[12%] h-[18%] w-[18%] rounded-full bg-yellow-300 border-2 border-black transition-all duration-500`} />
+      <div className="absolute left-[14%] right-[14%] bottom-[18%] grid grid-cols-7 gap-[3px]">
+        {Array.from({ length: 7 }).map((_, index) => (
+          <ParticipantDot key={index + 14} index={index + 14} />
+        ))}
+      </div>
+      <div className={`absolute ${emanuelOffset} top-[14%] h-[18%] w-[12%] transition-all duration-500`}>
+        <div className="absolute left-1/2 top-0 h-[45%] w-[42%] -translate-x-1/2 rounded-full border-2 border-black bg-[#f4c08a]" />
+        <div className="absolute bottom-0 left-[20%] right-[20%] h-[58%] border-2 border-black bg-red-700" />
+      </div>
+      <p className="absolute bottom-[3%] left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] sm:text-[10px] md:text-xs font-arcade uppercase text-white [text-shadow:2px_2px_0_#000]">Activity Room</p>
     </div>
   );
 }
 
-function AngerBar({ anger, timeLeft }: { anger: number; timeLeft: number }) {
+function VerticalAngerBar({ anger, timeLeft }: { anger: number; timeLeft: number }) {
   const color = anger > 78 ? 'bg-red-500' : anger > 48 ? 'bg-yellow-300' : 'bg-green-400';
   return (
-    <div className="w-full sm:w-72 bg-black/70 border border-white/10 rounded-xl p-3">
-      <div className="flex items-center justify-between text-[10px] font-bold uppercase mb-2">
-        <span className="text-gray-400">Emanuel Anger</span>
-        <span className={anger > 78 ? 'text-red-300' : 'text-white'}>{timeLeft}s</span>
+    <div className="absolute left-2 top-12 z-40 hidden sm:flex w-20 flex-col items-center text-center text-white [text-shadow:2px_2px_0_#000]">
+      <p className="text-[9px] md:text-[11px] font-arcade uppercase leading-tight">Trainer<br />Anger<br />Barometer</p>
+      <div className="relative mt-3 h-36 w-9 border-4 border-black bg-stone-300 p-1 shadow-[3px_3px_0_#000]">
+        <div className="relative h-full w-full overflow-hidden border-2 border-stone-700 bg-gray-900">
+          <div className={`absolute bottom-0 left-0 right-0 ${color} ${anger > 78 ? 'animate-pulse' : ''}`} style={{ height: `${anger}%` }} />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(255,255,255,.25)_48%,transparent_52%)] bg-[size:100%_18px]" />
+        </div>
+        {anger > 64 && (
+          <div className="absolute -right-6 -top-4 text-3xl animate-pulse drop-shadow-[2px_2px_0_#000]">🔥</div>
+        )}
       </div>
-      <div className="h-4 rounded-full bg-gray-900 overflow-hidden border border-white/10">
-        <div className={`h-full ${color} ${anger > 78 ? 'animate-pulse' : ''}`} style={{ width: `${anger}%` }} />
-      </div>
-      {anger > 78 && <p className="mt-2 text-[10px] text-red-300 font-black uppercase flex items-center gap-1"><Flame className="w-3 h-3" /> Barometer on fire</p>}
+      <p className="mt-2 text-[9px] md:text-[11px] font-arcade uppercase leading-tight">Anger<br />{timeLeft}s</p>
+      {anger > 78 && <p className="mt-1 text-[8px] font-black uppercase text-red-200 flex items-center gap-1"><Flame className="w-3 h-3" /> Fire</p>}
     </div>
+  );
+}
+
+function RoccoSpeech() {
+  return (
+    <div className="absolute left-[16%] top-12 z-40 hidden md:flex items-start gap-3">
+      <div className="relative h-20 w-20">
+        <div className="absolute left-1/2 top-0 h-12 w-12 -translate-x-1/2 rounded-full border-4 border-black bg-[#f1bd87] shadow-[3px_3px_0_#000]">
+          <div className="absolute left-2 top-5 h-1.5 w-1.5 rounded-full bg-black" />
+          <div className="absolute right-2 top-5 h-1.5 w-1.5 rounded-full bg-black" />
+          <div className="absolute left-2 right-2 top-1 h-4 rounded-t-full bg-[#6b341d]" />
+          <div className="absolute bottom-2 left-1/2 h-1 w-5 -translate-x-1/2 bg-black/70" />
+        </div>
+        <div className="absolute bottom-0 left-1/2 h-11 w-12 -translate-x-1/2 border-4 border-black bg-cyan-700 shadow-[3px_3px_0_#000]" />
+        <p className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs font-arcade text-white [text-shadow:2px_2px_0_#000]">Rocco</p>
+      </div>
+      <div className="relative mt-1 max-w-[470px] border-4 border-black bg-white px-4 py-3 shadow-[4px_4px_0_#000]">
+        <div className="absolute -left-4 top-6 h-5 w-5 rotate-45 border-b-4 border-l-4 border-black bg-white" />
+        <p className="text-sm lg:text-lg font-black leading-tight text-black">You are late for the activities!<br />Emanuel, the Trainer, is getting angry!</p>
+      </div>
+    </div>
+  );
+}
+
+function Torch({ tick }: { tick: number }) {
+  return (
+    <div className="absolute left-1/2 top-1/2 z-20 h-7 w-4 -translate-x-1/2 -translate-y-1/2">
+      <div className="absolute bottom-0 left-1/2 h-4 w-1 -translate-x-1/2 bg-[#3b2418]" />
+      <div className={`absolute left-1/2 top-0 h-4 w-3 -translate-x-1/2 rounded-full ${tick % 2 ? 'bg-yellow-300' : 'bg-orange-500'} shadow-[0_0_12px_#fb923c]`} />
+      <div className="absolute left-1/2 top-2 h-2 w-2 -translate-x-1/2 rounded-full bg-red-500" />
+    </div>
+  );
+}
+
+function PlayerSprite() {
+  return (
+    <div className="absolute inset-[12%] z-30">
+      <div className="absolute left-1/2 top-0 h-[34%] w-[42%] -translate-x-1/2 rounded-full border-2 border-black bg-[#e8b27f]" />
+      <div className="absolute left-[18%] top-[29%] h-[48%] w-[64%] border-2 border-black bg-[#2f8f8f]" />
+      <div className="absolute left-[8%] top-[36%] h-[28%] w-[18%] border-2 border-black bg-[#e8b27f]" />
+      <div className="absolute right-[8%] top-[36%] h-[28%] w-[18%] border-2 border-black bg-[#e8b27f]" />
+      <div className="absolute left-[24%] bottom-0 h-[25%] w-[18%] border-2 border-black bg-[#2c2a28]" />
+      <div className="absolute right-[24%] bottom-0 h-[25%] w-[18%] border-2 border-black bg-[#2c2a28]" />
+      <div className="absolute left-[30%] top-[10%] h-1 w-1 rounded-full bg-black" />
+      <div className="absolute right-[30%] top-[10%] h-1 w-1 rounded-full bg-black" />
+    </div>
+  );
+}
+
+function ParticipantDot({ index }: { key?: number; index: number }) {
+  const colors = ['bg-cyan-600', 'bg-yellow-600', 'bg-pink-600', 'bg-green-600', 'bg-purple-600'];
+  return (
+    <span className="relative aspect-square">
+      <span className="absolute left-1/2 top-0 h-[44%] w-[44%] -translate-x-1/2 rounded-full border border-black bg-[#f0bd88]" />
+      <span className={`absolute bottom-0 left-[18%] right-[18%] h-[55%] border border-black ${colors[index % colors.length]}`} />
+    </span>
   );
 }
 
