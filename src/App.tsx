@@ -8,9 +8,9 @@ import About from './pages/About';
 import Quiz from './pages/Quiz';
 import PrototypeLab from './pages/PrototypeLab';
 import GeminiCoach from './pages/GeminiCoach';
-import BubbleBossGame from './pages/games/BubbleBossGame';
-import EmpathySwitchGame from './pages/games/EmpathySwitchGame';
-import PlaytestPanicGame from './pages/games/PlaytestPanicGame';
+import LoopLabGame from './pages/games/LoopLabGame';
+import VillageSignalsGame from './pages/games/VillageSignalsGame';
+import PrototypeRemixGame from './pages/games/PrototypeRemixGame';
 import { courseInfo } from './data/course';
 
 export default function App() {
@@ -43,9 +43,9 @@ export default function App() {
             <Route path="/prototype" element={<PrototypeLab />} />
             <Route path="/coach" element={<GeminiCoach />} />
             <Route path="/arcade" element={<ArcadeList />} />
-            <Route path="/arcade/bubble-boss" element={<BubbleBossGame />} />
-            <Route path="/arcade/empathy-switch" element={<EmpathySwitchGame />} />
-            <Route path="/arcade/playtest-panic" element={<PlaytestPanicGame />} />
+            <Route path="/arcade/loop-lab" element={<LoopLabGame />} />
+            <Route path="/arcade/village-signals" element={<VillageSignalsGame />} />
+            <Route path="/arcade/prototype-remix" element={<PrototypeRemixGame />} />
             <Route path="/progress" element={<Progress />} />
             <Route path="/about" element={<About />} />
             <Route path="/quiz" element={<Quiz />} />

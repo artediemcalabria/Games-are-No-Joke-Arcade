@@ -1,10 +1,10 @@
 import { motion } from 'motion/react';
 import { CheckCircle2, ClipboardList, Download, RotateCcw } from 'lucide-react';
-import { prototypeSteps } from '../data/course';
+import { gameCatalog, prototypeSteps } from '../data/course';
 import { useStore } from '../store/useStore';
 
 export default function PrototypeLab() {
-  const { prototype, updatePrototypeField } = useStore();
+  const { prototype, gameTakeaways, gameNotes, updatePrototypeField } = useStore();
   const completedSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
   const progressPercent = Math.round((completedSteps / prototypeSteps.length) * 100);
 
@@ -69,7 +69,8 @@ export default function PrototypeLab() {
       </section>
 
       <aside className="lg:col-span-5">
-        <div className="sticky top-4 arcade-border-pink glass-panel-pink rounded-xl p-5">
+        <div className="sticky top-4 space-y-4">
+        <div className="arcade-border-pink glass-panel-pink rounded-xl p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Live Output</p>
@@ -105,6 +106,20 @@ export default function PrototypeLab() {
               <RotateCcw className="w-4 h-4" /> Clear Draft
             </button>
           </div>
+        </div>
+
+        <div className="arcade-border glass-panel rounded-xl p-5">
+          <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Collection Takeaways</p>
+          <div className="mt-4 space-y-3">
+            {gameCatalog.map((game) => (
+              <div key={game.id} className="rounded-lg border border-white/10 bg-black/50 p-3">
+                <p className="text-sm text-white font-bold">{game.title}</p>
+                <p className="text-xs text-gray-300 leading-relaxed mt-2">{gameTakeaways[game.id] || 'Play this game to unlock a design takeaway.'}</p>
+                {gameNotes[game.id] && <p className="text-xs text-cyan-300 leading-relaxed mt-2">Prototype note: {gameNotes[game.id]}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
         </div>
       </aside>
     </motion.div>

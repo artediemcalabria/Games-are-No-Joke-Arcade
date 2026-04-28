@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore';
 import { gameCatalog, lessons, prototypeSteps } from '../data/course';
 
 export default function Progress() {
-  const { completedLessons, completedGames, quizScores, totalScore, prototype, resetProgress } = useStore();
+  const { completedLessons, completedGames, gameTakeaways, quizScores, totalScore, prototype, resetProgress } = useStore();
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
 
   const milestones = [
@@ -68,10 +68,10 @@ export default function Progress() {
 
       <section className="md:col-span-4 arcade-border-pink glass-panel-pink p-5 rounded-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-arcade text-pink-500">Arcade</h3>
+          <h3 className="text-sm font-arcade text-pink-500">Collection</h3>
           <span className="text-xs font-bold text-white">{completedGames.length}/{gameCatalog.length}</span>
         </div>
-        <p className="text-xs text-gray-400 mt-3">Play minigames and collect takeaways.</p>
+        <p className="text-xs text-gray-400 mt-3">Play design games and unlock takeaways.</p>
       </section>
 
       <section className="md:col-span-4 arcade-border-green glass-panel-green p-5 rounded-xl">
@@ -101,7 +101,9 @@ export default function Progress() {
                   <span className={`text-sm font-bold uppercase ${milestone.completed ? 'text-white' : 'text-gray-500'}`}>
                     {milestone.name}
                   </span>
-                  <span className="text-[10px] text-gray-500 capitalize">{milestone.type}</span>
+                  <span className="text-[10px] text-gray-500 capitalize">
+                    {milestone.type === 'game' && gameTakeaways[milestone.id] ? 'game - takeaway saved' : milestone.type}
+                  </span>
                 </div>
               </div>
               {milestone.completed ? <CheckCircle2 className="w-6 h-6 text-cyan-400" /> : <Lock className="w-5 h-5 text-gray-600" />}

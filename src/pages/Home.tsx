@@ -93,9 +93,9 @@ export default function Home() {
           <motion.div whileHover={{ scale: 1.01 }} className="arcade-border-pink glass-panel-pink p-5 h-full flex flex-col justify-between gap-5">
             <div>
               <Gamepad2 className="w-8 h-8 text-pink-500 mb-4" />
-              <h2 className="text-lg font-arcade text-pink-500">Training Arcade</h2>
+              <h2 className="text-lg font-arcade text-pink-500">Game Collection</h2>
               <p className="text-sm text-gray-300 leading-relaxed mt-3">
-                Three short minigames about misinformation, empathy, and playtesting.
+                Start with playable design lessons about loops, systems, and prototype iteration.
               </p>
             </div>
             <div className="flex items-center justify-between text-sm font-bold text-white">
@@ -112,7 +112,7 @@ export default function Home() {
             <Sparkles className="w-5 h-5" /> Your Trainer Toolkit
           </h2>
           <p className="text-sm text-gray-300 leading-relaxed">
-            Read a short model, test it in a minigame, then turn it into a real prototype for your youth work context.
+            Read a short model, play a curated design game, then turn its takeaway into a real prototype for your youth work context.
           </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:w-auto">
