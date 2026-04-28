@@ -6,6 +6,7 @@ import { courseInfo, gameCatalog, lessons, prototypeSteps } from '../data/course
 
 export default function Home() {
   const { totalScore, completedLessons, completedGames, prototype } = useStore();
+  const assetBase = import.meta.env.BASE_URL;
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
   const journeyTotal = lessons.length + gameCatalog.length + prototypeSteps.length;
   const journeyDone = completedLessons.length + completedGames.length + completedPrototypeSteps;
@@ -42,10 +43,10 @@ export default function Home() {
           </div>
 
           <div className="relative min-h-[260px] md:min-h-full bg-black">
-            <img src="/ganj-cover.jpeg" alt="Games Are No Joke course cover" className="absolute inset-0 h-full w-full object-cover opacity-80" />
+            <img src={`${assetBase}ganj-cover.jpeg`} alt="Games Are No Joke course cover" className="absolute inset-0 h-full w-full object-cover opacity-80" />
             <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-black via-black/30 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3">
-              <img src="/ganj-logo.png" alt="" className="h-16 w-16 rounded-lg border border-white/20 bg-black/50 object-cover" />
+              <img src={`${assetBase}ganj-logo.png`} alt="" className="h-16 w-16 rounded-lg border border-white/20 bg-black/50 object-cover" />
               <span className="text-[10px] text-gray-200 font-bold uppercase text-right tracking-widest">Filadelfia (VV), Calabria</span>
             </div>
           </div>

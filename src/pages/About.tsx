@@ -2,6 +2,8 @@ import { motion } from 'motion/react';
 import { courseInfo, partners } from '../data/course';
 
 export default function About() {
+  const assetBase = import.meta.env.BASE_URL;
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="pb-10 flex flex-col gap-4">
       <div className="arcade-border-pink glass-panel-pink p-6 rounded-xl shadow-lg overflow-hidden">
@@ -28,7 +30,7 @@ export default function About() {
               </div>
             </div>
           </div>
-          <img src="/ganj-logo.png" alt="Games Are No Joke logo" className="w-full max-w-[220px] mx-auto rounded-xl border border-white/10 bg-black/50 object-cover" />
+          <img src={`${assetBase}ganj-logo.png`} alt="Games Are No Joke logo" className="w-full max-w-[220px] mx-auto rounded-xl border border-white/10 bg-black/50 object-cover" />
         </div>
       </div>
 

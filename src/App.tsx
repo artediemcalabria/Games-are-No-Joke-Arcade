@@ -13,9 +13,13 @@ import VillageSignalsGame from './pages/games/VillageSignalsGame';
 import PrototypeRemixGame from './pages/games/PrototypeRemixGame';
 import { courseInfo } from './data/course';
 
+const routerBasename = import.meta.env.BASE_URL === '/'
+  ? undefined
+  : import.meta.env.BASE_URL.replace(/\/$/, '');
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename}>
       {/* Outer shell containing the CRT effects */}
       <div className="min-h-screen bg-arcade-bg scanlines crt-flicker flex flex-col items-center font-sans tracking-wide">
         {/* Main Content Area */}

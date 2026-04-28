@@ -37,6 +37,9 @@ jobs:
           GITHUB_PAGES: 'true'
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
+      - name: Add SPA fallback
+        run: cp dist/index.html dist/404.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
