@@ -152,7 +152,7 @@ export default function CastleRushGame() {
   const nextLevel = () => startLevel(Math.min(level + 1, maxLevel));
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 max-w-5xl mx-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 max-w-7xl mx-auto">
       <section className="arcade-border-pink glass-panel-pink rounded-xl p-4 md:p-5 mb-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
@@ -194,11 +194,13 @@ export default function CastleRushGame() {
               <VerticalAngerBar anger={anger} timeLeft={timeLeft} />
               <RoccoSpeech />
 
-              <div className="absolute inset-x-[4%] bottom-[5%] top-[13%] overflow-hidden border-4 border-black bg-[#8b8774] shadow-[inset_0_0_0_4px_rgba(255,255,255,.18)]">
+              <div className="absolute left-[3%] right-[3%] top-[14%] bottom-[5%] md:left-[8%] md:right-[20%] flex items-center justify-center">
                 <div
-                  className="relative grid h-full w-full"
+                  className="relative grid aspect-square max-h-full max-w-full overflow-hidden border-4 border-black bg-[#8b8774] shadow-[inset_0_0_0_4px_rgba(255,255,255,.18),6px_6px_0_rgba(0,0,0,.45)]"
                   style={{
+                    width: 'min(100%, 70vh, 720px)',
                     gridTemplateColumns: `repeat(${tileCount}, minmax(0, 1fr))`,
+                    gridTemplateRows: `repeat(${tileCount}, minmax(0, 1fr))`,
                   }}
                 >
                   {maze.grid.map((row, y) =>
