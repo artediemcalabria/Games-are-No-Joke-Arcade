@@ -4,7 +4,8 @@ import { useStore } from '../store/useStore';
 import { gameCatalog, lessons, prototypeSteps } from '../data/course';
 
 export default function Progress() {
-  const { completedLessons, completedGames, gameTakeaways, quizScores, totalScore, prototype, resetProgress } = useStore();
+  const { completedLessons, completedGames, gameTakeaways, gameNotes, quizScores, totalScore, prototype, resetProgress } = useStore();
+  const completedCatalogGames = completedGames.filter((id) => gameCatalog.some((game) => game.id === id));
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
 
   const milestones = [
@@ -18,7 +19,7 @@ export default function Progress() {
       id: game.id,
       name: game.title,
       type: 'game',
-      completed: completedGames.includes(game.id),
+      completed: completedCatalogGames.includes(game.id),
     })),
     {
       id: 'prototype-card',
@@ -69,7 +70,7 @@ export default function Progress() {
       <section className="md:col-span-4 arcade-border-pink glass-panel-pink p-5 rounded-xl">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-arcade text-pink-500">Collection</h3>
-          <span className="text-xs font-bold text-white">{completedGames.length}/{gameCatalog.length}</span>
+          <span className="text-xs font-bold text-white">{completedCatalogGames.length}/{gameCatalog.length}</span>
         </div>
         <p className="text-xs text-gray-400 mt-3">Play design games and unlock takeaways.</p>
       </section>
@@ -102,7 +103,11 @@ export default function Progress() {
                     {milestone.name}
                   </span>
                   <span className="text-[10px] text-gray-500 capitalize">
-                    {milestone.type === 'game' && gameTakeaways[milestone.id] ? 'game - takeaway saved' : milestone.type}
+                    {milestone.type === 'game' && gameTakeaways[milestone.id]
+                      ? 'game - takeaway saved'
+                      : milestone.type === 'game' && gameNotes[milestone.id]
+                        ? `game - ${gameNotes[milestone.id]}`
+                        : milestone.type}
                   </span>
                 </div>
               </div>

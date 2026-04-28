@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Link } from 'react-router-dom';
 import { NavBar } from './components/NavBar';
 import Home from './pages/Home';
 import Theory from './pages/Theory';
@@ -8,18 +8,17 @@ import About from './pages/About';
 import Quiz from './pages/Quiz';
 import PrototypeLab from './pages/PrototypeLab';
 import GeminiCoach from './pages/GeminiCoach';
-import LoopLabGame from './pages/games/LoopLabGame';
-import VillageSignalsGame from './pages/games/VillageSignalsGame';
-import PrototypeRemixGame from './pages/games/PrototypeRemixGame';
+import CastleRushGame from './pages/games/CastleRushGame';
 import { courseInfo } from './data/course';
 
+const Router = import.meta.env.BASE_URL === '/' ? BrowserRouter : HashRouter;
 const routerBasename = import.meta.env.BASE_URL === '/'
   ? undefined
   : import.meta.env.BASE_URL.replace(/\/$/, '');
 
 export default function App() {
   return (
-    <BrowserRouter basename={routerBasename}>
+    <Router basename={Router === BrowserRouter ? routerBasename : undefined}>
       {/* Outer shell containing the CRT effects */}
       <div className="min-h-screen bg-arcade-bg scanlines crt-flicker flex flex-col items-center font-sans tracking-wide">
         {/* Main Content Area */}
@@ -47,9 +46,7 @@ export default function App() {
             <Route path="/prototype" element={<PrototypeLab />} />
             <Route path="/coach" element={<GeminiCoach />} />
             <Route path="/arcade" element={<ArcadeList />} />
-            <Route path="/arcade/loop-lab" element={<LoopLabGame />} />
-            <Route path="/arcade/village-signals" element={<VillageSignalsGame />} />
-            <Route path="/arcade/prototype-remix" element={<PrototypeRemixGame />} />
+            <Route path="/arcade/castle-rush" element={<CastleRushGame />} />
             <Route path="/progress" element={<Progress />} />
             <Route path="/about" element={<About />} />
             <Route path="/quiz" element={<Quiz />} />
@@ -58,6 +55,6 @@ export default function App() {
 
         <NavBar />
       </div>
-    </BrowserRouter>
+    </Router>
   );
 }

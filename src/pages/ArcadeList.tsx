@@ -1,75 +1,80 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { CircuitBoard, Gamepad2, Map, Sparkles, Wrench } from 'lucide-react';
+import { Crown, Flame, Gamepad2, Sparkles } from 'lucide-react';
 import { gameCatalog } from '../data/course';
 import { useStore } from '../store/useStore';
 
-const icons = {
-  'loop-lab': CircuitBoard,
-  'village-signals': Map,
-  'prototype-remix': Wrench,
-};
-
 export default function ArcadeList() {
-  const { completedGames, gameTakeaways } = useStore();
+  const { completedGames, gameTakeaways, gameNotes } = useStore();
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 h-full flex flex-col">
       <div className="bg-black/40 arcade-border-pink p-4 md:p-5 rounded-xl mb-6 shadow-lg">
         <div className="flex justify-between items-start gap-4">
           <div>
-            <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Curated Play Path</p>
-            <h2 className="text-xl md:text-2xl font-arcade text-pink-500 uppercase tracking-widest mt-2">Games Are No Joke Collection</h2>
+            <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Games Are No Joke Collection</p>
+            <h2 className="text-xl md:text-2xl font-arcade text-pink-500 uppercase tracking-widest mt-2">First Playable Challenge</h2>
             <p className="text-sm text-gray-300 mt-3 max-w-2xl">
-              Start with three playable design lessons: build a loop, manage a social system, then remix a prototype through playtesting.
+              A simple Erasmus+ castle maze about goals, pressure, feedback, and progressive level design.
             </p>
           </div>
           <Gamepad2 className="w-10 h-10 text-pink-400 shrink-0" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-grow">
-        {gameCatalog.map((game, idx) => {
-          const Icon = icons[game.id as keyof typeof icons];
+      <div className="grid grid-cols-1 gap-4 flex-grow">
+        {gameCatalog.map((game) => {
           const isDone = completedGames.includes(game.id);
           const takeaway = gameTakeaways[game.id];
+          const note = gameNotes[game.id];
           return (
             <Link key={game.id} to={game.path}>
               <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`${game.borderClass} glass-panel p-5 h-full min-h-[360px] flex flex-col justify-between group hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden`}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className={`${game.borderClass} glass-panel p-5 min-h-[360px] grid grid-cols-1 lg:grid-cols-[0.75fr_1.25fr] gap-5 group hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden`}
               >
-                <div>
-                  <div className="flex justify-between items-start mb-5">
-                    <div className={`p-3 bg-black/80 rounded-lg ${game.borderClass} border shadow-sm`}>
-                      <Icon className={`w-7 h-7 ${game.color}`} />
-                    </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 bg-black/50 rounded uppercase ${isDone ? 'text-green-300' : 'text-gray-400'}`}>
-                      {isDone ? 'Takeaway unlocked' : `Game 0${idx + 1}`}
-                    </span>
+                <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:34px_34px]" />
+                  <div className="absolute inset-4 border-4 border-stone-500/70 rounded-lg" />
+                  <div className="absolute left-6 top-6 right-20 h-10 bg-stone-600/80 rounded" />
+                  <div className="absolute left-20 top-20 bottom-12 w-10 bg-stone-600/80 rounded" />
+                  <div className="absolute right-8 bottom-8 h-20 w-28 rounded-lg border-2 border-green-400 bg-green-400/15 shadow-[0_0_24px_rgba(57,255,20,.35)]" />
+                  <div className="absolute left-8 bottom-8 h-6 w-6 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(0,242,255,.75)]" />
+                  <div className="absolute right-16 bottom-14 grid grid-cols-5 gap-1">
+                    {Array.from({ length: 21 }).map((_, index) => (
+                      <span key={index} className="h-2 w-2 rounded-full bg-white/80" />
+                    ))}
                   </div>
-
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{game.subtitle}</p>
-                  <h3 className="font-arcade text-base text-white group-hover:text-arcade-green transition-colors mt-3 leading-tight">{game.title}</h3>
-
-                  <div className="mt-5 space-y-3">
-                    <InfoLine label="Inspired by" value={game.inspiration} />
-                    <InfoLine label="Main mechanic" value={game.mechanic} />
-                    <InfoLine label="Learning goal" value={game.learningGoal} />
-                  </div>
+                  <Flame className="absolute right-5 top-5 w-9 h-9 text-orange-400 animate-pulse" />
+                  <Crown className="absolute right-16 bottom-12 w-7 h-7 text-yellow-300" />
                 </div>
 
-                <div className="mt-5 border-t border-white/10 pt-4">
-                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-gray-400 mb-3">
-                    <span>{game.duration}</span>
-                    <span>{game.difficulty}</span>
+                <div className="flex flex-col justify-between gap-5">
+                  <div>
+                    <div className="flex justify-between items-start gap-3">
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{game.subtitle}</p>
+                        <h3 className="font-arcade text-xl md:text-2xl text-white group-hover:text-arcade-green transition-colors mt-3 leading-tight">{game.title}</h3>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-1 bg-black/50 rounded uppercase ${isDone ? 'text-green-300' : 'text-gray-400'}`}>
+                        {isDone ? 'Completed' : note || '10 levels'}
+                      </span>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <InfoLine label="Inspired by" value={game.inspiration} />
+                      <InfoLine label="Main mechanic" value={game.mechanic} />
+                      <InfoLine label="Learning goal" value={game.learningGoal} />
+                    </div>
                   </div>
-                  <div className={`rounded-lg border p-3 ${takeaway ? 'border-green-400/40 bg-green-400/10' : 'border-white/10 bg-black/40'}`}>
+
+                  <div className={`rounded-lg border p-4 ${takeaway ? 'border-green-400/40 bg-green-400/10' : 'border-white/10 bg-black/40'}`}>
                     <p className="text-[10px] font-bold uppercase text-cyan-300 flex items-center gap-2">
                       <Sparkles className="w-3 h-3" /> Design Takeaway
                     </p>
-                    <p className="text-xs text-gray-200 leading-relaxed mt-2">{takeaway || 'Play to unlock the design takeaway and send a note to Prototype Lab.'}</p>
+                    <p className="text-sm text-gray-200 leading-relaxed mt-2">{takeaway || 'Complete all 10 levels to unlock the design takeaway.'}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase mt-4">{game.duration} - {game.difficulty}</p>
                   </div>
                 </div>
               </motion.div>
@@ -83,9 +88,9 @@ export default function ArcadeList() {
 
 function InfoLine({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="bg-black/45 border border-white/10 rounded-lg p-3">
       <p className="text-[10px] font-bold uppercase text-gray-500">{label}</p>
-      <p className="text-xs text-gray-200 leading-relaxed mt-1">{value}</p>
+      <p className="text-xs text-gray-200 leading-relaxed mt-2">{value}</p>
     </div>
   );
 }

@@ -14,6 +14,7 @@ interface ProgressState {
   completeLesson: (id: string, score?: number) => void;
   completeGame: (id: string, score?: number, takeaway?: string, note?: string) => void;
   saveGameTakeaway: (id: string, takeaway: string, note?: string) => void;
+  saveGameNote: (id: string, note: string) => void;
   saveQuizScore: (quizId: string, score: number) => void;
   updatePrototypeField: (field: string, value: string) => void;
   resetProgress: () => void;
@@ -61,6 +62,10 @@ export const useStore = create<ProgressState>()(
       saveGameTakeaway: (id, takeaway, note = '') => set((state) => ({
         gameTakeaways: { ...state.gameTakeaways, [id]: takeaway },
         gameNotes: note ? { ...state.gameNotes, [id]: note } : state.gameNotes,
+      })),
+
+      saveGameNote: (id, note) => set((state) => ({
+        gameNotes: { ...state.gameNotes, [id]: note },
       })),
 
       saveQuizScore: (quizId, score) => set((state) => ({
