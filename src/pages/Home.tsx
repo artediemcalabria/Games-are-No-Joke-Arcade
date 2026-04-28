@@ -97,7 +97,7 @@ export default function Home() {
               <Gamepad2 className="w-8 h-8 text-pink-500 mb-4" />
               <h2 className="text-lg font-arcade text-pink-500">Game Collection</h2>
               <p className="text-sm text-gray-300 leading-relaxed mt-3">
-                Play Castle Rush, a simple Erasmus+ maze about clear goals, time pressure, and feedback.
+                Play short Erasmus+ games about clear goals, feedback, resources, pressure, and debriefing.
               </p>
             </div>
             <div className="flex items-center justify-between text-sm font-bold text-white">
@@ -114,7 +114,7 @@ export default function Home() {
             <Sparkles className="w-5 h-5" /> Your Trainer Toolkit
           </h2>
           <p className="text-sm text-gray-300 leading-relaxed">
-            Read a short model, play Castle Rush, then turn its design takeaway into a real prototype for your youth work context.
+            Read a short model, play the collection, then turn each design takeaway into a real prototype for your youth work context.
           </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:w-auto">

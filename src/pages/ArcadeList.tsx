@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Crown, Flame, Gamepad2, Sparkles } from 'lucide-react';
+import { Coffee, Crown, Droplets, Flame, Gamepad2, Sparkles, Trophy } from 'lucide-react';
 import { gameCatalog } from '../data/course';
 import { useStore } from '../store/useStore';
 
@@ -15,7 +15,7 @@ export default function ArcadeList() {
             <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Games Are No Joke Collection</p>
             <h2 className="text-xl md:text-2xl font-arcade text-pink-500 uppercase tracking-widest mt-2">First Playable Challenge</h2>
             <p className="text-sm text-gray-300 mt-3 max-w-2xl">
-              A simple Erasmus+ castle maze about goals, pressure, feedback, and progressive level design.
+              A growing set of simple Erasmus+ games about goals, pressure, resources, feedback, and debriefing.
             </p>
           </div>
           <Gamepad2 className="w-10 h-10 text-pink-400 shrink-0" />
@@ -34,21 +34,7 @@ export default function ArcadeList() {
                 whileTap={{ scale: 0.99 }}
                 className={`${game.borderClass} glass-panel p-5 min-h-[360px] grid grid-cols-1 lg:grid-cols-[0.75fr_1.25fr] gap-5 group hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden`}
               >
-                <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:34px_34px]" />
-                  <div className="absolute inset-4 border-4 border-stone-500/70 rounded-lg" />
-                  <div className="absolute left-6 top-6 right-20 h-10 bg-stone-600/80 rounded" />
-                  <div className="absolute left-20 top-20 bottom-12 w-10 bg-stone-600/80 rounded" />
-                  <div className="absolute right-8 bottom-8 h-20 w-28 rounded-lg border-2 border-green-400 bg-green-400/15 shadow-[0_0_24px_rgba(57,255,20,.35)]" />
-                  <div className="absolute left-8 bottom-8 h-6 w-6 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(0,242,255,.75)]" />
-                  <div className="absolute right-16 bottom-14 grid grid-cols-5 gap-1">
-                    {Array.from({ length: 21 }).map((_, index) => (
-                      <span key={index} className="h-2 w-2 rounded-full bg-white/80" />
-                    ))}
-                  </div>
-                  <Flame className="absolute right-5 top-5 w-9 h-9 text-orange-400 animate-pulse" />
-                  <Crown className="absolute right-16 bottom-12 w-7 h-7 text-yellow-300" />
-                </div>
+                <GamePreview id={game.id} />
 
                 <div className="flex flex-col justify-between gap-5">
                   <div>
@@ -91,6 +77,45 @@ function InfoLine({ label, value }: { label: string; value: string }) {
     <div className="bg-black/45 border border-white/10 rounded-lg p-3">
       <p className="text-[10px] font-bold uppercase text-gray-500">{label}</p>
       <p className="text-xs text-gray-200 leading-relaxed mt-2">{value}</p>
+    </div>
+  );
+}
+
+function GamePreview({ id }: { id: string }) {
+  if (id === 'youthpass-drop') {
+    return (
+      <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,.22),transparent_40%),linear-gradient(180deg,#041626,#17051b)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-60" />
+        <Droplets className="absolute left-[18%] top-[18%] w-12 h-12 text-cyan-200 rounded-xl border border-cyan-300/50 bg-cyan-300/15 p-2 shadow-[0_0_18px_rgba(34,211,238,.55)]" />
+        <Coffee className="absolute right-[20%] top-[30%] w-12 h-12 text-yellow-200 rounded-xl border border-yellow-300/50 bg-yellow-300/15 p-2" />
+        <span className="absolute left-[35%] top-[48%] rounded-xl border-2 border-red-300 bg-red-500/20 px-3 py-3 text-xs font-black text-red-100 shadow-[0_0_16px_rgba(248,113,113,.5)]">VOD</span>
+        <div className="absolute left-1/2 bottom-8 h-14 w-14 -translate-x-1/2 rounded-full border-4 border-white bg-cyan-300 shadow-[0_0_20px_rgba(34,211,238,.8)]" />
+        <div className="absolute left-5 right-5 top-5 flex gap-1">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <span key={index} className={`h-6 flex-1 rounded border ${index < 4 ? 'border-yellow-300 bg-yellow-300' : 'border-white/10 bg-black/60'}`} />
+          ))}
+        </div>
+        <Trophy className="absolute right-6 bottom-7 w-9 h-9 text-yellow-300" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:34px_34px]" />
+      <div className="absolute inset-4 border-4 border-stone-500/70 rounded-lg" />
+      <div className="absolute left-6 top-6 right-20 h-10 bg-stone-600/80 rounded" />
+      <div className="absolute left-20 top-20 bottom-12 w-10 bg-stone-600/80 rounded" />
+      <div className="absolute right-8 bottom-8 h-20 w-28 rounded-lg border-2 border-green-400 bg-green-400/15 shadow-[0_0_24px_rgba(57,255,20,.35)]" />
+      <div className="absolute left-8 bottom-8 h-6 w-6 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(0,242,255,.75)]" />
+      <div className="absolute right-16 bottom-14 grid grid-cols-5 gap-1">
+        {Array.from({ length: 21 }).map((_, index) => (
+          <span key={index} className="h-2 w-2 rounded-full bg-white/80" />
+        ))}
+      </div>
+      <Flame className="absolute right-5 top-5 w-9 h-9 text-orange-400 animate-pulse" />
+      <Crown className="absolute right-16 bottom-12 w-7 h-7 text-yellow-300" />
     </div>
   );
 }
