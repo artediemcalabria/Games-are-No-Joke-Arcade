@@ -10,6 +10,7 @@ type GameState = 'intro' | 'playing' | 'won-level' | 'game-over' | 'completed';
 
 const game = gameCatalog.find((item) => item.id === 'castle-rush')!;
 const maxLevel = 10;
+const assetUrl = (name: string) => `${import.meta.env.BASE_URL}castle-rush/${name}.jpg`;
 const designNotes = [
   'Level 1: A clear goal helps players understand what to do immediately.',
   'Level 2: A small maze teaches movement before adding pressure.',
@@ -207,6 +208,8 @@ export default function CastleRushGame() {
                     row.map((cell, x) => (
                       <Tile
                         key={`${x}-${y}`}
+                        x={x}
+                        y={y}
                         cell={cell}
                         isPlayer={player.x === x && player.y === y}
                         isExit={maze.exit.x === x && maze.exit.y === y}
@@ -301,27 +304,17 @@ export default function CastleRushGame() {
   );
 }
 
-function Tile({ cell, isPlayer, isExit, tick }: { key?: string; cell: Cell; isPlayer: boolean; isExit: boolean; tick: number }) {
+function Tile({ x, y, cell, isPlayer, isExit, tick }: { key?: string; x: number; y: number; cell: Cell; isPlayer: boolean; isExit: boolean; tick: number }) {
   const isWall = cell === 'wall';
+  const floorAsset = (x + y) % 5 === 0 ? 'floor_alt' : 'floor';
+  const baseAsset = isWall ? ((x + y) % 7 === 0 ? 'wall_top' : 'wall') : floorAsset;
   return (
-    <div className={`relative min-w-0 min-h-0 ${isWall ? 'bg-[#5f5a4d]' : 'bg-[#8b8774]'}`}>
-      {isWall ? (
-        <>
-          <div className="absolute inset-0 border border-black/70 shadow-[inset_0_2px_0_rgba(255,255,255,.28),inset_0_-3px_0_rgba(0,0,0,.35)]" />
-          <div className="absolute inset-x-0 top-1/2 h-px bg-black/45" />
-          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-black/35" />
-        </>
-      ) : (
-        <>
-          <div className="absolute inset-0 border border-black/25" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_35%,rgba(255,255,255,.14),transparent_22%),radial-gradient(circle_at_72%_68%,rgba(0,0,0,.18),transparent_20%)]" />
-          <div className="absolute left-[12%] top-[18%] h-[12%] w-[28%] bg-black/20" />
-          <div className="absolute right-[10%] bottom-[16%] h-[10%] w-[22%] bg-white/10" />
-        </>
-      )}
-      {cell === 'start' && <div className="absolute left-[8%] top-[8%] z-20 border-2 border-black bg-white px-1 text-[7px] font-black uppercase text-black">Start</div>}
-      {cell === 'rug' && <div className="absolute inset-x-[10%] inset-y-[34%] bg-red-800/75 border-2 border-yellow-600/70" />}
-      {cell === 'wrong' && <div className="absolute inset-[18%] border-2 border-purple-900 bg-purple-500/20 shadow-[inset_0_0_0_2px_rgba(255,255,255,.12)]" />}
+    <div className="relative min-w-0 min-h-0 overflow-hidden bg-[#8b8774]">
+      <PixelAsset name={baseAsset} className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 border border-black/30" />
+      {cell === 'start' && <PixelAsset name="start" className="absolute left-[-8%] top-[-10%] z-20 h-[70%] w-[88%] object-contain" />}
+      {cell === 'rug' && <PixelAsset name="bench" className="absolute inset-x-[-45%] bottom-[8%] z-10 h-[58%] w-[190%] object-contain" />}
+      {cell === 'wrong' && <PixelAsset name={(x + y) % 2 === 0 ? 'door' : 'chest'} className="absolute inset-[7%] z-10 h-[86%] w-[86%] object-contain" />}
       {cell === 'torch' && <Torch tick={tick} />}
       {isExit && <div className="absolute inset-0 bg-green-400/10 border-2 border-green-300 shadow-[0_0_18px_rgba(57,255,20,.55)] z-10" />}
       {isPlayer && <PlayerSprite />}
@@ -338,24 +331,24 @@ function ActivityRoomOverlay({ exit, tileCount, tick }: { exit: Point; tileCount
   const top = Math.max(0, Math.min(100 - height, (exit.y - 1.2) * cell));
   return (
     <div
-      className="absolute z-10 pointer-events-none border-4 border-[#3b2119] bg-[#8f5944] shadow-[inset_0_0_0_4px_rgba(255,221,160,.18),0_0_22px_rgba(57,255,20,.4)]"
+      className="absolute z-10 pointer-events-none overflow-hidden border-4 border-[#3b2119] bg-[#8f5944] shadow-[inset_0_0_0_4px_rgba(255,221,160,.18),0_0_22px_rgba(57,255,20,.4)]"
       style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
     >
-      <div className="absolute inset-[10%] rounded-sm border-4 border-[#2d1a13] bg-[#a9744d]" />
-      <div className="absolute left-[18%] right-[18%] top-[34%] h-[24%] border-2 border-black bg-[#b77743]" />
-      <div className="absolute left-[14%] right-[14%] top-[16%] grid grid-cols-7 gap-[3px]">
+      <PixelAsset name="floor_alt" className="absolute inset-0 h-full w-full object-cover opacity-90" />
+      <div className="absolute inset-[8%] rounded-sm border-4 border-[#2d1a13] bg-[#a9744d]/70" />
+      <PixelAsset name="table_large" className="absolute left-[22%] top-[36%] z-20 h-[28%] w-[58%] object-fill" />
+      <div className="absolute left-[14%] right-[14%] top-[14%] z-30 grid grid-cols-7 gap-[3px]">
         {Array.from({ length: 14 }).map((_, index) => (
           <ParticipantDot key={index} index={index} />
         ))}
       </div>
-      <div className="absolute left-[14%] right-[14%] bottom-[18%] grid grid-cols-7 gap-[3px]">
+      <div className="absolute left-[14%] right-[14%] bottom-[18%] z-30 grid grid-cols-7 gap-[3px]">
         {Array.from({ length: 7 }).map((_, index) => (
           <ParticipantDot key={index + 14} index={index + 14} />
         ))}
       </div>
-      <div className={`absolute ${emanuelOffset} top-[14%] h-[18%] w-[12%] transition-all duration-500`}>
-        <div className="absolute left-1/2 top-0 h-[45%] w-[42%] -translate-x-1/2 rounded-full border-2 border-black bg-[#f4c08a]" />
-        <div className="absolute bottom-0 left-[20%] right-[20%] h-[58%] border-2 border-black bg-red-700" />
+      <div className={`absolute ${emanuelOffset} top-[9%] z-40 h-[24%] w-[16%] transition-all duration-500`}>
+        <PixelAsset name="rocco_walk_east_1" className="h-full w-full object-contain drop-shadow-[2px_2px_0_#000]" />
       </div>
       <p className="absolute bottom-[3%] left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] sm:text-[10px] md:text-xs font-arcade uppercase text-white [text-shadow:2px_2px_0_#000]">Activity Room</p>
     </div>
@@ -386,13 +379,7 @@ function RoccoSpeech() {
   return (
     <div className="absolute left-[16%] top-12 z-40 hidden md:flex items-start gap-3">
       <div className="relative h-20 w-20">
-        <div className="absolute left-1/2 top-0 h-12 w-12 -translate-x-1/2 rounded-full border-4 border-black bg-[#f1bd87] shadow-[3px_3px_0_#000]">
-          <div className="absolute left-2 top-5 h-1.5 w-1.5 rounded-full bg-black" />
-          <div className="absolute right-2 top-5 h-1.5 w-1.5 rounded-full bg-black" />
-          <div className="absolute left-2 right-2 top-1 h-4 rounded-t-full bg-[#6b341d]" />
-          <div className="absolute bottom-2 left-1/2 h-1 w-5 -translate-x-1/2 bg-black/70" />
-        </div>
-        <div className="absolute bottom-0 left-1/2 h-11 w-12 -translate-x-1/2 border-4 border-black bg-cyan-700 shadow-[3px_3px_0_#000]" />
+        <PixelAsset name="rocco_walk_south_1" className="absolute inset-0 h-full w-full object-contain drop-shadow-[3px_3px_0_#000]" />
         <p className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs font-arcade text-white [text-shadow:2px_2px_0_#000]">Rocco</p>
       </div>
       <div className="relative mt-1 max-w-[470px] border-4 border-black bg-white px-4 py-3 shadow-[4px_4px_0_#000]">
@@ -405,36 +392,39 @@ function RoccoSpeech() {
 
 function Torch({ tick }: { tick: number }) {
   return (
-    <div className="absolute left-1/2 top-1/2 z-20 h-7 w-4 -translate-x-1/2 -translate-y-1/2">
-      <div className="absolute bottom-0 left-1/2 h-4 w-1 -translate-x-1/2 bg-[#3b2418]" />
-      <div className={`absolute left-1/2 top-0 h-4 w-3 -translate-x-1/2 rounded-full ${tick % 2 ? 'bg-yellow-300' : 'bg-orange-500'} shadow-[0_0_12px_#fb923c]`} />
-      <div className="absolute left-1/2 top-2 h-2 w-2 -translate-x-1/2 rounded-full bg-red-500" />
+    <div className={`absolute inset-[10%] z-20 ${tick % 2 ? 'brightness-125' : 'brightness-100'}`}>
+      <PixelAsset name="torch" className="h-full w-full object-contain drop-shadow-[0_0_8px_#fb923c]" />
     </div>
   );
 }
 
 function PlayerSprite() {
   return (
-    <div className="absolute inset-[12%] z-30">
-      <div className="absolute left-1/2 top-0 h-[34%] w-[42%] -translate-x-1/2 rounded-full border-2 border-black bg-[#e8b27f]" />
-      <div className="absolute left-[18%] top-[29%] h-[48%] w-[64%] border-2 border-black bg-[#2f8f8f]" />
-      <div className="absolute left-[8%] top-[36%] h-[28%] w-[18%] border-2 border-black bg-[#e8b27f]" />
-      <div className="absolute right-[8%] top-[36%] h-[28%] w-[18%] border-2 border-black bg-[#e8b27f]" />
-      <div className="absolute left-[24%] bottom-0 h-[25%] w-[18%] border-2 border-black bg-[#2c2a28]" />
-      <div className="absolute right-[24%] bottom-0 h-[25%] w-[18%] border-2 border-black bg-[#2c2a28]" />
-      <div className="absolute left-[30%] top-[10%] h-1 w-1 rounded-full bg-black" />
-      <div className="absolute right-[30%] top-[10%] h-1 w-1 rounded-full bg-black" />
+    <div className="absolute inset-[4%] z-30">
+      <PixelAsset name="rocco_walk_south_1" className="h-full w-full object-contain drop-shadow-[2px_2px_0_#000]" />
     </div>
   );
 }
 
 function ParticipantDot({ index }: { key?: number; index: number }) {
-  const colors = ['bg-cyan-600', 'bg-yellow-600', 'bg-pink-600', 'bg-green-600', 'bg-purple-600'];
+  const chair = index % 2 === 0 ? 'chair_front' : 'chair_side';
   return (
     <span className="relative aspect-square">
-      <span className="absolute left-1/2 top-0 h-[44%] w-[44%] -translate-x-1/2 rounded-full border border-black bg-[#f0bd88]" />
-      <span className={`absolute bottom-0 left-[18%] right-[18%] h-[55%] border border-black ${colors[index % colors.length]}`} />
+      <PixelAsset name={chair} className="absolute inset-0 h-full w-full object-contain" />
     </span>
+  );
+}
+
+function PixelAsset({ name, className }: { name: string; className?: string }) {
+  return (
+    <img
+      src={assetUrl(name)}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      className={className}
+      style={{ imageRendering: 'pixelated' }}
+    />
   );
 }
 
