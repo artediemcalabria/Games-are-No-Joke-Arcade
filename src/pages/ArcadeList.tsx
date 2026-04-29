@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Coffee, Crown, Droplets, Flame, Gamepad2, GitBranch, Sparkles, Trophy } from 'lucide-react';
+import { Clock, Coffee, Droplets, Gamepad2, GitBranch, Sparkles, Trophy } from 'lucide-react';
 import { gameCatalog } from '../data/course';
 import { useStore } from '../store/useStore';
 
@@ -13,9 +13,9 @@ export default function ArcadeList() {
         <div className="flex justify-between items-start gap-4">
           <div>
             <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Games Are No Joke Collection</p>
-            <h2 className="text-xl md:text-2xl font-arcade text-pink-500 uppercase tracking-widest mt-2">Games Are No Joke Collection</h2>
+            <h2 className="text-xl md:text-2xl font-arcade text-pink-500 uppercase tracking-widest mt-2">Playable Design Challenges</h2>
             <p className="text-sm text-gray-300 mt-3 max-w-2xl">
-              Learn models, play design games, build a prototype, then reflect on what happened.
+              Each game teaches one design idea through action: pressure, feedback, resources, choices, or debrief.
             </p>
           </div>
           <Gamepad2 className="w-10 h-10 text-pink-400 shrink-0" />
@@ -27,7 +27,7 @@ export default function ArcadeList() {
           const isDone = completedGames.includes(game.id);
           const takeaway = gameTakeaways[game.id];
           const note = gameNotes[game.id];
-          const status = isDone ? 'Completed' : note ? 'In progress' : 'Not started';
+          const status = takeaway ? 'Takeaway saved' : isDone ? 'Completed' : note ? 'In progress' : 'Not started';
           return (
             <Link key={game.id} to={game.path}>
               <motion.div
@@ -60,7 +60,7 @@ export default function ArcadeList() {
                     <p className="text-[10px] font-bold uppercase text-cyan-300 flex items-center gap-2">
                       <Sparkles className="w-3 h-3" /> Design Takeaway
                     </p>
-                    <p className="text-sm text-gray-200 leading-relaxed mt-2">{takeaway || 'Complete all 10 levels to unlock the design takeaway.'}</p>
+                    <p className="text-sm text-gray-200 leading-relaxed mt-2">{takeaway || lockedTakeawayText(game.id)}</p>
                     {note && <p className="text-[10px] text-cyan-300 font-bold uppercase mt-3">{note}</p>}
                     <p className="text-[10px] text-gray-500 font-bold uppercase mt-4">{game.duration} - {game.difficulty}</p>
                   </div>
@@ -133,19 +133,26 @@ function GamePreview({ id }: { id: string }) {
 
   return (
     <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:34px_34px]" />
-      <div className="absolute inset-4 border-4 border-stone-500/70 rounded-lg" />
-      <div className="absolute left-6 top-6 right-20 h-10 bg-stone-600/80 rounded" />
-      <div className="absolute left-20 top-20 bottom-12 w-10 bg-stone-600/80 rounded" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(34,211,238,.14)_1px,transparent_1px),linear-gradient(rgba(34,211,238,.14)_1px,transparent_1px)] bg-[size:32px_32px]" />
+      <div className="absolute inset-4 rounded-lg border-2 border-cyan-400/50" />
+      <div className="absolute left-6 top-10 right-24 h-8 rounded bg-cyan-950 border border-cyan-400/40" />
+      <div className="absolute left-20 top-20 bottom-12 w-8 rounded bg-cyan-950 border border-cyan-400/40" />
       <div className="absolute right-8 bottom-8 h-20 w-28 rounded-lg border-2 border-green-400 bg-green-400/15 shadow-[0_0_24px_rgba(57,255,20,.35)]" />
-      <div className="absolute left-8 bottom-8 h-6 w-6 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(0,242,255,.75)]" />
+      <div className="absolute left-8 bottom-8 h-7 w-7 rounded-full border-2 border-white bg-yellow-300 shadow-[0_0_16px_rgba(250,204,21,.85)]" />
+      <Clock className="absolute left-[48%] top-[42%] h-9 w-9 rounded-full border-2 border-red-200 bg-red-500 p-1 text-white shadow-[0_0_16px_rgba(248,113,113,.8)]" />
+      <Clock className="absolute left-[70%] top-[23%] h-8 w-8 rounded-full border-2 border-red-200 bg-red-500 p-1 text-white shadow-[0_0_16px_rgba(248,113,113,.8)]" />
       <div className="absolute right-16 bottom-14 grid grid-cols-5 gap-1">
         {Array.from({ length: 21 }).map((_, index) => (
           <span key={index} className="h-2 w-2 rounded-full bg-white/80" />
         ))}
       </div>
-      <Flame className="absolute right-5 top-5 w-9 h-9 text-orange-400 animate-pulse" />
-      <Crown className="absolute right-16 bottom-12 w-7 h-7 text-yellow-300" />
+      <div className="absolute right-5 top-5 rounded-lg border border-red-400/40 bg-red-400/10 px-2 py-1 text-[9px] font-black uppercase text-red-200">Anger</div>
     </div>
   );
+}
+
+function lockedTakeawayText(id: string) {
+  if (id === 'filadelfia-story') return 'Reach an ending to unlock the hidden logic and design takeaway.';
+  if (id === 'youthpass-drop') return 'Collect YouthPass pieces to unlock the resource-system takeaway.';
+  return 'Complete the clock-chase levels to unlock the pressure and feedback takeaway.';
 }

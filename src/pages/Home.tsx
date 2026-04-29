@@ -12,6 +12,8 @@ export default function Home() {
   const journeyTotal = lessons.length + gameCatalog.length + prototypeSteps.length;
   const journeyDone = completedLessons.length + completedCatalogGames.length + completedPrototypeSteps;
   const progressPercent = Math.round((journeyDone / journeyTotal) * 100);
+  const nextGame = gameCatalog.find((game) => !completedCatalogGames.includes(game.id)) ?? gameCatalog[0];
+  const nextModel = lessons.find((lesson) => !completedLessons.includes(lesson.id)) ?? lessons[0];
   const nextAction = completedLessons.length < lessons.length
     ? { to: '/theory', label: 'Continue Learning Models', detail: 'Learn models -> Play design games -> Build prototype -> Reflect.' }
     : completedCatalogGames.length < gameCatalog.length
@@ -69,6 +71,36 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="md:col-span-12 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-4">
+        <div className="arcade-border-pink glass-panel-pink rounded-xl p-5">
+          <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Featured Next Game</p>
+          <div className="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-arcade text-white">{nextGame.title}</h2>
+              <p className="text-sm text-gray-300 leading-relaxed mt-3 max-w-2xl">{nextGame.learningGoal}</p>
+              <p className="text-xs text-pink-200 font-bold uppercase mt-3">{nextGame.duration} - {nextGame.difficulty}</p>
+            </div>
+            <Link
+              to={nextGame.path}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-pink-400/50 bg-pink-400/10 px-4 py-3 text-xs font-bold uppercase tracking-widest text-pink-100 hover:bg-pink-400 hover:text-black transition-colors"
+            >
+              Play Now
+              <Gamepad2 className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+
+        <div className="arcade-border glass-panel rounded-xl p-5">
+          <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Next Learning Model</p>
+          <h2 className="text-lg font-arcade text-white mt-4">{nextModel.title}</h2>
+          <p className="text-sm text-gray-300 leading-relaxed mt-3">{nextModel.focus}</p>
+          <Link to="/theory" className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-cyan-300 hover:text-white">
+            Open Models
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </section>
+
       <section className="md:col-span-4">
         <Link to="/theory" className="block h-full group">
           <motion.div whileHover={{ scale: 1.01 }} className="arcade-border glass-panel p-5 h-full flex flex-col justify-between gap-5">
@@ -80,8 +112,26 @@ export default function Home() {
               </p>
             </div>
             <div className="flex items-center justify-between text-sm font-bold text-white">
-              <span>{completedLessons.length}/{lessons.length} lessons</span>
+              <span>{completedLessons.length}/{lessons.length} models</span>
               <ArrowRight className="w-5 h-5 text-arcade-cyan opacity-70 group-hover:opacity-100" />
+            </div>
+          </motion.div>
+        </Link>
+      </section>
+
+      <section className="md:col-span-4">
+        <Link to="/arcade" className="block h-full group">
+          <motion.div whileHover={{ scale: 1.01 }} className="arcade-border-pink glass-panel-pink p-5 h-full flex flex-col justify-between gap-5">
+            <div>
+              <Gamepad2 className="w-8 h-8 text-pink-500 mb-4" />
+              <h2 className="text-lg font-arcade text-pink-500">Game Collection</h2>
+              <p className="text-sm text-gray-300 leading-relaxed mt-3">
+                Play short Erasmus+ games about goals, pressure, choices, resources, and debriefing.
+              </p>
+            </div>
+            <div className="flex items-center justify-between text-sm font-bold text-white">
+              <span>{completedCatalogGames.length}/{gameCatalog.length} games</span>
+              <ArrowRight className="w-5 h-5 text-pink-500 opacity-70 group-hover:opacity-100" />
             </div>
           </motion.div>
         </Link>
@@ -105,24 +155,6 @@ export default function Home() {
         </Link>
       </section>
 
-      <section className="md:col-span-4">
-        <Link to="/arcade" className="block h-full group">
-          <motion.div whileHover={{ scale: 1.01 }} className="arcade-border-pink glass-panel-pink p-5 h-full flex flex-col justify-between gap-5">
-            <div>
-              <Gamepad2 className="w-8 h-8 text-pink-500 mb-4" />
-              <h2 className="text-lg font-arcade text-pink-500">Game Collection</h2>
-              <p className="text-sm text-gray-300 leading-relaxed mt-3">
-                Play short Erasmus+ games about clear goals, feedback, resources, pressure, and debriefing.
-              </p>
-            </div>
-            <div className="flex items-center justify-between text-sm font-bold text-white">
-              <span>{completedCatalogGames.length}/{gameCatalog.length} games</span>
-              <ArrowRight className="w-5 h-5 text-pink-500 opacity-70 group-hover:opacity-100" />
-            </div>
-          </motion.div>
-        </Link>
-      </section>
-
       <section className="md:col-span-12 arcade-border bg-blue-900/20 p-5 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="max-w-2xl">
           <h2 className="text-lg font-arcade text-cyan-400 flex items-center gap-3 mb-2">
@@ -139,7 +171,7 @@ export default function Home() {
           </div>
           <div className="bg-black/60 border border-white/10 rounded-lg p-3 text-center">
             <p className="text-xl font-bold text-white">{lessons.length}</p>
-            <p className="text-[9px] text-gray-500 font-bold uppercase mt-1">Lessons</p>
+            <p className="text-[9px] text-gray-500 font-bold uppercase mt-1">Models</p>
           </div>
           <div className="bg-black/60 border border-white/10 rounded-lg p-3 text-center">
             <p className="text-xl font-bold text-white">{gameCatalog.length}</p>
