@@ -172,9 +172,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: '{you} reaches the stone courtyard with a backpack, a tired smile, and the first question: stay safe, or enter the group?',
     cast: ['Rocco', 'Emanuel', 'Sophie', 'Mihaela', 'Giuseppe', 'Buse Naz'],
     dialogue: [
-      { speaker: 'Rocco', text: 'Welcome to Filadelfia. Leave the luggage here. The activity room is upstairs.' },
-      { speaker: 'Emanuel', text: 'This week we design games, but we also design how people meet each other.' },
-      { speaker: 'Sophie', text: 'I hope my team is not too serious. I want a game people really play.' },
+      { speaker: 'Rocco', text: 'Welcome to Filadelfia. Put your luggage near the desk. The first circle starts soon.' },
+      { speaker: 'Sophie', text: 'First circle already? I know nobody yet. I hope the group is friendly.' },
+      { speaker: 'Emanuel', text: 'That is the first design challenge. Before we make games, we make a group where people can play.' },
+      { speaker: 'Mihaela', text: 'So the first move is not on a board. It is how we enter the room.' },
     ],
     choices: [
       {
@@ -216,10 +217,11 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'Emanuel forms mixed teams. {you} sits with Sophie, Mihaela, Rasim Hamza, Cristina, and Georgi. The team must choose a topic for a board game.',
     cast: ['Emanuel', 'Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Georgi'],
     dialogue: [
-      { speaker: 'Emanuel', text: 'Start from a real need. A topic is not yet a game.' },
-      { speaker: 'Mihaela', text: 'I want something about inclusion. Some people disappear in groups.' },
-      { speaker: 'Rasim Hamza', text: 'Misinformation could work. Players can check sources before moving.' },
-      { speaker: 'Cristina', text: 'Can we combine both without making a lecture?' },
+      { speaker: 'Emanuel', text: 'Choose one real need. Not the most impressive topic. The one your rules can make players feel.' },
+      { speaker: 'Mihaela', text: 'Then I want inclusion. In groups, quiet people can disappear without anyone noticing.' },
+      { speaker: 'Rasim Hamza', text: 'For me it is misinformation. People move fast when they trust the wrong signal.' },
+      { speaker: 'Cristina', text: 'Maybe those are connected. What if the wrong signal makes the group ignore someone?' },
+      { speaker: 'Georgi', text: 'That could become a rule, not only a discussion.' },
     ],
     choices: [
       {
@@ -261,9 +263,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: '{you} understands the group dynamics, but the team has already started to move without a clear invitation.',
     cast: ['Emanuel', 'Kaotar', 'Elena', 'Ethan', 'Stefan', 'Loredana'],
     dialogue: [
-      { speaker: 'Kaotar', text: 'We need a topic now, or we will spend all morning talking.' },
-      { speaker: 'Elena', text: 'I have an idea, but maybe it is too complicated.' },
-      { speaker: 'Emanuel', text: 'Complex is fine. Hidden is harder. Bring the idea into the room.' },
+      { speaker: 'Kaotar', text: 'We need to choose soon. If we keep opening ideas, we will never build anything.' },
+      { speaker: 'Elena', text: 'I have an idea, but I am not sure I can explain it in English.' },
+      { speaker: 'Ethan', text: 'Try with an example. We can help shape the words.' },
+      { speaker: 'Emanuel', text: 'Exactly. A complicated idea is welcome. A hidden idea cannot help the team.' },
     ],
     choices: [
       {
@@ -305,9 +308,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'Rocco brings biscuits. {you} is comfortable, but the mixed team is forming on the other side of the room.',
     cast: ['Rocco', 'Claudia', 'Giuseppe', 'Buse Naz', 'Ognjen'],
     dialogue: [
-      { speaker: 'Rocco', text: 'Coffee is good, but do not miss your team. The workshop clock is faster than it looks.' },
-      { speaker: 'Buse Naz', text: 'I think the game should be funny first. People learn when they relax.' },
-      { speaker: 'Ognjen', text: 'Yes, but if we do not decide roles, nobody will finish the board.' },
+      { speaker: 'Rocco', text: 'Coffee helps, but the team table is filling up. Do not let the project start without you.' },
+      { speaker: 'Buse Naz', text: 'I want the game to be funny first. If people laugh, they relax.' },
+      { speaker: 'Ognjen', text: 'I agree, but someone must hold the structure. Otherwise we will only have funny fragments.' },
+      { speaker: 'Giuseppe', text: 'Maybe the question is: who brings fun, and who checks if the fun teaches something?' },
     ],
     choices: [
       {
@@ -349,9 +353,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'The team chooses a board game about inclusion and misinformation. Players must decide whom to trust, who to invite, and when to check a source.',
     cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Georgi'],
     dialogue: [
-      { speaker: 'Sophie', text: 'What if each player has different information?' },
-      { speaker: 'Rasim Hamza', text: 'Then checking the source is not a quiz. It is a move.' },
-      { speaker: 'Mihaela', text: 'And inclusion means you cannot win if one voice is always ignored.' },
+      { speaker: 'Sophie', text: 'What if each player sees only part of the truth?' },
+      { speaker: 'Rasim Hamza', text: 'Then checking a source is not a quiz question. It becomes a move you choose.' },
+      { speaker: 'Mihaela', text: 'And if players ignore one person too long, the team should feel the cost.' },
+      { speaker: 'Cristina', text: 'So the board can ask: do we win faster alone, or better together?' },
     ],
     choices: [
       {
@@ -393,9 +398,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: '{you} writes a strong rule structure. The team watches, helps a little, and slowly becomes an audience.',
     cast: ['Kiril', 'Hatche', 'Liviu', 'Claudia', 'Mehmet Emin'],
     dialogue: [
-      { speaker: 'Kiril', text: 'The rules are clear, but where do we add our ideas?' },
-      { speaker: 'Hatche', text: 'Maybe we can test before everything is fixed.' },
-      { speaker: 'Mehmet Emin', text: 'If one person understands the system, is it really a group game?' },
+      { speaker: 'Kiril', text: 'The rule system is clear. I can follow it. But where do we put our ideas?' },
+      { speaker: 'Hatche', text: 'Maybe we should touch the prototype before it becomes too finished.' },
+      { speaker: 'Liviu', text: 'If only one person can explain the rules, players will depend on that person too.' },
+      { speaker: 'Mehmet Emin', text: 'So the first test is not only for the game. It is for the team.' },
     ],
     choices: [
       {
@@ -437,9 +443,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'The team creates fast challenges, jokes, and silly penalties. People laugh, but Emanuel asks where the youth-work learning sits inside the rules.',
     cast: ['Buse Naz', 'Ethan', 'Stefan', 'Loredana', 'Emanuel'],
     dialogue: [
-      { speaker: 'Ethan', text: 'This will be the loudest game at the showcase.' },
-      { speaker: 'Loredana', text: 'But what changes after people play it?' },
-      { speaker: 'Emanuel', text: 'Keep the energy. Now give the energy a direction.' },
+      { speaker: 'Ethan', text: 'People will run, laugh, and shout. This will wake up the whole room.' },
+      { speaker: 'Buse Naz', text: 'Good. I do not want another serious poster with rules.' },
+      { speaker: 'Loredana', text: 'I like the energy, but what will players understand after the laughing stops?' },
+      { speaker: 'Emanuel', text: 'Do not remove the fun. Give the fun a job.' },
     ],
     choices: [
       {
@@ -481,9 +488,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'Mihaela and Sophie test the first round. A player is blocked for three turns and says the game feels unfair.',
     cast: ['Mihaela', 'Sophie', 'Georgi', 'Cristina', 'Emanuel'],
     dialogue: [
-      { speaker: 'Sophie', text: 'I like the idea, but I do not know what I can do now.' },
-      { speaker: 'Mihaela', text: 'If a player is silent for three turns, the game repeats the problem we wanted to solve.' },
-      { speaker: 'Emanuel', text: 'Good. The prototype is speaking. What is it telling you?' },
+      { speaker: 'Sophie', text: 'I understand the topic, but on my turn I do not know what choice I have.' },
+      { speaker: 'Georgi', text: 'Maybe that is because the blocked player can only wait.' },
+      { speaker: 'Mihaela', text: 'Then the game is repeating exclusion instead of helping players notice it.' },
+      { speaker: 'Emanuel', text: 'That is useful feedback. What rule would let a player repair the situation?' },
     ],
     choices: [
       {
@@ -525,9 +533,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'The board has colors, icons, and a name. Then Giuseppe tries one turn and asks what he is allowed to do.',
     cast: ['Giuseppe', 'Kaotar', 'Stasa', 'Stefan', 'Emanuel'],
     dialogue: [
-      { speaker: 'Giuseppe', text: 'It looks ready, but I cannot see my choice.' },
-      { speaker: 'Kaotar', text: 'Maybe the player needs fewer cards and more feedback.' },
-      { speaker: 'Emanuel', text: 'A beautiful prototype is still a question. Let players answer it.' },
+      { speaker: 'Giuseppe', text: 'The board looks finished, but when I start, I do not see my real choice.' },
+      { speaker: 'Kaotar', text: 'Maybe there are too many cards. The player is reading more than deciding.' },
+      { speaker: 'Stasa', text: 'Can we remove half of it and test only one round?' },
+      { speaker: 'Emanuel', text: 'Yes. Beauty can wait. First, make the player action visible.' },
     ],
     choices: [
       {
@@ -569,9 +578,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'After dinner, {you} keeps working alone. The prototype becomes complete, but the empty chairs around the table become part of the story.',
     cast: ['Rocco', 'Liviu', 'Claudia', 'Kiril'],
     dialogue: [
-      { speaker: 'Rocco', text: 'You are still here? Remember: Erasmus+ projects are not only final products.' },
-      { speaker: 'Liviu', text: 'I can test one round, but I do not know what your team decided.' },
-      { speaker: 'Claudia', text: 'It is clear. It is also very much yours.' },
+      { speaker: 'Rocco', text: 'Still working? I admire the effort. But remember, this course is not only about having an object tomorrow.' },
+      { speaker: 'Liviu', text: 'I can test one round if you want. But I do not know what your team agreed on.' },
+      { speaker: 'Claudia', text: 'The rules are clear when you explain them. I am not sure the team can explain them without you.' },
+      { speaker: 'Kiril', text: 'Maybe the question is not: is it finished? Maybe it is: who can carry it?' },
     ],
     choices: [
       {
@@ -613,9 +623,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'The team names the conflict: some players have power, others wait. Now the board game can change.',
     cast: ['Cristina', 'Mihaela', 'Sophie', 'Georgi', 'Emanuel'],
     dialogue: [
-      { speaker: 'Cristina', text: 'The unfair part is useful. It shows what exclusion feels like.' },
-      { speaker: 'Georgi', text: 'Then the game needs a move that lets players repair exclusion.' },
-      { speaker: 'Emanuel', text: 'Exactly. A mechanic can carry the message when the rule creates the feeling.' },
+      { speaker: 'Cristina', text: 'The unfair part is uncomfortable, but it helped us see the real topic.' },
+      { speaker: 'Sophie', text: 'I do not want players to only feel stuck. I want them to have a way to respond.' },
+      { speaker: 'Georgi', text: 'Then we need a repair move. A player can spend a turn to bring someone back.' },
+      { speaker: 'Emanuel', text: 'Now the mechanic carries the message: exclusion is visible, and repair is possible.' },
     ],
     choices: [
       {
@@ -648,9 +659,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'The team follows the rules, but nobody argues anymore. That silence is not agreement.',
     cast: ['Kiril', 'Hatche', 'Mehmet Emin', 'Buse Naz'],
     dialogue: [
-      { speaker: 'Kiril', text: 'I can present, but I do not feel this is our game.' },
-      { speaker: 'Hatche', text: 'Maybe it works, but I stopped suggesting ideas.' },
-      { speaker: 'Buse Naz', text: 'It needs life. Right now it feels like homework.' },
+      { speaker: 'Kiril', text: 'I can present the rulebook, but I do not feel this is our game.' },
+      { speaker: 'Hatche', text: 'I stopped suggesting changes because every change felt like a problem.' },
+      { speaker: 'Mehmet Emin', text: 'The game is controlled, yes. But controlled by whom?' },
+      { speaker: 'Buse Naz', text: 'It needs life. Right now players may follow it, but not care about it.' },
     ],
     choices: [
       {
@@ -683,9 +695,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'The team tries to relax, but the same problem returns during dinner. Someone says they do not want to present tomorrow.',
     cast: ['Loredana', 'Elena', 'Ognjen', 'Rocco'],
     dialogue: [
-      { speaker: 'Loredana', text: 'I do not want to explain a game I do not believe in.' },
-      { speaker: 'Elena', text: 'We avoided the hard talk. Now the hard talk is bigger.' },
-      { speaker: 'Rocco', text: 'You still have tonight. But you need honesty, not panic.' },
+      { speaker: 'Loredana', text: 'I do not want to stand tomorrow and explain a game I do not believe in.' },
+      { speaker: 'Elena', text: 'We tried to be polite, but we never solved the problem.' },
+      { speaker: 'Ognjen', text: 'If we speak now, maybe we lose time. If we do not speak, maybe we lose the team.' },
+      { speaker: 'Rocco', text: 'You still have tonight. Use it for honesty, not panic.' },
     ],
     choices: [
       {
@@ -718,9 +731,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'The team cuts rules, tests again, and adds one clear debrief question. The board is simple, but everyone can explain why it exists.',
     cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Georgi'],
     dialogue: [
-      { speaker: 'Sophie', text: 'Now players must choose: win alone, or bring someone back into the game.' },
-      { speaker: 'Rasim Hamza', text: 'Checking information costs time, but it protects trust.' },
-      { speaker: 'Mihaela', text: 'This finally feels like our project.' },
+      { speaker: 'Sophie', text: 'Now each turn has a real choice: move faster alone, or help someone re-enter the game.' },
+      { speaker: 'Rasim Hamza', text: 'And checking information costs time, but protects group trust.' },
+      { speaker: 'Cristina', text: 'So the system creates tension without punishing only one player.' },
+      { speaker: 'Mihaela', text: 'This finally feels like our project, not only our topic.' },
     ],
     choices: [
       {
@@ -753,9 +767,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: '{you} has a playable board. The pieces are aligned. The rulebook is ready. The team is not.',
     cast: ['Claudia', 'Kiril', 'Hatche', 'Rocco'],
     dialogue: [
-      { speaker: 'Claudia', text: 'I can help present, but I do not know the story behind each rule.' },
-      { speaker: 'Kiril', text: 'It is good work. I just wish we had built it together.' },
-      { speaker: 'Rocco', text: 'A complete board is not always a complete project.' },
+      { speaker: 'Claudia', text: 'I can help present the board, but I do not know why every rule is there.' },
+      { speaker: 'Kiril', text: 'The work is good. I just wish the work had included us earlier.' },
+      { speaker: 'Hatche', text: 'Maybe tomorrow we should say that honestly. It is part of the learning.' },
+      { speaker: 'Rocco', text: 'A complete board is not always a complete project. But honest reflection can still save the lesson.' },
     ],
     choices: [
       {
@@ -788,9 +803,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'The team admits the game may not fully work. Emanuel does not rescue the prototype. He helps the group rescue the learning.',
     cast: ['Emanuel', 'Elena', 'Loredana', 'Ognjen', 'Rocco'],
     dialogue: [
-      { speaker: 'Emanuel', text: 'A failed prototype can still be serious if you can show what it taught you.' },
-      { speaker: 'Elena', text: 'Then our debrief should ask why the system failed.' },
-      { speaker: 'Ognjen', text: 'We can show one broken round and ask players to improve it.' },
+      { speaker: 'Emanuel', text: 'If the prototype is weak, do not pretend it is strong. Ask what the weakness teaches.' },
+      { speaker: 'Elena', text: 'Then our debrief can ask: where did the system fail the players?' },
+      { speaker: 'Loredana', text: 'That feels risky, but more honest than selling a game we do not trust.' },
+      { speaker: 'Ognjen', text: 'We can show one broken round, then ask players to redesign the rule with us.' },
     ],
     choices: [
       {
@@ -823,9 +839,9 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     text: 'All teams gather. Chairs make a circle. Emanuel invites the final reflection. The board game is on the table, and the path behind it is now visible.',
     cast: ['Emanuel', 'Rocco', 'All Participants'],
     dialogue: [
-      { speaker: 'Emanuel', text: 'Do not only show what players do. Show what your rules make players feel, notice, and discuss.' },
-      { speaker: 'Rocco', text: 'And after this, YouthPass reflection. So make the last play count.' },
-      { speaker: 'Narrator', text: 'The outcome depends on the team you built and the game system you shaped.' },
+      { speaker: 'Emanuel', text: 'When you present, show the rule, the player choice, and the feeling it creates.' },
+      { speaker: 'Rocco', text: 'After the showcase we move to YouthPass reflection. So let the last play tell the truth.' },
+      { speaker: 'Narrator', text: 'The board is on the table. The team stands around it. The story now becomes visible.' },
     ],
     choices: [
       {
