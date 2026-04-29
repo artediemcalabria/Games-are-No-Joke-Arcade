@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, ChevronRight, Coffee, Droplets, RotateCcw, Trophy, Volume2, VolumeX } from 'lucide-react';
+import { Beer, ChevronLeft, ChevronRight, Coffee, Droplets, RotateCcw, Trophy, Volume2, VolumeX, Wine } from 'lucide-react';
 import { gameCatalog } from '../../data/course';
 import { useStore } from '../../store/useStore';
 
-type ItemType = 'water' | 'coffee' | 'beer' | 'vodka';
+type ItemType = 'water' | 'coffee' | 'beer' | 'wine';
 type Phase = 'name' | 'ready' | 'playing' | 'level-won' | 'game-over' | 'completed';
 type FallingItem = { id: number; type: ItemType; x: number; y: number; speed: number; drift: number };
 type Meters = { life: number; energy: number; happiness: number };
@@ -68,9 +68,9 @@ const itemMeta: Record<ItemType, {
     className: 'border-orange-300 bg-orange-400/20 text-orange-100 shadow-[0_0_14px_rgba(251,146,60,.45)]',
     description: '-energy, short +happiness',
   },
-  vodka: {
-    label: 'Vodka',
-    short: 'VOD',
+  wine: {
+    label: 'Wine',
+    short: 'WINE',
     className: 'border-red-300 bg-red-500/25 text-red-100 shadow-[0_0_16px_rgba(248,113,113,.55)]',
     description: 'big -energy, fast happiness crash',
   },
@@ -201,7 +201,7 @@ export default function YouthPassDropGame() {
       energy: clamp(current.energy - 34),
       happiness: clamp(current.happiness + 34),
     }));
-    setLastCatch('Vodka gave a short spike, then happiness crashed.');
+    setLastCatch('Wine gave a short spike, then happiness crashed.');
     playTone(120, 0.18, 'sawtooth');
     const timer = window.setTimeout(() => {
       setMeters((current) => ({ ...current, happiness: clamp(current.happiness * 0.45), life: clamp(current.life - 8) }));
@@ -518,14 +518,14 @@ export default function YouthPassDropGame() {
 
 function FallingToken({ item }: { key?: number; item: FallingItem }) {
   const meta = itemMeta[item.type];
-  const Icon = item.type === 'water' ? Droplets : item.type === 'coffee' ? Coffee : null;
+  const Icon = item.type === 'water' ? Droplets : item.type === 'coffee' ? Coffee : item.type === 'beer' ? Beer : Wine;
   return (
     <div
       className={`absolute z-20 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-2xl border-2 text-[10px] font-black ${meta.className}`}
       style={{ left: `${item.x}%`, top: `${item.y}%` }}
       title={meta.label}
     >
-      {Icon ? <Icon className="w-6 h-6" /> : meta.short}
+      <Icon className="w-6 h-6" />
     </div>
   );
 }
@@ -594,7 +594,7 @@ function pickItem(config: ReturnType<typeof getLevelConfig>): ItemType {
   if (roll < config.waterChance) return 'water';
   if (roll < config.waterChance + config.coffeeChance) return 'coffee';
   if (roll < config.waterChance + config.coffeeChance + config.beerChance) return 'beer';
-  return 'vodka';
+  return 'wine';
 }
 
 function isTypingTarget(target: EventTarget | null) {
