@@ -16,7 +16,7 @@ export function NavBar() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 w-full bg-black/60 backdrop-blur-md border-t border-white/10 p-2 z-40 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+    <nav className="fixed bottom-0 left-0 right-0 w-full bg-black/75 backdrop-blur-md border-t border-white/10 px-1 py-2 z-[70] safe-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
       <ul className="flex justify-around items-center max-w-5xl mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
@@ -25,7 +25,7 @@ export function NavBar() {
               <Link
                 to={item.path}
                 className={cn(
-                  "flex flex-col items-center p-2 transition-all duration-200",
+                  "flex flex-col items-center rounded-lg p-2 min-h-11 transition-all duration-200",
                   isActive ? "text-arcade-cyan scale-110" : "text-gray-500 hover:text-white"
                 )}
               >

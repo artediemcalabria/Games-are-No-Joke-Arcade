@@ -24,11 +24,11 @@ export default function App() {
       {/* Outer shell containing the CRT effects */}
       <div className="min-h-screen bg-arcade-bg scanlines crt-flicker flex flex-col items-center font-sans tracking-wide">
         {/* Main Content Area */}
-        <main className="flex-1 w-full max-w-5xl mx-auto relative pb-32 px-4 pt-6 flex flex-col gap-4">
+        <main className="flex-1 w-full max-w-6xl mx-auto relative pb-36 px-3 sm:px-4 pt-4 sm:pt-6 flex flex-col gap-4 overflow-x-hidden">
           
           <header className="flex flex-col md:flex-row justify-between items-center bg-black/40 arcade-border-pink p-4 mb-4 gap-4">
             <Link to="/" className="flex flex-col">
-              <h1 className="text-2xl md:text-3xl font-arcade text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-cyan-400">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-arcade mobile-readable-arcade text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-cyan-400">
                 {courseInfo.title}
               </h1>
               <p className="text-xs text-gray-400 flex items-center gap-2 mt-2 tracking-widest font-bold uppercase">

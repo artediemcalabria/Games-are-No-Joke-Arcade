@@ -8,6 +8,10 @@ export default defineConfig(({mode}) => {
   return {
     base: process.env.GITHUB_PAGES === 'true' ? '/Games-are-No-Joke-Arcade/' : '/',
     plugins: [react(), tailwindcss()],
+    build: {
+      target: 'es2018',
+      cssTarget: 'safari13',
+    },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },

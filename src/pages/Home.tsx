@@ -29,7 +29,7 @@ export default function Home() {
           <div className="p-5 md:p-8 flex flex-col justify-between gap-6">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-arcade-green">{courseInfo.programme}</p>
-              <h2 className="text-2xl md:text-4xl font-arcade text-white mt-4 leading-tight">{courseInfo.title}</h2>
+              <h2 className="text-xl sm:text-2xl md:text-4xl font-arcade mobile-readable-arcade text-white mt-4 leading-tight">{courseInfo.title}</h2>
               <p className="text-cyan-300 text-sm md:text-base font-bold mt-4 uppercase tracking-widest">{courseInfo.subtitle}</p>
               <p className="text-gray-300 text-sm leading-relaxed mt-4 max-w-2xl">
                 A mobile companion for youth workers learning how to design meaningful, fun, and inclusive games during the training in {courseInfo.venue}.
@@ -76,7 +76,7 @@ export default function Home() {
           <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Featured Next Game</p>
           <div className="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-arcade text-white">{nextGame.title}</h2>
+          <h2 className="text-lg sm:text-xl font-arcade mobile-readable-arcade text-white">{nextGame.title}</h2>
               <p className="text-sm text-gray-300 leading-relaxed mt-3 max-w-2xl">{nextGame.learningGoal}</p>
               <p className="text-xs text-pink-200 font-bold uppercase mt-3">{nextGame.duration} - {nextGame.difficulty}</p>
             </div>
@@ -92,7 +92,7 @@ export default function Home() {
 
         <div className="arcade-border glass-panel rounded-xl p-5">
           <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Next Learning Model</p>
-          <h2 className="text-lg font-arcade text-white mt-4">{nextModel.title}</h2>
+          <h2 className="text-base sm:text-lg font-arcade mobile-readable-arcade text-white mt-4">{nextModel.title}</h2>
           <p className="text-sm text-gray-300 leading-relaxed mt-3">{nextModel.focus}</p>
           <Link to="/theory" className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-cyan-300 hover:text-white">
             Open Models

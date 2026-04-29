@@ -13,7 +13,7 @@ export default function ArcadeList() {
         <div className="flex justify-between items-start gap-4">
           <div>
             <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Games Are No Joke Collection</p>
-            <h2 className="text-xl md:text-2xl font-arcade text-pink-500 uppercase tracking-widest mt-2">Playable Design Challenges</h2>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-arcade mobile-readable-arcade text-pink-500 uppercase tracking-widest mt-2">Playable Design Challenges</h2>
             <p className="text-sm text-gray-300 mt-3 max-w-2xl">
               Each game teaches one design idea through action: pressure, feedback, resources, choices, or debrief.
             </p>
@@ -33,7 +33,7 @@ export default function ArcadeList() {
               <motion.div
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                className={`${game.borderClass} glass-panel p-5 min-h-[360px] grid grid-cols-1 lg:grid-cols-[0.75fr_1.25fr] gap-5 group hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden`}
+                className={`${game.borderClass} glass-panel p-4 sm:p-5 min-h-[320px] grid grid-cols-1 lg:grid-cols-[0.75fr_1.25fr] gap-5 group hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden`}
               >
                 <GamePreview id={game.id} />
 
@@ -42,7 +42,7 @@ export default function ArcadeList() {
                     <div className="flex justify-between items-start gap-3">
                       <div>
                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{game.subtitle}</p>
-                        <h3 className="font-arcade text-xl md:text-2xl text-white group-hover:text-arcade-green transition-colors mt-3 leading-tight">{game.title}</h3>
+                        <h3 className="font-arcade text-lg md:text-2xl mobile-readable-arcade text-white group-hover:text-arcade-green transition-colors mt-3 leading-tight">{game.title}</h3>
                       </div>
                       <span className={`text-[10px] font-bold px-2 py-1 bg-black/50 rounded uppercase ${isDone ? 'text-green-300' : 'text-gray-400'}`}>
                         {status}

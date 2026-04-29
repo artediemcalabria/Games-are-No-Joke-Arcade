@@ -213,7 +213,7 @@ export default function CastleRushGame() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">{game.subtitle}</p>
-            <h1 className="text-2xl md:text-3xl font-arcade text-white mt-3">{game.title}</h1>
+            <h1 className="text-xl md:text-3xl font-arcade mobile-readable-arcade text-white mt-3">{game.title}</h1>
             <p className="text-sm text-gray-300 leading-relaxed mt-4 max-w-2xl">
               A Pac-Man style training sprint inside Residenza Antico Borgo. Reach the Activity Room while clock enemies chase you.
             </p>
@@ -243,9 +243,9 @@ export default function CastleRushGame() {
             <AngerBar anger={anger} timeLeft={timeLeft} clockCount={clocks.length} />
           </div>
 
-          <div className="mx-auto w-full max-w-[720px]">
+          <div className="mx-auto w-full max-w-[min(720px,calc(100vw-2rem))]">
             <div
-              className="relative grid overflow-hidden rounded-xl border-2 border-cyan-400/60 bg-[#020617] shadow-[0_0_28px_rgba(0,242,255,.18)]"
+              className="relative grid overflow-hidden rounded-xl border-2 border-cyan-400/60 bg-[#020617] shadow-[0_0_28px_rgba(0,242,255,.18)] touch-none"
               style={{
                 gridTemplateColumns: `repeat(${tileCount}, minmax(0, 1fr))`,
                 aspectRatio: '1 / 1',

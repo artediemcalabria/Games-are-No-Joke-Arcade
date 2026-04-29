@@ -385,7 +385,7 @@ export default function FiladelfiaStoryGame() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="text-xs text-green-300 font-bold uppercase tracking-widest">{game.subtitle}</p>
-            <h1 className="text-2xl md:text-3xl font-arcade text-white mt-3">{game.title}</h1>
+            <h1 className="text-xl md:text-3xl font-arcade mobile-readable-arcade text-white mt-3">{game.title}</h1>
             <p className="text-sm text-gray-300 leading-relaxed mt-4 max-w-3xl">
               A narrative game inside the Games Are No Joke Erasmus+ project in Filadelfia. Read the scene, choose actions, and watch the story system change.
             </p>
@@ -457,7 +457,7 @@ export default function FiladelfiaStoryGame() {
 
 function StoryStage({ scene, meters, lastFeedback, onChoose }: { scene: Scene; meters: Meters; lastFeedback: string; onChoose: (choice: Choice) => void }) {
   return (
-    <div className="relative min-h-[660px] overflow-hidden rounded-xl border border-green-400/30 bg-slate-950 p-3 sm:p-4 flex flex-col justify-between">
+    <div className="relative min-h-[560px] sm:min-h-[660px] overflow-hidden rounded-xl border border-green-400/30 bg-slate-950 p-3 sm:p-4 flex flex-col justify-between">
       <StageBackdrop sceneId={scene.id} />
       <div className="relative z-20 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="rounded-lg border border-white/10 bg-black/70 px-3 py-2">
@@ -473,12 +473,12 @@ function StoryStage({ scene, meters, lastFeedback, onChoose }: { scene: Scene; m
 
       <StageCharacters sceneId={scene.id} />
 
-      <div className="relative z-20 mt-56 rounded-xl border-2 border-green-300/60 bg-black/88 p-4 shadow-[0_0_24px_rgba(34,197,94,.22)] backdrop-blur">
+      <div className="relative z-20 mt-36 sm:mt-56 rounded-xl border-2 border-green-300/60 bg-black/88 p-3 sm:p-4 shadow-[0_0_24px_rgba(34,197,94,.22)] backdrop-blur">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[10px] font-black uppercase tracking-widest text-green-300">{scene.speaker}</p>
           <p className="text-[10px] font-bold uppercase text-gray-500">{scene.stageNote}</p>
         </div>
-        <h2 className="mt-2 text-xl font-arcade text-white">{scene.title}</h2>
+        <h2 className="mt-2 text-base sm:text-xl font-arcade mobile-readable-arcade text-white">{scene.title}</h2>
         <p className="mt-3 text-sm leading-relaxed text-gray-200">{scene.text}</p>
         <div className="mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-100">
           Consequence memory: {lastFeedback}
