@@ -16,8 +16,8 @@ export default function PrototypeLab() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 grid grid-cols-1 lg:grid-cols-12 gap-4">
-      <section className="lg:col-span-12 arcade-border-green glass-panel-green rounded-xl p-5 md:p-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 space-y-4">
+      <section className="arcade-border-green glass-panel-green rounded-xl p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Prototype Lab</p>
@@ -39,7 +39,7 @@ export default function PrototypeLab() {
         </div>
       </section>
 
-      <section className="lg:col-span-7 space-y-3">
+      <section className="space-y-3">
         {prototypeSteps.map((step, index) => {
           const isDone = Boolean(prototype[step.id]?.trim());
           return (
@@ -68,9 +68,7 @@ export default function PrototypeLab() {
         })}
       </section>
 
-      <aside className="lg:col-span-5">
-        <div className="sticky top-4 space-y-4">
-        <div className="arcade-border-pink glass-panel-pink rounded-xl p-5">
+      <section className="arcade-border-pink glass-panel-pink rounded-xl p-5 md:p-6">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Live Output</p>
@@ -79,17 +77,19 @@ export default function PrototypeLab() {
             <ClipboardList className="w-8 h-8 text-pink-400" />
           </div>
 
-          <div className="mt-5 rounded-xl bg-white text-black p-4 space-y-3">
+          <div className="mt-5 rounded-xl bg-white text-black p-5 md:p-6">
             <div className="border-b border-black/20 pb-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">Games Are No Joke</p>
               <h3 className="text-xl font-black uppercase leading-tight">{prototype.topic || 'Untitled prototype'}</h3>
             </div>
-            {prototypeSteps.map((step) => (
-              <div key={step.id}>
-                <p className="text-[10px] font-black uppercase text-gray-500">{step.label}</p>
-                <p className="text-sm font-semibold leading-snug whitespace-pre-wrap">{prototype[step.id]?.trim() || '-'}</p>
-              </div>
-            ))}
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {prototypeSteps.map((step) => (
+                <div key={step.id} className={step.id === 'rules' || step.id === 'playtestPlan' ? 'md:col-span-2' : ''}>
+                  <p className="text-[10px] font-black uppercase text-gray-500">{step.label}</p>
+                  <p className="text-sm font-semibold leading-snug whitespace-pre-wrap">{prototype[step.id]?.trim() || '-'}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -106,8 +106,9 @@ export default function PrototypeLab() {
               <RotateCcw className="w-4 h-4" /> Clear Draft
             </button>
           </div>
-        </div>
+      </section>
 
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="arcade-border glass-panel rounded-xl p-5">
           <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Collection Takeaways</p>
           <div className="mt-4 space-y-3">
@@ -152,8 +153,7 @@ export default function PrototypeLab() {
             ))}
           </div>
         </div>
-        </div>
-      </aside>
+      </section>
     </motion.div>
   );
 }
