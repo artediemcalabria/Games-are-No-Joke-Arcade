@@ -1,57 +1,103 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, GitBranch, RotateCcw, Sparkles } from 'lucide-react';
+import { ArrowRight, Flag, GitBranch, MapPin, MessageSquare, RotateCcw, Sparkles, UserRound } from 'lucide-react';
 import { gameCatalog } from '../../data/course';
 import { useStore } from '../../store/useStore';
 
 type MeterKey = 'trust' | 'clarity' | 'inclusion' | 'energy' | 'learning';
 type Meters = Record<MeterKey, number>;
-type SceneId = 'arrival' | 'team' | 'prototype' | 'conflict' | 'debrief' | 'showcase';
+type ProtagonistId = 'andrea' | 'slave' | 'ivalina';
+type StoryNodeId =
+  | 'arrival'
+  | 'circle-connect'
+  | 'circle-distance'
+  | 'circle-familiar'
+  | 'team-shared'
+  | 'team-solo'
+  | 'team-fun'
+  | 'prototype-playtest'
+  | 'prototype-polish'
+  | 'prototype-alone'
+  | 'conflict-listen'
+  | 'conflict-control'
+  | 'conflict-avoid'
+  | 'night-repair'
+  | 'night-solo'
+  | 'night-honest'
+  | 'showcase';
 type EndingId =
-  | 'inclusive-showcase'
-  | 'fun-weak-learning'
-  | 'perfect-bored'
-  | 'conflict-returned'
-  | 'collapsed-great-debrief'
-  | 'shared-ownership';
+  | 'shared-board-game-success'
+  | 'solo-prototype-success'
+  | 'fun-game-weak-message'
+  | 'beautiful-board-broken-rules'
+  | 'conflict-breaks-team'
+  | 'failed-prototype-strong-learning';
+
+type Participant = {
+  name: string;
+  country: string;
+};
+
+type Protagonist = Participant & {
+  id: ProtagonistId;
+  trait: string;
+  risk: string;
+  opening: string;
+  initialBoost: Partial<Meters>;
+};
+
+type DialogueLine = {
+  speaker: string;
+  text: string;
+};
 
 type Choice = {
   id: string;
   label: string;
-  text: string;
+  intention: string;
   effects: Partial<Meters>;
   flags?: string[];
-  next: SceneId | 'ending';
+  next: StoryNodeId | 'ending';
   feedback: string;
 };
 
-type Scene = {
-  id: SceneId;
-  act: string;
+type StoryNode = {
+  id: StoryNodeId;
+  chapter: string;
+  dayLabel: string;
   title: string;
   location: string;
   speaker: string;
   text: string;
-  stageNote: string;
+  dialogue: DialogueLine[];
+  cast: string[];
   choices: Choice[];
 };
 
-type PathStep = {
-  sceneId: SceneId;
-  choiceId: string;
-  label: string;
+type StoryLogEntry = {
+  nodeId: StoryNodeId;
+  nodeTitle: string;
+  dayLabel: string;
+  location: string;
+  dialogue: DialogueLine[];
+  chosenAction: string;
   feedback: string;
+  meterChanges: Partial<Meters>;
+  flags: string[];
 };
 
 type Ending = {
   title: string;
-  summary: string;
+  protagonistOutcome: string;
+  boardGameOutcome: string;
+  teamOutcome: string;
   logic: string;
   howToReach: string;
   trainerReflection: string;
 };
 
 const game = gameCatalog.find((item) => item.id === 'filadelfia-story')!;
+
 const initialMeters: Meters = {
   trust: 50,
   clarity: 50,
@@ -60,329 +106,884 @@ const initialMeters: Meters = {
   learning: 45,
 };
 
-const scenes: Scene[] = [
-  {
+const protagonists: Record<ProtagonistId, Protagonist> = {
+  andrea: {
+    id: 'andrea',
+    name: 'Andrea',
+    country: 'France',
+    trait: 'Creative and social',
+    risk: 'Can chase fun and lose the learning message.',
+    opening: 'Andrea arrives with jokes, ideas, and a strong wish to make people play fast.',
+    initialBoost: { energy: 8, trust: 4 },
+  },
+  slave: {
+    id: 'slave',
+    name: 'Slave',
+    country: 'N. Macedonia',
+    trait: 'Analytical and structured',
+    risk: 'Can control the prototype alone when pressure rises.',
+    opening: 'Slave arrives with a notebook, already thinking about rules, balance, and a clean system.',
+    initialBoost: { clarity: 8, learning: 4 },
+  },
+  ivalina: {
+    id: 'ivalina',
+    name: 'Ivalina',
+    country: 'Bulgaria',
+    trait: 'Reflective and inclusive',
+    risk: 'Can avoid conflict for too long.',
+    opening: 'Ivalina arrives quietly, watching who speaks, who waits, and who is left outside the circle.',
+    initialBoost: { inclusion: 8, trust: 4 },
+  },
+};
+
+const participants: Participant[] = [
+  { country: 'Italy', name: 'Claudia' },
+  { country: 'Italy', name: 'Kaotar' },
+  { country: 'Italy', name: 'Giuseppe' },
+  { country: 'Turkiye', name: 'Rasim Hamza' },
+  { country: 'Turkiye', name: 'Mehmet Emin' },
+  { country: 'Turkiye', name: 'Buse Naz' },
+  { country: 'Romania', name: 'Liviu' },
+  { country: 'Romania', name: 'Cristina' },
+  { country: 'Romania', name: 'Loredana' },
+  { country: 'N. Macedonia', name: 'Slave' },
+  { country: 'N. Macedonia', name: 'Mihaela' },
+  { country: 'N. Macedonia', name: 'Elena' },
+  { country: 'N. Macedonia', name: 'Kiril' },
+  { country: 'Bulgaria', name: 'Ivalina' },
+  { country: 'Bulgaria', name: 'Georgi' },
+  { country: 'Bulgaria', name: 'Hatche' },
+  { country: 'France', name: 'Andrea' },
+  { country: 'France', name: 'Sophie' },
+  { country: 'France', name: 'Ethan' },
+  { country: 'Serbia', name: 'Stasa' },
+  { country: 'Serbia', name: 'Stefan' },
+  { country: 'Serbia', name: 'Ognjen' },
+];
+
+const storyNodes: Record<StoryNodeId, StoryNode> = {
+  arrival: {
     id: 'arrival',
-    act: 'Beginning',
-    title: 'The Courtyard Before Session',
-    location: 'Residenza Antico Borgo',
+    chapter: 'Chapter 1',
+    dayLabel: 'Day 1',
+    title: 'Arrival at the Borgo',
+    location: 'Residenza Antico Borgo, Filadelfia',
     speaker: 'Rocco',
-    text: 'The group arrives with coffee, jokes, and loud energy. One participant stands near the wall, holding an idea but saying nothing.',
-    stageNote: 'First tension: energy is high, but inclusion is fragile.',
+    text: '{you} reaches the stone courtyard with a backpack, a tired smile, and the first question: stay safe, or enter the group?',
+    cast: ['Rocco', 'Emanuel', 'Sophie', 'Mihaela', 'Giuseppe', 'Buse Naz'],
+    dialogue: [
+      { speaker: 'Rocco', text: 'Welcome to Filadelfia. Leave the luggage here. The activity room is upstairs.' },
+      { speaker: 'Emanuel', text: 'This week we design games, but we also design how people meet each other.' },
+      { speaker: 'Sophie', text: 'I hope my team is not too serious. I want a game people really play.' },
+    ],
     choices: [
       {
-        id: 'listen-first',
-        label: 'Move closer and listen',
-        text: 'Ask the quiet participant what kind of game they dream about.',
-        effects: { trust: 10, inclusion: 14, learning: 6, energy: -3 },
-        flags: ['listenedFirst', 'includedQuietVoice'],
-        next: 'team',
-        feedback: 'You changed the scene with one small action: attention became a game mechanic.',
+        id: 'connect-courtyard',
+        label: 'Enter the circle',
+        intention: 'Ask Sophie and Mihaela what kind of game they want to build.',
+        effects: { trust: 10, inclusion: 8, energy: -2, learning: 4 },
+        flags: ['builtAlliance', 'includedQuietVoice'],
+        next: 'circle-connect',
+        feedback: 'You made the first mechanic social: attention created trust.',
       },
       {
-        id: 'join-joke',
-        label: 'Ride the loud energy',
-        text: 'Join the jokes and pull everyone quickly toward the activity room.',
-        effects: { energy: 10, trust: 4, inclusion: -8, learning: -2 },
-        flags: ['missedQuietVoice'],
-        next: 'team',
-        feedback: 'The room became lively, but one player was still outside the circle.',
+        id: 'observe-courtyard',
+        label: 'Observe first',
+        intention: 'Stay quiet, map who speaks, and wait before joining.',
+        effects: { clarity: 6, inclusion: 4, energy: -4 },
+        flags: ['watchedGroup'],
+        next: 'circle-distance',
+        feedback: 'You saw useful patterns, but the group did not yet feel your presence.',
       },
       {
-        id: 'trainer-mode',
-        label: 'Guide the energy',
-        text: 'Smile, welcome the jokes, then invite the group to bring that energy into the first activity.',
-        effects: { clarity: 9, trust: 6, energy: 4, inclusion: 4, learning: 4 },
-        flags: ['guidedEnergy'],
-        next: 'team',
-        feedback: 'You did not shut the group down. You turned energy into a learning frame.',
+        id: 'stay-familiar',
+        label: 'Stay with familiar voices',
+        intention: 'Talk with people who feel easy and avoid the first awkward moment.',
+        effects: { energy: 8, trust: -4, inclusion: -8 },
+        flags: ['ignoredTeam'],
+        next: 'circle-familiar',
+        feedback: 'Comfort helped your energy, but narrowed the first bridge to the group.',
       },
     ],
   },
-  {
-    id: 'team',
-    act: 'Rising Action',
-    title: 'The Topic Split',
+  'circle-connect': {
+    id: 'circle-connect',
+    chapter: 'Chapter 2',
+    dayLabel: 'Day 2',
+    title: 'The Mixed Team',
     location: 'Activity Room',
     speaker: 'Emanuel',
-    text: 'Your table must choose one theme: misinformation, inclusion, polarization, or well-being. Every person thinks their theme is urgent.',
-    stageNote: 'The team needs one shared direction before the prototype can breathe.',
+    text: 'Emanuel forms mixed teams. {you} sits with Sophie, Mihaela, Rasim Hamza, Cristina, and Georgi. The team must choose a topic for a board game.',
+    cast: ['Emanuel', 'Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Georgi'],
+    dialogue: [
+      { speaker: 'Emanuel', text: 'Start from a real need. A topic is not yet a game.' },
+      { speaker: 'Mihaela', text: 'I want something about inclusion. Some people disappear in groups.' },
+      { speaker: 'Rasim Hamza', text: 'Misinformation could work. Players can check sources before moving.' },
+      { speaker: 'Cristina', text: 'Can we combine both without making a lecture?' },
+    ],
     choices: [
-      {
-        id: 'vote-fast',
-        label: 'Push a fast vote',
-        text: 'Choose the most popular topic and start building before energy drops.',
-        effects: { clarity: 8, energy: 6, trust: -4, inclusion: -7 },
-        flags: ['rushedDecision'],
-        next: 'prototype',
-        feedback: 'Pace improved, but the losing ideas did not disappear. They went underground.',
-      },
       {
         id: 'map-needs',
         label: 'Map the needs',
-        text: 'Give each person one minute to explain the need behind their topic.',
-        effects: { trust: 10, inclusion: 12, clarity: 8, learning: 5, energy: -4 },
-        flags: ['sharedOwnership'],
-        next: 'prototype',
-        feedback: 'Disagreement became useful design material.',
+        intention: 'Give each person one minute to explain the need behind their topic.',
+        effects: { trust: 12, inclusion: 12, clarity: 8, learning: 8, energy: -4 },
+        flags: ['sharedRoles', 'learningInsideMechanic'],
+        next: 'team-shared',
+        feedback: 'The team did not vote on ego. They designed from needs.',
       },
       {
-        id: 'pick-cool',
-        label: 'Pick the coolest idea',
-        text: 'Choose the topic that sounds most fun as a game.',
-        effects: { energy: 12, clarity: -5, learning: -8, trust: -3 },
+        id: 'take-structure',
+        label: 'Take the structure role',
+        intention: 'Offer to write the rules because the team needs order now.',
+        effects: { clarity: 12, energy: 2, trust: -4, inclusion: -6 },
+        flags: ['soloDesigner'],
+        next: 'team-solo',
+        feedback: 'The rules became clearer, but ownership started moving toward one person.',
+      },
+      {
+        id: 'choose-funniest',
+        label: 'Choose the funniest topic',
+        intention: 'Push the idea that will make players laugh quickest.',
+        effects: { energy: 12, trust: 2, clarity: -6, learning: -10 },
         flags: ['funFirst'],
-        next: 'prototype',
-        feedback: 'Fun pulled the team forward, but the learning target became blurry.',
+        next: 'team-fun',
+        feedback: 'The room got louder. The learning target got thinner.',
       },
     ],
   },
-  {
-    id: 'prototype',
-    act: 'Pressure',
-    title: 'The Beautiful Broken Game',
-    location: 'Workshop Table',
-    speaker: 'Team Mate',
-    text: 'The showcase is close. The board looks empty. Someone wants perfect cards. Someone else says the core rule still does not work.',
-    stageNote: 'The prototype can become playable or become decoration.',
+  'circle-distance': {
+    id: 'circle-distance',
+    chapter: 'Chapter 2',
+    dayLabel: 'Day 2',
+    title: 'Quiet Notes, Loud Table',
+    location: 'Activity Room',
+    speaker: 'Narrator',
+    text: '{you} understands the group dynamics, but the team has already started to move without a clear invitation.',
+    cast: ['Emanuel', 'Kaotar', 'Elena', 'Ethan', 'Stefan', 'Loredana'],
+    dialogue: [
+      { speaker: 'Kaotar', text: 'We need a topic now, or we will spend all morning talking.' },
+      { speaker: 'Elena', text: 'I have an idea, but maybe it is too complicated.' },
+      { speaker: 'Emanuel', text: 'Complex is fine. Hidden is harder. Bring the idea into the room.' },
+    ],
     choices: [
       {
-        id: 'test-core-loop',
-        label: 'Play the ugly version',
-        text: 'Use paper, tokens, and three rules. Test one round now.',
-        effects: { clarity: 15, learning: 12, trust: 6, energy: -4 },
-        flags: ['testedCoreLoop'],
-        next: 'conflict',
-        feedback: 'A small playable loop revealed more truth than a long discussion.',
+        id: 'invite-elena',
+        label: 'Invite Elena in',
+        intention: 'Ask Elena to explain the complicated idea with one example.',
+        effects: { trust: 10, inclusion: 14, learning: 8, clarity: 2 },
+        flags: ['includedQuietVoice', 'builtAlliance'],
+        next: 'team-shared',
+        feedback: 'A quiet idea became shared material.',
       },
       {
-        id: 'make-pretty',
+        id: 'write-alone',
+        label: 'Write a clean concept alone',
+        intention: 'Use your notes to create a complete concept before the group drifts.',
+        effects: { clarity: 14, energy: -4, trust: -8, inclusion: -8 },
+        flags: ['soloDesigner', 'ignoredTeam'],
+        next: 'team-solo',
+        feedback: 'The concept became neat, but the group did not feel inside it.',
+      },
+      {
+        id: 'follow-loud',
+        label: 'Follow the loud idea',
+        intention: 'Let Ethan and Stefan lead with the energetic proposal.',
+        effects: { energy: 10, trust: 2, learning: -8, inclusion: -6 },
+        flags: ['funFirst', 'ignoredTeam'],
+        next: 'team-fun',
+        feedback: 'Momentum replaced shared intention.',
+      },
+    ],
+  },
+  'circle-familiar': {
+    id: 'circle-familiar',
+    chapter: 'Chapter 2',
+    dayLabel: 'Day 2',
+    title: 'The Easy Corner',
+    location: 'Coffee Break Table',
+    speaker: 'Rocco',
+    text: 'Rocco brings biscuits. {you} is comfortable, but the mixed team is forming on the other side of the room.',
+    cast: ['Rocco', 'Claudia', 'Giuseppe', 'Buse Naz', 'Ognjen'],
+    dialogue: [
+      { speaker: 'Rocco', text: 'Coffee is good, but do not miss your team. The workshop clock is faster than it looks.' },
+      { speaker: 'Buse Naz', text: 'I think the game should be funny first. People learn when they relax.' },
+      { speaker: 'Ognjen', text: 'Yes, but if we do not decide roles, nobody will finish the board.' },
+    ],
+    choices: [
+      {
+        id: 'repair-entry',
+        label: 'Repair the entry',
+        intention: 'Move to the mixed team and ask what role is still missing.',
+        effects: { trust: 6, inclusion: 8, clarity: 4, energy: -2 },
+        flags: ['builtAlliance'],
+        next: 'team-shared',
+        feedback: 'You arrived late, but you entered with a useful question.',
+      },
+      {
+        id: 'keep-control',
+        label: 'Offer a ready plan',
+        intention: 'Tell the team you already have a structure to save time.',
+        effects: { clarity: 12, trust: -8, inclusion: -10, energy: 2 },
+        flags: ['soloDesigner', 'ignoredTeam'],
+        next: 'team-solo',
+        feedback: 'The plan helped speed. It also reduced ownership.',
+      },
+      {
+        id: 'make-party-game',
+        label: 'Make a party game',
+        intention: 'Build around fast laughter and simple challenges.',
+        effects: { energy: 14, learning: -12, clarity: -4 },
+        flags: ['funFirst'],
+        next: 'team-fun',
+        feedback: 'Everyone could imagine the fun. Nobody could yet name the learning.',
+      },
+    ],
+  },
+  'team-shared': {
+    id: 'team-shared',
+    chapter: 'Chapter 3',
+    dayLabel: 'Day 3',
+    title: 'A Board With Many Hands',
+    location: 'Workshop Table',
+    speaker: 'Sophie',
+    text: 'The team chooses a board game about inclusion and misinformation. Players must decide whom to trust, who to invite, and when to check a source.',
+    cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Georgi'],
+    dialogue: [
+      { speaker: 'Sophie', text: 'What if each player has different information?' },
+      { speaker: 'Rasim Hamza', text: 'Then checking the source is not a quiz. It is a move.' },
+      { speaker: 'Mihaela', text: 'And inclusion means you cannot win if one voice is always ignored.' },
+    ],
+    choices: [
+      {
+        id: 'test-ugly-loop',
+        label: 'Playtest the ugly loop',
+        intention: 'Use paper, coins, and six cards to test one full round now.',
+        effects: { clarity: 14, learning: 12, trust: 6, energy: -4 },
+        flags: ['usedPlaytest', 'learningInsideMechanic'],
+        next: 'prototype-playtest',
+        feedback: 'The rough loop showed what the rules really did.',
+      },
+      {
+        id: 'divide-shared-roles',
+        label: 'Divide roles clearly',
+        intention: 'Assign rules, board, cards, and debrief to different people.',
+        effects: { trust: 8, inclusion: 8, clarity: 8, energy: 2 },
+        flags: ['sharedRoles'],
+        next: 'prototype-playtest',
+        feedback: 'Shared work became a visible system.',
+      },
+      {
+        id: 'decorate-first',
+        label: 'Make it beautiful first',
+        intention: 'Create cards, colors, and board spaces before testing.',
+        effects: { energy: -6, clarity: 4, learning: -8, trust: -2 },
+        flags: ['polishedBeforeTesting'],
+        next: 'prototype-polish',
+        feedback: 'The table looked better. The mechanic stayed unproven.',
+      },
+    ],
+  },
+  'team-solo': {
+    id: 'team-solo',
+    chapter: 'Chapter 3',
+    dayLabel: 'Day 3',
+    title: 'The Prototype in One Notebook',
+    location: 'Quiet Corner',
+    speaker: 'Narrator',
+    text: '{you} writes a strong rule structure. The team watches, helps a little, and slowly becomes an audience.',
+    cast: ['Kiril', 'Hatche', 'Liviu', 'Claudia', 'Mehmet Emin'],
+    dialogue: [
+      { speaker: 'Kiril', text: 'The rules are clear, but where do we add our ideas?' },
+      { speaker: 'Hatche', text: 'Maybe we can test before everything is fixed.' },
+      { speaker: 'Mehmet Emin', text: 'If one person understands the system, is it really a group game?' },
+    ],
+    choices: [
+      {
+        id: 'open-notebook',
+        label: 'Open the notebook',
+        intention: 'Stop writing and ask each person to change one rule.',
+        effects: { trust: 10, inclusion: 12, clarity: -2, learning: 6 },
+        flags: ['sharedRoles', 'includedQuietVoice'],
+        next: 'prototype-playtest',
+        feedback: 'Control became invitation. The prototype got messier and healthier.',
+      },
+      {
+        id: 'finish-alone',
+        label: 'Build alone tonight',
+        intention: 'Finish the board yourself so the team has something complete.',
+        effects: { clarity: 16, energy: -12, trust: -12, inclusion: -14 },
+        flags: ['soloDesigner'],
+        next: 'prototype-alone',
+        feedback: 'The prototype moved forward, but the team moved backward.',
+      },
+      {
+        id: 'make-polished-board',
         label: 'Polish the board',
-        text: 'Spend time making cards, icons, colors, and a nicer board.',
-        effects: { energy: -8, clarity: 8, learning: -8, trust: -4 },
-        flags: ['overbuiltPrototype'],
-        next: 'conflict',
-        feedback: 'The prototype looked safer, but the rule problem stayed hidden.',
+        intention: 'Use the clean rules to create a beautiful final board.',
+        effects: { clarity: 8, energy: -8, learning: -8, inclusion: -6 },
+        flags: ['polishedBeforeTesting'],
+        next: 'prototype-polish',
+        feedback: 'The board looked official before players had tested its truth.',
+      },
+    ],
+  },
+  'team-fun': {
+    id: 'team-fun',
+    chapter: 'Chapter 3',
+    dayLabel: 'Day 3',
+    title: 'The Laughing Prototype',
+    location: 'Courtyard Table',
+    speaker: 'Buse Naz',
+    text: 'The team creates fast challenges, jokes, and silly penalties. People laugh, but Emanuel asks where the youth-work learning sits inside the rules.',
+    cast: ['Buse Naz', 'Ethan', 'Stefan', 'Loredana', 'Emanuel'],
+    dialogue: [
+      { speaker: 'Ethan', text: 'This will be the loudest game at the showcase.' },
+      { speaker: 'Loredana', text: 'But what changes after people play it?' },
+      { speaker: 'Emanuel', text: 'Keep the energy. Now give the energy a direction.' },
+    ],
+    choices: [
+      {
+        id: 'add-learning-rule',
+        label: 'Put learning inside one rule',
+        intention: 'Add a rule where players must include a quiet voice to unlock progress.',
+        effects: { learning: 14, inclusion: 10, clarity: 4, energy: -2 },
+        flags: ['learningInsideMechanic', 'includedQuietVoice'],
+        next: 'prototype-playtest',
+        feedback: 'The message moved from explanation into play.',
+      },
+      {
+        id: 'sell-party-energy',
+        label: 'Protect the fun',
+        intention: 'Keep the game fast and trust the debrief to explain the meaning later.',
+        effects: { energy: 12, learning: -12, clarity: -6 },
+        flags: ['funFirst'],
+        next: 'prototype-polish',
+        feedback: 'The game stayed funny, but its message was delayed.',
       },
       {
         id: 'copy-classic',
-        label: 'Copy a known game',
-        text: 'Use a familiar board game and paste the topic on top.',
-        effects: { clarity: 5, energy: 8, learning: -10, inclusion: -3 },
+        label: 'Copy a known board game',
+        intention: 'Use familiar rules and paste the project topic on top.',
+        effects: { clarity: 8, energy: 4, learning: -14, inclusion: -4 },
         flags: ['reskinnedGame'],
-        next: 'conflict',
-        feedback: 'The structure was clear, but the message did not live inside the mechanic.',
+        next: 'prototype-polish',
+        feedback: 'Players understood the structure, but the topic did not shape the mechanic.',
       },
     ],
   },
-  {
-    id: 'conflict',
-    act: 'Climax',
-    title: 'The Rule Breaks',
-    location: 'Courtyard Break',
+  'prototype-playtest': {
+    id: 'prototype-playtest',
+    chapter: 'Chapter 4',
+    dayLabel: 'Day 4',
+    title: 'The First Test Breaks Something',
+    location: 'Activity Room Floor',
     speaker: 'Tester',
-    text: 'A tester stops playing and says: “This is not fair. I do not understand why I lose.” The team freezes. One person starts defending the rules.',
-    stageNote: 'The conflict is not outside the game. It is feedback from the system.',
+    text: 'Mihaela and Sophie test the first round. A player is blocked for three turns and says the game feels unfair.',
+    cast: ['Mihaela', 'Sophie', 'Georgi', 'Cristina', 'Emanuel'],
+    dialogue: [
+      { speaker: 'Sophie', text: 'I like the idea, but I do not know what I can do now.' },
+      { speaker: 'Mihaela', text: 'If a player is silent for three turns, the game repeats the problem we wanted to solve.' },
+      { speaker: 'Emanuel', text: 'Good. The prototype is speaking. What is it telling you?' },
+    ],
     choices: [
       {
-        id: 'invite-feedback',
-        label: 'Turn anger into data',
-        text: 'Ask what felt unfair and write it as a design problem.',
-        effects: { trust: 12, learning: 12, clarity: 8, inclusion: 5 },
-        flags: ['usedFeedback'],
-        next: 'debrief',
-        feedback: 'The conflict became fuel for iteration.',
+        id: 'turn-feedback-data',
+        label: 'Turn feedback into data',
+        intention: 'Ask what felt unfair, then change the rule immediately.',
+        effects: { trust: 12, clarity: 10, inclusion: 8, learning: 10 },
+        flags: ['usedPlaytest', 'clearDebrief'],
+        next: 'conflict-listen',
+        feedback: 'The conflict became design material.',
       },
       {
-        id: 'defend-rules',
-        label: 'Defend the rules',
-        text: 'Explain that the rules are correct and players need to listen better.',
-        effects: { trust: -16, inclusion: -8, clarity: -4, learning: -8 },
+        id: 'defend-balance',
+        label: 'Defend the balance',
+        intention: 'Explain that losing turns is part of the challenge.',
+        effects: { clarity: -4, trust: -12, inclusion: -10, learning: -6 },
         flags: ['ignoredFeedback'],
-        next: 'debrief',
-        feedback: 'You protected the idea and lost information from players.',
+        next: 'conflict-control',
+        feedback: 'You protected the rules and lost information from players.',
       },
       {
-        id: 'avoid-conflict',
-        label: 'Change subject',
-        text: 'Say the team can fix it later and move everyone away from tension.',
-        effects: { energy: 5, trust: -10, learning: -4, clarity: -8 },
+        id: 'pause-tension',
+        label: 'Pause the tension',
+        intention: 'Say the team will fix it later and move to materials now.',
+        effects: { energy: 4, trust: -8, clarity: -8, learning: -4 },
         flags: ['avoidedConflict'],
-        next: 'debrief',
-        feedback: 'The moment felt calmer, but the same problem kept moving under the surface.',
+        next: 'conflict-avoid',
+        feedback: 'The room felt calmer, but the problem did not leave.',
       },
     ],
   },
-  {
-    id: 'debrief',
-    act: 'Action',
-    title: 'Two Minutes With Emanuel',
-    location: 'Training Room',
-    speaker: 'Emanuel',
-    text: 'Emanuel asks: “How does your game connect fun to learning?” Your team has two minutes before the showcase doors open.',
-    stageNote: 'Now the game needs a bridge between emotion and reflection.',
+  'prototype-polish': {
+    id: 'prototype-polish',
+    chapter: 'Chapter 4',
+    dayLabel: 'Day 4',
+    title: 'Beautiful Cards, Unclear Turns',
+    location: 'Workshop Table',
+    speaker: 'Giuseppe',
+    text: 'The board has colors, icons, and a name. Then Giuseppe tries one turn and asks what he is allowed to do.',
+    cast: ['Giuseppe', 'Kaotar', 'Stasa', 'Stefan', 'Emanuel'],
+    dialogue: [
+      { speaker: 'Giuseppe', text: 'It looks ready, but I cannot see my choice.' },
+      { speaker: 'Kaotar', text: 'Maybe the player needs fewer cards and more feedback.' },
+      { speaker: 'Emanuel', text: 'A beautiful prototype is still a question. Let players answer it.' },
+    ],
     choices: [
       {
-        id: 'safe-question',
-        label: 'Create a debrief question',
-        text: 'Write: “What did this system make you feel or notice?”',
-        effects: { learning: 16, trust: 8, inclusion: 8, clarity: 4 },
-        flags: ['strongDebrief'],
-        next: 'showcase',
-        feedback: 'The debrief connected rules, emotions, and real life.',
+        id: 'cut-to-core',
+        label: 'Cut to the core loop',
+        intention: 'Remove half the cards and test only goal, choice, feedback.',
+        effects: { clarity: 14, learning: 10, trust: 6, energy: -4 },
+        flags: ['usedPlaytest', 'learningInsideMechanic'],
+        next: 'conflict-listen',
+        feedback: 'Removing content made the real game visible.',
       },
       {
-        id: 'skip-debrief',
-        label: 'Trust the fun',
-        text: 'Say the game is clear enough and the learning is obvious.',
-        effects: { energy: 6, learning: -14, clarity: -6 },
-        flags: ['weakDebrief'],
-        next: 'showcase',
-        feedback: 'The game stayed fun, but reflection became accidental.',
+        id: 'hide-weakness',
+        label: 'Hide the weak rule',
+        intention: 'Prepare a confident presentation and hope players do not notice.',
+        effects: { clarity: -10, trust: -10, learning: -8, energy: 4 },
+        flags: ['hidFailure', 'polishedBeforeTesting'],
+        next: 'conflict-control',
+        feedback: 'The prototype looked safer than it was.',
       },
       {
-        id: 'lecture-ending',
-        label: 'Add a final lecture',
-        text: 'Prepare a long explanation after the game ends.',
-        effects: { learning: 4, clarity: 5, energy: -12, trust: -3 },
-        flags: ['lectureEnding'],
-        next: 'showcase',
-        feedback: 'The explanation helped a little. The mechanic still had to teach.',
+        id: 'ask-co-design',
+        label: 'Ask for co-design',
+        intention: 'Invite Stasa and Stefan to change the unclear turn with you.',
+        effects: { trust: 10, inclusion: 10, clarity: 6, learning: 6 },
+        flags: ['sharedRoles', 'usedPlaytest'],
+        next: 'conflict-listen',
+        feedback: 'Players became co-designers, not judges.',
       },
     ],
   },
-  {
-    id: 'showcase',
-    act: 'Resolution',
-    title: 'Filadelfia Game Fair',
-    location: 'Final Showcase',
+  'prototype-alone': {
+    id: 'prototype-alone',
+    chapter: 'Chapter 4',
+    dayLabel: 'Night 4',
+    title: 'The Solo Table',
+    location: 'Common Room',
     speaker: 'Narrator',
-    text: 'Other teams arrive. Your prototype is on the table. This is the last choice: how will you invite people into the experience?',
-    stageNote: 'The ending depends on what your system made visible.',
+    text: 'After dinner, {you} keeps working alone. The prototype becomes complete, but the empty chairs around the table become part of the story.',
+    cast: ['Rocco', 'Liviu', 'Claudia', 'Kiril'],
+    dialogue: [
+      { speaker: 'Rocco', text: 'You are still here? Remember: Erasmus+ projects are not only final products.' },
+      { speaker: 'Liviu', text: 'I can test one round, but I do not know what your team decided.' },
+      { speaker: 'Claudia', text: 'It is clear. It is also very much yours.' },
+    ],
     choices: [
       {
-        id: 'facilitate-circle',
-        label: 'Facilitate a reflection circle',
-        text: 'Let players test, observe silently, then ask a short reflection question.',
-        effects: { trust: 8, inclusion: 10, learning: 12, clarity: 5, energy: -3 },
-        flags: ['reflectionCircle'],
-        next: 'ending',
-        feedback: 'The activity became a shared learning space.',
+        id: 'invite-late-test',
+        label: 'Invite a late test',
+        intention: 'Ask Liviu and Claudia to break the game before tomorrow.',
+        effects: { clarity: 8, learning: 8, trust: 4, energy: -6 },
+        flags: ['usedPlaytest'],
+        next: 'conflict-listen',
+        feedback: 'A late test saved some learning, but ownership stayed fragile.',
       },
       {
-        id: 'sell-fun',
-        label: 'Sell the fun',
-        text: 'Pitch the prototype as the funniest game in the room.',
-        effects: { energy: 12, trust: 2, learning: -6, clarity: -3 },
-        flags: ['soldFun'],
-        next: 'ending',
-        feedback: 'Players were curious, but the learning frame became thin.',
+        id: 'finish-solo',
+        label: 'Finish it alone',
+        intention: 'Complete the board, rules, and debrief without waking the team.',
+        effects: { clarity: 12, energy: -14, trust: -14, inclusion: -14 },
+        flags: ['soloDesigner', 'hidFailure'],
+        next: 'night-solo',
+        feedback: 'The game became finished and lonely.',
       },
       {
-        id: 'admit-rough',
-        label: 'Invite co-design',
-        text: 'Say this is a rough test and ask players to help improve it.',
-        effects: { trust: 10, learning: 10, inclusion: 6, clarity: 2 },
-        flags: ['honestPrototype'],
-        next: 'ending',
-        feedback: 'A rough prototype became an invitation to participate.',
+        id: 'admit-stuck',
+        label: 'Admit you are stuck',
+        intention: 'Write to the team chat: I need help, not perfection.',
+        effects: { trust: 12, inclusion: 8, learning: 8, clarity: -2 },
+        flags: ['sharedRoles', 'clearDebrief'],
+        next: 'night-repair',
+        feedback: 'Vulnerability reopened collaboration.',
       },
     ],
   },
-];
+  'conflict-listen': {
+    id: 'conflict-listen',
+    chapter: 'Chapter 5',
+    dayLabel: 'Day 5',
+    title: 'Repair Through Listening',
+    location: 'Courtyard',
+    speaker: 'Cristina',
+    text: 'The team names the conflict: some players have power, others wait. Now the board game can change.',
+    cast: ['Cristina', 'Mihaela', 'Sophie', 'Georgi', 'Emanuel'],
+    dialogue: [
+      { speaker: 'Cristina', text: 'The unfair part is useful. It shows what exclusion feels like.' },
+      { speaker: 'Georgi', text: 'Then the game needs a move that lets players repair exclusion.' },
+      { speaker: 'Emanuel', text: 'Exactly. A mechanic can carry the message when the rule creates the feeling.' },
+    ],
+    choices: [
+      {
+        id: 'design-repair-move',
+        label: 'Design a repair move',
+        intention: 'Add a rule where players can invite a blocked player back into action.',
+        effects: { inclusion: 12, learning: 12, clarity: 8, trust: 8 },
+        flags: ['learningInsideMechanic', 'clearDebrief'],
+        next: 'night-repair',
+        feedback: 'The message became playable.',
+      },
+      {
+        id: 'keep-as-lesson',
+        label: 'Keep unfairness as lesson',
+        intention: 'Keep the painful rule and explain it in the debrief.',
+        effects: { learning: 8, trust: -6, inclusion: -8, clarity: -4 },
+        flags: ['clearDebrief'],
+        next: 'night-honest',
+        feedback: 'The debrief may work, but the play experience still hurts.',
+      },
+    ],
+  },
+  'conflict-control': {
+    id: 'conflict-control',
+    chapter: 'Chapter 5',
+    dayLabel: 'Day 5',
+    title: 'Control Costs Trust',
+    location: 'Workshop Table',
+    speaker: 'Kiril',
+    text: 'The team follows the rules, but nobody argues anymore. That silence is not agreement.',
+    cast: ['Kiril', 'Hatche', 'Mehmet Emin', 'Buse Naz'],
+    dialogue: [
+      { speaker: 'Kiril', text: 'I can present, but I do not feel this is our game.' },
+      { speaker: 'Hatche', text: 'Maybe it works, but I stopped suggesting ideas.' },
+      { speaker: 'Buse Naz', text: 'It needs life. Right now it feels like homework.' },
+    ],
+    choices: [
+      {
+        id: 'return-ownership',
+        label: 'Return ownership',
+        intention: 'Give the team the next decision, even if it changes your rules.',
+        effects: { trust: 12, inclusion: 12, energy: -4, clarity: -2 },
+        flags: ['sharedRoles'],
+        next: 'night-repair',
+        feedback: 'The game became less controlled and more shared.',
+      },
+      {
+        id: 'protect-final-form',
+        label: 'Protect the final form',
+        intention: 'Keep the rulebook stable so the showcase is not chaotic.',
+        effects: { clarity: 10, trust: -12, inclusion: -10, learning: -6 },
+        flags: ['soloDesigner', 'hidFailure'],
+        next: 'night-solo',
+        feedback: 'The prototype became stable. The team became distant.',
+      },
+    ],
+  },
+  'conflict-avoid': {
+    id: 'conflict-avoid',
+    chapter: 'Chapter 5',
+    dayLabel: 'Day 5',
+    title: 'The Conflict Returns',
+    location: 'Dinner Table',
+    speaker: 'Loredana',
+    text: 'The team tries to relax, but the same problem returns during dinner. Someone says they do not want to present tomorrow.',
+    cast: ['Loredana', 'Elena', 'Ognjen', 'Rocco'],
+    dialogue: [
+      { speaker: 'Loredana', text: 'I do not want to explain a game I do not believe in.' },
+      { speaker: 'Elena', text: 'We avoided the hard talk. Now the hard talk is bigger.' },
+      { speaker: 'Rocco', text: 'You still have tonight. But you need honesty, not panic.' },
+    ],
+    choices: [
+      {
+        id: 'host-honest-circle',
+        label: 'Host an honest circle',
+        intention: 'Ask what each person needs to present with dignity.',
+        effects: { trust: 10, inclusion: 12, learning: 8, energy: -6 },
+        flags: ['clearDebrief', 'sharedRoles'],
+        next: 'night-honest',
+        feedback: 'Avoided conflict became a late but real conversation.',
+      },
+      {
+        id: 'smooth-over-again',
+        label: 'Smooth it over again',
+        intention: 'Say tomorrow will be fine and keep people calm.',
+        effects: { energy: 4, trust: -12, clarity: -8, learning: -8 },
+        flags: ['avoidedConflict', 'hidFailure'],
+        next: 'night-solo',
+        feedback: 'Calm without repair became a countdown.',
+      },
+    ],
+  },
+  'night-repair': {
+    id: 'night-repair',
+    chapter: 'Chapter 6',
+    dayLabel: 'Night 5',
+    title: 'The Game Finds Its Shape',
+    location: 'Common Room',
+    speaker: 'Narrator',
+    text: 'The team cuts rules, tests again, and adds one clear debrief question. The board is simple, but everyone can explain why it exists.',
+    cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Georgi'],
+    dialogue: [
+      { speaker: 'Sophie', text: 'Now players must choose: win alone, or bring someone back into the game.' },
+      { speaker: 'Rasim Hamza', text: 'Checking information costs time, but it protects trust.' },
+      { speaker: 'Mihaela', text: 'This finally feels like our project.' },
+    ],
+    choices: [
+      {
+        id: 'present-as-team',
+        label: 'Present as a team',
+        intention: 'Let each person explain one part: rules, feeling, learning, debrief.',
+        effects: { trust: 10, inclusion: 10, clarity: 6, learning: 8, energy: -2 },
+        flags: ['sharedRoles', 'clearDebrief'],
+        next: 'showcase',
+        feedback: 'The showcase became shared ownership.',
+      },
+      {
+        id: 'lead-but-credit',
+        label: 'Lead and credit others',
+        intention: 'Facilitate the presentation while naming each person contribution.',
+        effects: { clarity: 8, trust: 4, inclusion: 4, learning: 6 },
+        flags: ['clearDebrief'],
+        next: 'showcase',
+        feedback: 'Leadership supported the team instead of replacing it.',
+      },
+    ],
+  },
+  'night-solo': {
+    id: 'night-solo',
+    chapter: 'Chapter 6',
+    dayLabel: 'Night 5',
+    title: 'Finished, But Alone',
+    location: 'Activity Room',
+    speaker: 'Narrator',
+    text: '{you} has a playable board. The pieces are aligned. The rulebook is ready. The team is not.',
+    cast: ['Claudia', 'Kiril', 'Hatche', 'Rocco'],
+    dialogue: [
+      { speaker: 'Claudia', text: 'I can help present, but I do not know the story behind each rule.' },
+      { speaker: 'Kiril', text: 'It is good work. I just wish we had built it together.' },
+      { speaker: 'Rocco', text: 'A complete board is not always a complete project.' },
+    ],
+    choices: [
+      {
+        id: 'own-solo-choice',
+        label: 'Present it honestly',
+        intention: 'Say the prototype is mostly yours and ask the team to reflect on ownership.',
+        effects: { learning: 10, trust: 2, clarity: 4 },
+        flags: ['clearDebrief', 'soloDesigner'],
+        next: 'showcase',
+        feedback: 'Honesty turned a weak process into learning.',
+      },
+      {
+        id: 'pretend-team-game',
+        label: 'Pretend it was shared',
+        intention: 'Present it as a group result and avoid the ownership problem.',
+        effects: { trust: -12, inclusion: -12, learning: -8, clarity: 2 },
+        flags: ['hidFailure', 'soloDesigner'],
+        next: 'showcase',
+        feedback: 'The presentation looked easier, but the hidden story got heavier.',
+      },
+    ],
+  },
+  'night-honest': {
+    id: 'night-honest',
+    chapter: 'Chapter 6',
+    dayLabel: 'Night 5',
+    title: 'A Prototype That May Fail',
+    location: 'Common Room',
+    speaker: 'Emanuel',
+    text: 'The team admits the game may not fully work. Emanuel does not rescue the prototype. He helps the group rescue the learning.',
+    cast: ['Emanuel', 'Elena', 'Loredana', 'Ognjen', 'Rocco'],
+    dialogue: [
+      { speaker: 'Emanuel', text: 'A failed prototype can still be serious if you can show what it taught you.' },
+      { speaker: 'Elena', text: 'Then our debrief should ask why the system failed.' },
+      { speaker: 'Ognjen', text: 'We can show one broken round and ask players to improve it.' },
+    ],
+    choices: [
+      {
+        id: 'show-failure-openly',
+        label: 'Show failure openly',
+        intention: 'Run one broken round, then invite players to redesign it.',
+        effects: { learning: 16, trust: 8, inclusion: 8, clarity: -2 },
+        flags: ['clearDebrief'],
+        next: 'showcase',
+        feedback: 'The failure became a learning device.',
+      },
+      {
+        id: 'hide-failure-final',
+        label: 'Hide the failure',
+        intention: 'Shorten the playtest and speak more than players play.',
+        effects: { clarity: -6, trust: -8, learning: -8, energy: 2 },
+        flags: ['hidFailure'],
+        next: 'showcase',
+        feedback: 'The game avoided risk and lost its strongest lesson.',
+      },
+    ],
+  },
+  showcase: {
+    id: 'showcase',
+    chapter: 'Chapter 7',
+    dayLabel: 'Final Day',
+    title: 'The Games Are No Joke Showcase',
+    location: 'Activity Room',
+    speaker: 'Narrator',
+    text: 'All teams gather. Chairs make a circle. Emanuel invites the final reflection. The board game is on the table, and the path behind it is now visible.',
+    cast: ['Emanuel', 'Rocco', 'All Participants'],
+    dialogue: [
+      { speaker: 'Emanuel', text: 'Do not only show what players do. Show what your rules make players feel, notice, and discuss.' },
+      { speaker: 'Rocco', text: 'And after this, YouthPass reflection. So make the last play count.' },
+      { speaker: 'Narrator', text: 'The outcome depends on the team you built and the game system you shaped.' },
+    ],
+    choices: [
+      {
+        id: 'invite-play-reflect',
+        label: 'Play, observe, reflect',
+        intention: 'Let players play, watch silently, then ask what the system made visible.',
+        effects: { trust: 8, inclusion: 8, learning: 10, clarity: 4 },
+        flags: ['clearDebrief'],
+        next: 'ending',
+        feedback: 'The final activity connected mechanics to reflection.',
+      },
+      {
+        id: 'pitch-fun-only',
+        label: 'Pitch the fun',
+        intention: 'Sell the game as the most energetic prototype in the room.',
+        effects: { energy: 10, learning: -8, clarity: -4 },
+        flags: ['funFirst'],
+        next: 'ending',
+        feedback: 'Players smiled quickly, but the learning frame weakened.',
+      },
+      {
+        id: 'invite-co-design-final',
+        label: 'Invite co-design',
+        intention: 'Present the prototype as unfinished and ask players to improve one rule.',
+        effects: { trust: 8, inclusion: 10, learning: 10, clarity: 2 },
+        flags: ['usedPlaytest', 'clearDebrief'],
+        next: 'ending',
+        feedback: 'The final showcase became participation, not performance.',
+      },
+    ],
+  },
+};
 
 const endings: Record<EndingId, Ending> = {
-  'inclusive-showcase': {
-    title: 'Inclusive Prototype Showcase',
-    summary: 'Your game was clear, inclusive, and connected to learning. The group could play and reflect.',
-    logic: 'The system worked because learning, clarity, and inclusion stayed strong together.',
-    howToReach: 'Test the core loop, invite feedback, and use a safe debrief question.',
-    trainerReflection: 'Emanuel notices that good facilitation helped the group connect play with reflection.',
+  'shared-board-game-success': {
+    title: 'Shared Board Game Success',
+    protagonistOutcome: '{you} becomes a facilitator inside the team, not the owner of the idea.',
+    boardGameOutcome: 'The board game is playable, simple, and clearly connected to inclusion and misinformation.',
+    teamOutcome: 'The group presents together. Quiet voices are visible in the rules.',
+    logic: 'High trust, inclusion, playtesting, shared roles, and learning inside the mechanic created a shared success.',
+    howToReach: 'Build alliances, share roles, test early, and put the learning message inside a rule.',
+    trainerReflection: 'Emanuel says: This is what game design can do in youth work: make participation visible.',
   },
-  'fun-weak-learning': {
-    title: 'Fun Game, Weak Learning',
-    summary: 'Players laughed and moved fast, but the learning message did not live inside the rules.',
-    logic: 'The system produced energy, but the mechanics did not carry the learning goal.',
-    howToReach: 'Choose fun-first options, skip debrief, and sell the game mainly as entertainment.',
-    trainerReflection: 'Emanuel would invite the team to keep the fun, then redesign one rule so the message is inside the play.',
+  'solo-prototype-success': {
+    title: 'Solo Prototype Success',
+    protagonistOutcome: '{you} finishes a coherent prototype, but carries too much of the process alone.',
+    boardGameOutcome: 'The game works, but the debrief reveals weak group ownership.',
+    teamOutcome: 'The team respects the effort, but some participants feel like helpers, not co-designers.',
+    logic: 'High clarity with low inclusion and solo-designer flags created a technically successful but socially fragile outcome.',
+    howToReach: 'Take control, finish the board alone, and present honestly or with limited shared ownership.',
+    trainerReflection: 'Emanuel says: A good product is not always a good learning process. Who owned the design?',
   },
-  'perfect-bored': {
-    title: 'Perfect Rules, Bored Players',
-    summary: 'The prototype looked controlled and clear, but players had low ownership and little energy.',
-    logic: 'The system valued polish before playtesting, so players received rules but not ownership.',
-    howToReach: 'Spend too much time polishing rules and visuals before testing the core loop.',
-    trainerReflection: 'Emanuel would gently bring the group back to a fast playable test before more decoration.',
+  'fun-game-weak-message': {
+    title: 'Fun Game, Weak Message',
+    protagonistOutcome: '{you} creates energy and laughter, but cannot fully explain the youth-work lesson.',
+    boardGameOutcome: 'The game is enjoyable, but the topic sits mostly in the explanation after play.',
+    teamOutcome: 'The team has fun, yet the reflection feels thin.',
+    logic: 'High energy with low learning and fun-first choices made the game playful but weak as education.',
+    howToReach: 'Choose fun-first options, protect party energy, and skip strong learning mechanics.',
+    trainerReflection: 'Emanuel says: Keep the fun. Now redesign one rule so the lesson happens during play.',
   },
-  'conflict-returned': {
-    title: 'Conflict Avoided, Conflict Returned',
-    summary: 'The team avoided tension, but the same problem returned during the showcase.',
-    logic: 'The system hid conflict instead of using it as feedback, so trust stayed fragile.',
-    howToReach: 'Change subject during conflict and avoid turning disagreement into design feedback.',
-    trainerReflection: 'Emanuel would slow the group down and create a safer moment to name the tension.',
+  'beautiful-board-broken-rules': {
+    title: 'Beautiful Board, Broken Rules',
+    protagonistOutcome: '{you} helps make something that looks ready before it is truly playable.',
+    boardGameOutcome: 'The prototype has strong visuals, but players do not understand the core turn.',
+    teamOutcome: 'The group loses confidence when the first players get confused.',
+    logic: 'Polish-before-testing and hidden failure flags outweighed clarity and playtest learning.',
+    howToReach: 'Decorate early, avoid cutting to the core loop, and hide unclear rules before the showcase.',
+    trainerReflection: 'Emanuel says: A prototype is not a poster. First make the player action clear.',
   },
-  'collapsed-great-debrief': {
-    title: 'Prototype Collapsed, Great Debrief',
-    summary: 'The game broke during play, but the group learned a lot because the debrief was honest.',
-    logic: 'The system failed as a game, but honest reflection converted the failure into learning.',
-    howToReach: 'Ignore some feedback, then recover by asking strong reflection questions.',
-    trainerReflection: 'Emanuel would celebrate the learning and help the team turn it into a clearer next prototype.',
+  'conflict-breaks-team': {
+    title: 'Conflict Breaks the Team',
+    protagonistOutcome: '{you} avoids or controls tension until the group cannot use it as feedback.',
+    boardGameOutcome: 'The game reaches the table, but the team cannot present it with real trust.',
+    teamOutcome: 'Some participants step back. The conflict becomes the real lesson.',
+    logic: 'Avoided conflict, ignored feedback, low trust, and low inclusion broke the group process.',
+    howToReach: 'Avoid disagreement, defend rules, and do not repair ownership before the showcase.',
+    trainerReflection: 'Emanuel says: Conflict is not failure. Unused conflict is lost information.',
   },
-  'shared-ownership': {
-    title: 'Shared Ownership Breakthrough',
-    summary: 'The prototype became a real Erasmus+ group creation. Quiet voices shaped the final design.',
-    logic: 'The system created shared ownership because quiet voices, trust, and reflection shaped the rules.',
-    howToReach: 'Listen first, include quiet voices, map needs, and facilitate a reflection circle.',
-    trainerReflection: 'Emanuel sees the group using facilitation as design: everyone helped make the game stronger.',
+  'failed-prototype-strong-learning': {
+    title: 'Failed Prototype, Strong Learning',
+    protagonistOutcome: '{you} accepts that the game is unfinished and uses the failure honestly.',
+    boardGameOutcome: 'The prototype breaks, but the debrief is powerful and specific.',
+    teamOutcome: 'The team learns how testing, feedback, and humility improve design.',
+    logic: 'The prototype stayed weak, but clear debrief and honest failure converted the collapse into learning.',
+    howToReach: 'Admit problems, show a broken round, and invite players to redesign the rule.',
+    trainerReflection: 'Emanuel says: This is a valid prototype lesson. You did not hide the system; you learned from it.',
   },
 };
 
 export default function FiladelfiaStoryGame() {
   const { completeGame, saveGameNote, updatePrototypeField } = useStore();
-  const [sceneId, setSceneId] = useState<SceneId>('arrival');
+  const [protagonistId, setProtagonistId] = useState<ProtagonistId | null>(null);
+  const [nodeId, setNodeId] = useState<StoryNodeId>('arrival');
   const [meters, setMeters] = useState<Meters>(initialMeters);
   const [flags, setFlags] = useState<string[]>([]);
-  const [path, setPath] = useState<PathStep[]>([]);
+  const [storyLog, setStoryLog] = useState<StoryLogEntry[]>([]);
   const [endingId, setEndingId] = useState<EndingId | null>(null);
-  const [lastFeedback, setLastFeedback] = useState('Your choices will change the story system.');
+  const [lastFeedback, setLastFeedback] = useState('Choose a participant to begin the journey.');
 
-  const scene = scenes.find((item) => item.id === sceneId) ?? scenes[0];
+  const protagonist = protagonistId ? protagonists[protagonistId] : null;
+  const node = storyNodes[nodeId];
   const ending = endingId ? endings[endingId] : null;
-  const chosenChoiceIds = useMemo(() => new Set(path.map((step) => step.choiceId)), [path]);
+  const chosenChoiceIds = useMemo(() => new Set(storyLog.map((entry) => entry.chosenAction)), [storyLog]);
+
+  const startStory = (id: ProtagonistId) => {
+    const selected = protagonists[id];
+    setProtagonistId(id);
+    setNodeId('arrival');
+    setMeters(clampMeters(initialMeters, selected.initialBoost));
+    setFlags([`perspective:${id}`]);
+    setStoryLog([]);
+    setEndingId(null);
+    setLastFeedback(selected.opening);
+    saveGameNote(game.id, `Story started as ${selected.name} from ${selected.country}`);
+  };
 
   const choose = (choice: Choice) => {
+    if (!protagonist) return;
     const nextMeters = clampMeters(meters, choice.effects);
     const nextFlags = Array.from(new Set([...flags, ...(choice.flags ?? [])]));
-    const nextPath = [...path, {
-      sceneId: scene.id,
-      choiceId: choice.id,
-      label: choice.label,
+    const nextLog = [...storyLog, {
+      nodeId: node.id,
+      nodeTitle: node.title,
+      dayLabel: node.dayLabel,
+      location: node.location,
+      dialogue: node.dialogue,
+      chosenAction: choice.id,
       feedback: choice.feedback,
+      meterChanges: choice.effects,
+      flags: choice.flags ?? [],
     }];
 
     setMeters(nextMeters);
     setFlags(nextFlags);
-    setPath(nextPath);
+    setStoryLog(nextLog);
     setLastFeedback(choice.feedback);
 
     if (choice.next === 'ending') {
       const result = resolveEnding(nextMeters, nextFlags);
       setEndingId(result);
-      completeGame(game.id, 650, game.takeaway, `Ending: ${endings[result].title}`);
-      saveGameNote(game.id, `Ending: ${endings[result].title}`);
+      completeGame(game.id, 650, game.takeaway, `Ending: ${endings[result].title} as ${protagonist.name}`);
+      saveGameNote(game.id, `${protagonist.name}: ${endings[result].title}`);
       return;
     }
 
-    setSceneId(choice.next);
-    saveGameNote(game.id, `Story scene ${nextPath.length + 1}/${scenes.length}`);
+    setNodeId(choice.next);
+    saveGameNote(game.id, `${protagonist.name}: ${storyNodes[choice.next].title}`);
   };
 
   const restart = () => {
-    setSceneId('arrival');
+    setProtagonistId(null);
+    setNodeId('arrival');
     setMeters(initialMeters);
     setFlags([]);
-    setPath([]);
+    setStoryLog([]);
     setEndingId(null);
-    setLastFeedback('Your choices will change the story system.');
+    setLastFeedback('Choose a participant to begin the journey.');
     saveGameNote(game.id, 'Story restarted');
   };
 
@@ -394,7 +995,7 @@ export default function FiladelfiaStoryGame() {
             <p className="text-xs text-green-300 font-bold uppercase tracking-widest">{game.subtitle}</p>
             <h1 className="text-xl md:text-3xl font-arcade mobile-readable-arcade text-white mt-3">{game.title}</h1>
             <p className="text-sm text-gray-300 leading-relaxed mt-4 max-w-3xl">
-              A narrative game inside the Games Are No Joke Erasmus+ project in Filadelfia. Read the scene, choose actions, and watch the story system change.
+              Follow one participant through Games Are No Joke in Filadelfia. Your choices change the team, the board game, and the final outcome.
             </p>
           </div>
           <button onClick={restart} className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-green-400">
@@ -403,104 +1004,162 @@ export default function FiladelfiaStoryGame() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1fr_310px] gap-4">
-        <div className="arcade-border glass-panel rounded-xl p-3 md:p-4">
-          {!ending ? (
-            <StoryStage scene={scene} meters={meters} lastFeedback={lastFeedback} onChoose={choose} />
-          ) : (
-            <EndingPanel
-              ending={ending}
-              endingId={endingId}
-              chosenChoiceIds={chosenChoiceIds}
-              flags={flags}
-              path={path}
-              onSendTakeaway={() => updatePrototypeField('debriefQuestion', game.prototypePrompt)}
-            />
-          )}
-        </div>
-
-        <aside className="space-y-4">
-          <div className="arcade-border-pink glass-panel-pink rounded-xl p-4">
-            <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Story Meters</p>
-            <div className="mt-4 space-y-3">
-              {(Object.keys(meters) as MeterKey[]).map((key) => (
-                <Meter key={key} label={key} value={meters[key]} />
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-black/60 border border-white/10 rounded-xl p-4">
-            <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Path Timeline</p>
-            <div className="mt-3 space-y-2">
-              {path.length === 0 && <p className="text-sm text-gray-400">No choices yet.</p>}
-              {path.map((step, index) => (
-                <div key={`${step.sceneId}-${step.choiceId}`} className="rounded-lg border border-white/10 bg-black/45 p-3">
-                  <p className="text-[10px] font-bold uppercase text-gray-500">Scene {index + 1}: {sceneTitle(step.sceneId)}</p>
-                  <p className="text-sm text-white font-bold mt-1">{step.label}</p>
-                  <p className="text-xs text-gray-400 leading-relaxed mt-2">{step.feedback}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-black/60 border border-white/10 rounded-xl p-4">
-            <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Hidden Logic</p>
-            {!ending && <p className="text-sm text-gray-300 leading-relaxed mt-3">Flags stay hidden during play. At the end, the game reveals why you got your ending.</p>}
-            {ending && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {flags.map((flag) => (
-                  <span key={flag} className="rounded bg-green-400/10 border border-green-400/30 px-2 py-1 text-[10px] font-bold uppercase text-green-200">
-                    {flag}
-                  </span>
-                ))}
-              </div>
+      {!protagonist ? (
+        <ProtagonistSelect onStart={startStory} />
+      ) : (
+        <section className="grid grid-cols-1 xl:grid-cols-[1fr_330px] gap-4">
+          <div className="arcade-border glass-panel rounded-xl p-3 md:p-4">
+            {!ending ? (
+              <StoryStage
+                node={node}
+                protagonist={protagonist}
+                meters={meters}
+                lastFeedback={lastFeedback}
+                onChoose={choose}
+              />
+            ) : (
+              <EndingPanel
+                ending={ending}
+                protagonist={protagonist}
+                flags={flags}
+                storyLog={storyLog}
+                chosenChoiceIds={chosenChoiceIds}
+                endingId={endingId}
+                onSendTakeaway={() => updatePrototypeField('debriefQuestion', game.prototypePrompt)}
+              />
             )}
           </div>
-        </aside>
-      </section>
+
+          <aside className="space-y-4">
+            <div className="arcade-border-pink glass-panel-pink rounded-xl p-4">
+              <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Perspective</p>
+              <div className="mt-3 flex items-center gap-3">
+                <Avatar name={protagonist.name} tone="bg-green-300" />
+                <div>
+                  <p className="text-sm font-black text-white">{protagonist.name}</p>
+                  <p className="text-xs text-gray-400">{protagonist.country}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+              <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Story Meters</p>
+              <div className="mt-4 space-y-3">
+                {(Object.keys(meters) as MeterKey[]).map((key) => (
+                  <Meter key={key} label={key} value={meters[key]} />
+                ))}
+              </div>
+            </div>
+
+            <StoryLogPanel storyLog={storyLog} protagonist={protagonist} compact />
+
+            <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+              <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Hidden Logic</p>
+              {!ending && <p className="text-sm text-gray-300 leading-relaxed mt-3">Flags stay hidden while you play. At the end, the game reveals why you got your ending.</p>}
+              {ending && <FlagList flags={flags} />}
+            </div>
+          </aside>
+        </section>
+      )}
     </motion.div>
   );
 }
 
-function StoryStage({ scene, meters, lastFeedback, onChoose }: { scene: Scene; meters: Meters; lastFeedback: string; onChoose: (choice: Choice) => void }) {
+function ProtagonistSelect({ onStart }: { onStart: (id: ProtagonistId) => void }) {
   return (
-    <div className="relative min-h-[560px] sm:min-h-[660px] overflow-hidden rounded-xl border border-green-400/30 bg-slate-950 p-3 sm:p-4 flex flex-col justify-between">
-      <StageBackdrop sceneId={scene.id} />
-      <div className="relative z-20 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="rounded-lg border border-white/10 bg-black/70 px-3 py-2">
-          <p className="text-[10px] font-black uppercase tracking-widest text-green-300">{scene.act}</p>
-          <p className="mt-1 text-xs font-bold text-white">{scene.location}</p>
+    <section className="arcade-border glass-panel rounded-xl p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Choose Your Participant</p>
+          <h2 className="mt-3 text-xl md:text-2xl font-arcade mobile-readable-arcade text-white">One week. One team. One board game.</h2>
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-300">
+            Each perspective starts with a different strength and risk. The story follows one participant from arrival to final showcase.
+          </p>
         </div>
-        <div className="grid grid-cols-5 gap-1 rounded-lg border border-white/10 bg-black/70 p-2">
+        <div className="rounded-xl border border-white/10 bg-black/50 p-3 text-xs text-gray-300">
+          France, N. Macedonia, Bulgaria, Italy, Romania, Turkiye, Greece, Serbia
+        </div>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {(Object.values(protagonists) as Protagonist[]).map((participant) => (
+          <button
+            key={participant.id}
+            onClick={() => onStart(participant.id)}
+            className="group rounded-xl border border-white/10 bg-black/55 p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
+          >
+            <Avatar name={participant.name} tone={participant.id === 'andrea' ? 'bg-pink-300' : participant.id === 'slave' ? 'bg-cyan-300' : 'bg-green-300'} large />
+            <p className="mt-4 text-lg font-black text-white">{participant.name}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-300">{participant.country}</p>
+            <p className="mt-3 text-sm text-gray-200 font-bold">{participant.trait}</p>
+            <p className="mt-2 text-xs text-gray-400 leading-relaxed">Risk: {participant.risk}</p>
+            <div className="mt-4 flex items-center justify-between text-xs font-bold uppercase text-cyan-200">
+              Start journey <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function StoryStage({
+  node,
+  protagonist,
+  meters,
+  lastFeedback,
+  onChoose,
+}: {
+  node: StoryNode;
+  protagonist: Protagonist;
+  meters: Meters;
+  lastFeedback: string;
+  onChoose: (choice: Choice) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-green-400/30 bg-slate-950 overflow-hidden">
+      <LocationPanel node={node} protagonist={protagonist} />
+      <div className="p-4">
+        <div className="grid grid-cols-5 gap-1 rounded-lg border border-white/10 bg-black/70 p-2 mb-4">
           {(Object.keys(meters) as MeterKey[]).map((key) => (
             <MeterPip key={key} label={key} value={meters[key]} />
           ))}
         </div>
-      </div>
 
-      <StageCharacters sceneId={scene.id} />
+        <div className="rounded-xl border-2 border-green-300/60 bg-black/90 p-4 shadow-[0_0_24px_rgba(34,197,94,.18)]">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[10px] font-black uppercase tracking-widest text-green-300">{node.speaker}</p>
+            <p className="text-[10px] font-bold uppercase text-gray-500">{node.chapter} - {node.dayLabel}</p>
+          </div>
+          <h2 className="mt-2 text-base sm:text-xl font-arcade mobile-readable-arcade text-white">{node.title}</h2>
+          <p className="mt-3 text-sm leading-relaxed text-gray-200">{formatText(node.text, protagonist)}</p>
 
-      <div className="relative z-20 mt-36 sm:mt-56 rounded-xl border-2 border-green-300/60 bg-black/88 p-3 sm:p-4 shadow-[0_0_24px_rgba(34,197,94,.22)] backdrop-blur">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[10px] font-black uppercase tracking-widest text-green-300">{scene.speaker}</p>
-          <p className="text-[10px] font-bold uppercase text-gray-500">{scene.stageNote}</p>
+          <div className="mt-4 space-y-2">
+            {node.dialogue.map((line, index) => (
+              <div key={`${line.speaker}-${index}`} className="rounded-lg border border-white/10 bg-white/[.04] p-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-cyan-300">{line.speaker}</p>
+                <p className="mt-1 text-sm leading-relaxed text-gray-100">"{formatText(line.text, protagonist)}"</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-100">
+            Consequence memory: {lastFeedback}
+          </div>
         </div>
-        <h2 className="mt-2 text-base sm:text-xl font-arcade mobile-readable-arcade text-white">{scene.title}</h2>
-        <p className="mt-3 text-sm leading-relaxed text-gray-200">{scene.text}</p>
-        <div className="mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-100">
-          Consequence memory: {lastFeedback}
-        </div>
+
         <div className="mt-4 grid grid-cols-1 gap-3">
-          {scene.choices.map((choice) => (
+          {node.choices.map((choice) => (
             <button
               key={choice.id}
               onClick={() => onChoose(choice)}
-              className="group rounded-lg border border-white/10 bg-white/[.04] p-3 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
+              className="group rounded-lg border border-white/10 bg-white/[.04] p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-black text-white">{choice.label}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-gray-300">{choice.text}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-300">{choice.intention}</p>
+                  <MeterDelta effects={choice.effects} />
                 </div>
                 <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-green-300 opacity-70 group-hover:opacity-100" />
               </div>
@@ -512,105 +1171,64 @@ function StoryStage({ scene, meters, lastFeedback, onChoose }: { scene: Scene; m
   );
 }
 
-function StageBackdrop({ sceneId }: { sceneId: SceneId }) {
-  const backdropClass: Record<SceneId, string> = {
-    arrival: 'from-cyan-950 via-slate-950 to-emerald-950',
-    team: 'from-emerald-950 via-slate-950 to-cyan-950',
-    prototype: 'from-yellow-950 via-slate-950 to-pink-950',
-    conflict: 'from-red-950 via-slate-950 to-orange-950',
-    debrief: 'from-blue-950 via-slate-950 to-emerald-950',
-    showcase: 'from-fuchsia-950 via-slate-950 to-cyan-950',
-  };
-
+function LocationPanel({ node, protagonist }: { node: StoryNode; protagonist: Protagonist }) {
+  const cast = node.cast.map((name) => findParticipant(name, protagonist));
   return (
-    <div className={`absolute inset-0 bg-gradient-to-br ${backdropClass[sceneId]}`}>
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] bg-[size:32px_32px]" />
-      <div className="absolute left-[8%] top-[16%] h-[52%] w-[22%] rounded-t-full border-4 border-white/10 bg-black/20" />
-      <div className="absolute right-[8%] top-[18%] h-[48%] w-[24%] rounded-t-full border-4 border-white/10 bg-black/20" />
-      <div className="absolute left-[28%] top-[24%] h-[28%] w-[44%] rounded-xl border border-white/10 bg-black/20 shadow-[0_0_26px_rgba(255,255,255,.08)]" />
-      {sceneId === 'prototype' && <PrototypeTable />}
-      {sceneId === 'showcase' && <ShowcaseLights />}
-      {sceneId === 'conflict' && <div className="absolute left-[20%] top-[26%] h-[38%] w-[60%] rounded-full border-2 border-red-300/30 bg-red-500/10 blur-sm" />}
-    </div>
-  );
-}
-
-function PrototypeTable() {
-  return (
-    <div className="absolute left-[32%] top-[30%] h-[30%] w-[36%] rounded-lg border-2 border-yellow-200/40 bg-yellow-900/30">
-      <div className="absolute left-[14%] top-[20%] h-[28%] w-[22%] rounded border border-cyan-200/50 bg-cyan-300/20" />
-      <div className="absolute left-[42%] top-[18%] h-[36%] w-[20%] rounded border border-pink-200/50 bg-pink-300/20" />
-      <div className="absolute left-[66%] top-[30%] h-[24%] w-[18%] rounded border border-green-200/50 bg-green-300/20" />
-    </div>
-  );
-}
-
-function ShowcaseLights() {
-  return (
-    <>
-      <div className="absolute left-[18%] top-[12%] h-20 w-20 rounded-full bg-fuchsia-400/20 blur-xl" />
-      <div className="absolute right-[16%] top-[14%] h-20 w-20 rounded-full bg-cyan-400/20 blur-xl" />
-    </>
-  );
-}
-
-function StageCharacters({ sceneId }: { sceneId: SceneId }) {
-  const characters: Record<SceneId, Array<{ label: string; x: string; y: string; tone: string }>> = {
-    arrival: [
-      { label: 'You', x: '18%', y: '58%', tone: 'bg-yellow-300' },
-      { label: 'Quiet voice', x: '74%', y: '52%', tone: 'bg-cyan-300' },
-      { label: 'Group', x: '46%', y: '48%', tone: 'bg-pink-300' },
-    ],
-    team: [
-      { label: 'You', x: '18%', y: '58%', tone: 'bg-yellow-300' },
-      { label: 'Topic A', x: '38%', y: '48%', tone: 'bg-cyan-300' },
-      { label: 'Topic B', x: '58%', y: '48%', tone: 'bg-green-300' },
-      { label: 'Emanuel', x: '78%', y: '55%', tone: 'bg-orange-300' },
-    ],
-    prototype: [
-      { label: 'You', x: '24%', y: '60%', tone: 'bg-yellow-300' },
-      { label: 'Builder', x: '76%', y: '58%', tone: 'bg-pink-300' },
-      { label: 'Rules', x: '50%', y: '56%', tone: 'bg-cyan-300' },
-    ],
-    conflict: [
-      { label: 'Tester', x: '26%', y: '55%', tone: 'bg-red-300' },
-      { label: 'Team', x: '52%', y: '48%', tone: 'bg-pink-300' },
-      { label: 'You', x: '76%', y: '58%', tone: 'bg-yellow-300' },
-    ],
-    debrief: [
-      { label: 'Emanuel', x: '28%', y: '52%', tone: 'bg-orange-300' },
-      { label: 'You', x: '50%', y: '60%', tone: 'bg-yellow-300' },
-      { label: 'Team', x: '72%', y: '52%', tone: 'bg-green-300' },
-    ],
-    showcase: [
-      { label: 'Players', x: '25%', y: '52%', tone: 'bg-cyan-300' },
-      { label: 'Prototype', x: '50%', y: '58%', tone: 'bg-green-300' },
-      { label: 'You', x: '75%', y: '52%', tone: 'bg-yellow-300' },
-    ],
-  };
-
-  return (
-    <div className="pointer-events-none absolute inset-0 z-10">
-      {characters[sceneId].map((character) => (
-        <div
-          key={character.label}
-          className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2"
-          style={{ left: character.x, top: character.y }}
-        >
-          <div className={`h-11 w-11 rounded-full border-2 border-white shadow-[0_0_14px_rgba(255,255,255,.3)] ${character.tone}`} />
-          <span className="rounded bg-black/70 px-2 py-1 text-[9px] font-black uppercase text-white">{character.label}</span>
+    <div className="relative overflow-hidden border-b border-green-300/20 bg-gradient-to-br from-slate-950 via-emerald-950 to-cyan-950 p-4">
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] bg-[size:28px_28px]" />
+      <div className="relative z-10 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-green-300 flex items-center gap-2">
+              <MapPin className="w-4 h-4" /> {node.location}
+            </p>
+            <p className="mt-2 text-sm text-gray-200 leading-relaxed">{formatText(protagonist.opening, protagonist)}</p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-xs font-bold text-white">
+            {node.dayLabel}
+          </div>
         </div>
-      ))}
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          {cast.map((participant) => (
+            <CharacterChip key={`${participant.name}-${participant.country}`} participant={participant} protagonist={protagonist} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-function EndingPanel({ ending, endingId, chosenChoiceIds, flags, path, onSendTakeaway }: {
+function CharacterChip({ participant, protagonist }: { key?: string; participant: Participant; protagonist: Protagonist }) {
+  const isYou = participant.name === protagonist.name;
+  return (
+    <div className={`rounded-lg border p-2 ${isYou ? 'border-green-300 bg-green-300/15' : 'border-white/10 bg-black/55'}`}>
+      <div className="flex items-center gap-2">
+        <Avatar name={participant.name} tone={isYou ? 'bg-green-300' : 'bg-cyan-300'} />
+        <div className="min-w-0">
+          <p className="truncate text-xs font-black text-white">{isYou ? `${participant.name} (You)` : participant.name}</p>
+          <p className="truncate text-[10px] font-bold uppercase text-gray-500">{participant.country}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EndingPanel({
+  ending,
+  protagonist,
+  flags,
+  storyLog,
+  chosenChoiceIds,
+  endingId,
+  onSendTakeaway,
+}: {
   ending: Ending;
-  endingId: EndingId | null;
-  chosenChoiceIds: Set<string>;
+  protagonist: Protagonist;
   flags: string[];
-  path: PathStep[];
+  storyLog: StoryLogEntry[];
+  chosenChoiceIds: Set<string>;
+  endingId: EndingId | null;
   onSendTakeaway: () => void;
 }) {
   return (
@@ -618,11 +1236,15 @@ function EndingPanel({ ending, endingId, chosenChoiceIds, flags, path, onSendTak
       <div className="arcade-border-green glass-panel-green rounded-xl p-5 text-center">
         <Sparkles className="w-10 h-10 text-green-300 mx-auto" />
         <p className="text-xs text-green-300 font-bold uppercase tracking-widest mt-4">Ending Unlocked</p>
-        <h2 className="text-2xl font-arcade text-white mt-3">{ending.title}</h2>
-        <p className="text-sm text-gray-200 leading-relaxed mt-4">{ending.summary}</p>
-        <p className="text-sm text-cyan-200 leading-relaxed mt-4">{ending.logic}</p>
+        <h2 className="text-2xl font-arcade mobile-readable-arcade text-white mt-3">{ending.title}</h2>
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
+          <OutcomeCard title="Participant" text={formatText(ending.protagonistOutcome, protagonist)} />
+          <OutcomeCard title="Board Game" text={formatText(ending.boardGameOutcome, protagonist)} />
+          <OutcomeCard title="Team" text={formatText(ending.teamOutcome, protagonist)} />
+        </div>
+        <p className="text-sm text-cyan-200 leading-relaxed mt-5">{ending.logic}</p>
         <p className="text-sm text-green-100 leading-relaxed mt-4 rounded-lg border border-green-300/20 bg-green-300/10 p-3">
-          Trainer reflection: {ending.trainerReflection}
+          Trainer reflection: {formatText(ending.trainerReflection, protagonist)}
         </p>
         <button
           onClick={onSendTakeaway}
@@ -633,25 +1255,13 @@ function EndingPanel({ ending, endingId, chosenChoiceIds, flags, path, onSendTak
       </div>
 
       <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-white/10 bg-black/60 p-4">
-          <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Your Path</p>
-          <div className="mt-3 space-y-2">
-            {path.map((step, index) => (
-              <div key={`${step.sceneId}-${step.choiceId}`} className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3">
-                <p className="text-[10px] font-bold uppercase text-cyan-200">{index + 1}. {sceneTitle(step.sceneId)}</p>
-                <p className="mt-1 text-sm font-bold text-white">{step.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <StoryLogPanel storyLog={storyLog} protagonist={protagonist} />
         <div className="rounded-xl border border-white/10 bg-black/60 p-4">
           <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Hidden Flags Revealed</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {flags.map((flag) => (
-              <span key={flag} className="rounded bg-green-400/10 border border-green-400/30 px-2 py-1 text-[10px] font-bold uppercase text-green-200">
-                {flag}
-              </span>
-            ))}
+          <FlagList flags={flags} />
+          <div className="mt-5 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3">
+            <p className="text-xs font-black uppercase tracking-widest text-cyan-300">How this ending happened</p>
+            <p className="mt-2 text-sm leading-relaxed text-gray-200">{ending.howToReach}</p>
           </div>
         </div>
       </div>
@@ -661,55 +1271,74 @@ function EndingPanel({ ending, endingId, chosenChoiceIds, flags, path, onSendTak
   );
 }
 
-function MeterPip({ label, value }: { key?: MeterKey; label: MeterKey; value: number }) {
-  const color = value >= 70 ? 'bg-green-300' : value >= 45 ? 'bg-cyan-300' : 'bg-red-300';
-  return (
-    <div className="w-10 text-center">
-      <p className="text-[8px] font-black uppercase text-gray-400">{label[0]}</p>
-      <div className="mt-1 h-8 rounded border border-white/10 bg-black/50 flex items-end overflow-hidden">
-        <div className={`w-full ${color}`} style={{ height: `${value}%` }} />
-      </div>
+function StoryLogPanel({ storyLog, protagonist, compact = false }: { storyLog: StoryLogEntry[]; protagonist: Protagonist; compact?: boolean }) {
+  const content = (
+    <div className="mt-3 space-y-3 max-h-[520px] overflow-y-auto pr-1">
+      {storyLog.length === 0 && <p className="text-sm text-gray-400">No story choices yet.</p>}
+      {storyLog.map((entry, index) => (
+        <div key={`${entry.nodeId}-${entry.chosenAction}-${index}`} className="rounded-lg border border-white/10 bg-black/45 p-3">
+          <p className="text-[10px] font-bold uppercase text-cyan-200">{entry.dayLabel} - {entry.nodeTitle}</p>
+          <p className="text-[10px] text-gray-500">{entry.location}</p>
+          <div className="mt-2 space-y-1">
+            {entry.dialogue.map((line, lineIndex) => (
+              <p key={`${line.speaker}-${lineIndex}`} className="text-xs leading-relaxed text-gray-300">
+                <span className="font-bold text-white">{line.speaker}:</span> "{formatText(line.text, protagonist)}"
+              </p>
+            ))}
+          </div>
+          <p className="mt-2 text-sm font-bold text-white">Choice: {choiceLabel(entry.chosenAction)}</p>
+          <p className="mt-1 text-xs leading-relaxed text-green-200">{entry.feedback}</p>
+        </div>
+      ))}
     </div>
   );
-}
 
-function Meter({ label, value }: { key?: MeterKey; label: MeterKey; value: number }) {
+  if (compact) {
+    return (
+      <details className="bg-black/60 border border-white/10 rounded-xl p-4 xl:block" open>
+        <summary className="cursor-pointer text-xs text-cyan-300 font-bold uppercase tracking-widest">Full Story Log</summary>
+        {content}
+      </details>
+    );
+  }
+
   return (
-    <div>
-      <div className="flex items-center justify-between text-[10px] font-bold uppercase text-gray-400">
-        <span>{label}</span>
-        <span className="text-white">{value}</span>
-      </div>
-      <div className="mt-2 h-2 rounded-full bg-gray-900 overflow-hidden">
-        <div className="h-full bg-green-300" style={{ width: `${value}%` }} />
-      </div>
+    <div className="rounded-xl border border-white/10 bg-black/60 p-4">
+      <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest flex items-center gap-2">
+        <MessageSquare className="w-4 h-4" /> Full Story Log
+      </p>
+      {content}
     </div>
   );
 }
 
 function LogicDiagram({ chosenChoiceIds, endingId }: { chosenChoiceIds: Set<string>; endingId: EndingId | null }) {
+  const importantNodes: StoryNodeId[] = ['arrival', 'team-shared', 'team-solo', 'team-fun', 'prototype-playtest', 'prototype-polish', 'prototype-alone', 'showcase'];
   return (
     <div className="mt-5 bg-black/60 border border-white/10 rounded-xl p-4">
       <h3 className="text-sm font-arcade text-green-300 flex items-center gap-2">
-        <GitBranch className="w-5 h-5" /> Full Branching Map
+        <GitBranch className="w-5 h-5" /> Branching Map
       </h3>
-      <div className="mt-4 space-y-4">
-        {scenes.map((scene) => (
-          <div key={scene.id} className="rounded-lg border border-white/10 bg-black/45 p-3">
-            <p className="text-[10px] font-bold uppercase text-gray-500">{scene.act}: {scene.title}</p>
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-              {scene.choices.map((choice) => {
-                const chosen = chosenChoiceIds.has(choice.id);
-                return (
-                  <div key={choice.id} className={`rounded border p-2 ${chosen ? 'border-green-300 bg-green-300/10' : 'border-white/10 bg-black/40'}`}>
-                    <p className={`text-xs font-bold ${chosen ? 'text-green-200' : 'text-gray-300'}`}>{choice.label}</p>
-                    <p className="text-[10px] text-gray-500 mt-1">Next: {choice.next === 'ending' ? 'Ending logic' : sceneTitle(choice.next)}</p>
-                  </div>
-                );
-              })}
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+        {importantNodes.map((id) => {
+          const node = storyNodes[id];
+          return (
+            <div key={id} className="rounded-lg border border-white/10 bg-black/45 p-3">
+              <p className="text-[10px] font-bold uppercase text-gray-500">{node.chapter}: {node.title}</p>
+              <div className="mt-3 space-y-2">
+                {node.choices.map((choice) => {
+                  const chosen = chosenChoiceIds.has(choice.id);
+                  return (
+                    <div key={choice.id} className={`rounded border p-2 ${chosen ? 'border-green-300 bg-green-300/10' : 'border-white/10 bg-black/40'}`}>
+                      <p className={`text-xs font-bold ${chosen ? 'text-green-200' : 'text-gray-300'}`}>{choice.label}</p>
+                      <p className="text-[10px] text-gray-500 mt-1">Next: {choice.next === 'ending' ? 'Ending logic' : storyNodes[choice.next].title}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <h3 className="text-sm font-arcade text-cyan-300 mt-6">Other Endings</h3>
@@ -725,16 +1354,85 @@ function LogicDiagram({ chosenChoiceIds, endingId }: { chosenChoiceIds: Set<stri
   );
 }
 
+function OutcomeCard({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="rounded-lg border border-green-300/20 bg-green-300/10 p-3">
+      <p className="text-[10px] font-black uppercase tracking-widest text-green-300">{title}</p>
+      <p className="mt-2 text-sm leading-relaxed text-gray-100">{text}</p>
+    </div>
+  );
+}
+
+function MeterPip({ label, value }: { key?: MeterKey; label: MeterKey; value: number }) {
+  const color = value >= 70 ? 'bg-green-300' : value >= 45 ? 'bg-cyan-300' : 'bg-red-300';
+  return (
+    <div className="text-center">
+      <p className="text-[8px] font-black uppercase text-gray-400">{label[0]}</p>
+      <div className="mt-1 h-8 rounded border border-white/10 bg-black/50 flex items-end overflow-hidden">
+        <div className={`w-full ${color}`} style={{ height: `${value}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function Meter({ label, value }: { key?: MeterKey; label: MeterKey; value: number }) {
+  const color = value >= 70 ? 'bg-green-300' : value >= 45 ? 'bg-cyan-300' : 'bg-red-300';
+  return (
+    <div>
+      <div className="flex items-center justify-between text-[10px] font-bold uppercase text-gray-400">
+        <span>{label}</span>
+        <span className="text-white">{value}</span>
+      </div>
+      <div className="mt-2 h-2 rounded-full bg-gray-900 overflow-hidden">
+        <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function MeterDelta({ effects }: { effects: Partial<Meters> }) {
+  const entries = (Object.entries(effects) as Array<[MeterKey, number]>).filter(([, value]) => value !== 0);
+  return (
+    <div className="mt-3 flex flex-wrap gap-1.5">
+      {entries.map(([key, value]) => (
+        <span key={key} className={`rounded border px-2 py-1 text-[10px] font-bold uppercase ${value > 0 ? 'border-green-300/30 bg-green-300/10 text-green-200' : 'border-red-300/30 bg-red-300/10 text-red-200'}`}>
+          {key} {value > 0 ? `+${value}` : value}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function Avatar({ name, tone, large = false }: { name: string; tone: string; large?: boolean }) {
+  return (
+    <div className={`${large ? 'h-14 w-14 text-lg' : 'h-9 w-9 text-xs'} flex shrink-0 items-center justify-center rounded-full border-2 border-white text-black font-black shadow-[0_0_12px_rgba(255,255,255,.25)] ${tone}`}>
+      {name === 'All Participants' ? <UserRound className="w-5 h-5" /> : name.slice(0, 1)}
+    </div>
+  );
+}
+
+function FlagList({ flags }: { flags: string[] }) {
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {flags.map((flag) => (
+        <span key={flag} className="rounded bg-green-400/10 border border-green-400/30 px-2 py-1 text-[10px] font-bold uppercase text-green-200">
+          {flag}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function resolveEnding(meters: Meters, flags: string[]): EndingId {
   const has = (flag: string) => flags.includes(flag);
-  if ((has('listenedFirst') || has('includedQuietVoice')) && has('sharedOwnership') && meters.trust >= 68 && meters.inclusion >= 68) {
-    return 'shared-ownership';
-  }
-  if (has('avoidedConflict') && meters.trust < 55) return 'conflict-returned';
-  if (has('overbuiltPrototype') || (meters.clarity >= 78 && meters.energy < 48)) return 'perfect-bored';
-  if (has('ignoredFeedback') || (meters.clarity < 45 && meters.learning >= 58)) return 'collapsed-great-debrief';
-  if (meters.energy >= 72 && meters.learning < 58) return 'fun-weak-learning';
-  return 'inclusive-showcase';
+  if ((has('hidFailure') || has('polishedBeforeTesting')) && meters.clarity < 58) return 'beautiful-board-broken-rules';
+  if ((has('avoidedConflict') || has('ignoredFeedback')) && (meters.trust < 48 || meters.inclusion < 45)) return 'conflict-breaks-team';
+  if (has('soloDesigner') && meters.clarity >= 62 && meters.inclusion < 58) return 'solo-prototype-success';
+  if (has('funFirst') && meters.energy >= 68 && meters.learning < 58) return 'fun-game-weak-message';
+  if (has('clearDebrief') && meters.learning >= 68 && (meters.clarity < 58 || has('hidFailure'))) return 'failed-prototype-strong-learning';
+  if (has('sharedRoles') && has('usedPlaytest') && has('learningInsideMechanic') && meters.trust >= 62 && meters.inclusion >= 62) return 'shared-board-game-success';
+  if (meters.learning >= 70 && has('clearDebrief')) return 'failed-prototype-strong-learning';
+  return meters.inclusion >= 62 ? 'shared-board-game-success' : 'fun-game-weak-message';
 }
 
 function clampMeters(current: Meters, effects: Partial<Meters>) {
@@ -748,6 +1446,25 @@ function clamp(value: number) {
   return Math.min(100, Math.max(0, value));
 }
 
-function sceneTitle(id: SceneId) {
-  return scenes.find((scene) => scene.id === id)?.title ?? id;
+function findParticipant(name: string, protagonist: Protagonist): Participant {
+  if (name === 'All Participants') return { name, country: 'Group' };
+  if (name === protagonist.name) return protagonist;
+  if (name === 'Emanuel') return { name, country: 'Trainer' };
+  if (name === 'Rocco') return { name, country: 'Logistics' };
+  if (name === 'Narrator') return { name, country: 'Story' };
+  return participants.find((participant) => participant.name === name) ?? { name, country: 'Participant' };
+}
+
+function formatText(text: string, protagonist: Protagonist) {
+  return text
+    .replaceAll('{you}', protagonist.name)
+    .replaceAll('{country}', protagonist.country);
+}
+
+function choiceLabel(choiceId: string) {
+  for (const node of Object.values(storyNodes)) {
+    const choice = node.choices.find((item) => item.id === choiceId);
+    if (choice) return choice.label;
+  }
+  return choiceId;
 }
