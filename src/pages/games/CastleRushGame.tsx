@@ -42,7 +42,7 @@ const designNotes = [
 ];
 
 const tokenLabels: Record<TokenKind, string> = {
-  coffee: 'Coffee Token: speed boost active.',
+  coffee: 'Coffee Token: steady rhythm active. Clocks slow down briefly.',
   focus: 'Focus Token: clocks frozen for a moment.',
   bell: 'Bell Token: safest path revealed.',
 };
@@ -141,7 +141,7 @@ export default function CastleRushGame() {
 
   const movePlayer = useCallback((dx: number, dy: number) => {
     if (gameState !== 'playing') return;
-    const steps = activeCoffee ? 2 : 1;
+    const steps = 1;
     setPlayer((current) => {
       let nextPosition = current;
       for (let index = 0; index < steps; index++) {
@@ -149,7 +149,7 @@ export default function CastleRushGame() {
         const nextCell = levelData.grid[next.y]?.[next.x];
         if (!nextCell || nextCell === 'wall') break;
         nextPosition = next;
-        if (same(next, levelData.room.goal) || nextCell === 'exit') {
+        if (nextCell === 'room' || nextCell === 'exit' || same(next, levelData.room.goal)) {
           window.setTimeout(finishLevel, 0);
           break;
         }
@@ -170,7 +170,7 @@ export default function CastleRushGame() {
       playTone(240 + level * 10, 0.035, 'triangle');
       return nextPosition;
     });
-  }, [activeCoffee, clocks, collectToken, collectedTokens, finishLevel, gameState, handleClockHit, level, levelData.grid, levelData.room.goal, playTone]);
+  }, [clocks, collectToken, collectedTokens, finishLevel, gameState, handleClockHit, level, levelData.grid, levelData.room.goal, playTone]);
 
   useEffect(() => {
     const parsed = parseLevel(levelTemplates[level - 1]);
@@ -209,9 +209,9 @@ export default function CastleRushGame() {
         }
         return nextClocks;
       });
-    }, levelData.clockSpeed);
+    }, activeCoffee ? levelData.clockSpeed + 180 : levelData.clockSpeed);
     return () => window.clearInterval(interval);
-  }, [activeFocus, gameState, handleClockHit, level, levelData.clockSpeed, levelData.grid, nowTick, player]);
+  }, [activeCoffee, activeFocus, gameState, handleClockHit, level, levelData.clockSpeed, levelData.grid, nowTick, player]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -333,7 +333,7 @@ export default function CastleRushGame() {
           <div className="bg-black/60 border border-white/10 rounded-xl p-4">
             <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Tools Active</p>
             <div className="mt-3 grid grid-cols-3 gap-2">
-              <ToolStatus active={activeCoffee} icon={<Coffee className="w-4 h-4" />} label="Speed" />
+              <ToolStatus active={activeCoffee} icon={<Coffee className="w-4 h-4" />} label="Rhythm" />
               <ToolStatus active={activeFocus} icon={<Focus className="w-4 h-4" />} label="Freeze" />
               <ToolStatus active={activeBell} icon={<Bell className="w-4 h-4" />} label="Path" />
             </div>
@@ -567,15 +567,13 @@ function parseLevel(template: LevelTemplate) {
   const grid: Cell[][] = template.rows.map((row) => row.padEnd(size, '#').split('').map(charToCell));
   let start = { x: 1, y: 1 };
   let goal = { x: 1, y: 1 };
-  const roomCells: Point[] = [];
 
   grid.forEach((row, y) => row.forEach((cell, x) => {
     if (cell === 'start') start = { x, y };
     if (cell === 'exit') goal = { x, y };
-    if (cell === 'room' || cell === 'exit') roomCells.push({ x, y });
   }));
 
-  const room = roomFromCells(roomCells, goal);
+  const room = carveActivityRoom(grid, goal);
   const clocks = template.patrols.map((path, id) => ({ id, path, step: 0, direction: 1 as const, alertUntil: 0 }));
   return { grid, start, room, clocks, time: template.time, hitPenalty: template.hitPenalty, clockSpeed: template.clockSpeed };
 }
@@ -593,16 +591,31 @@ function charToCell(char: string): Cell {
   return 'floor';
 }
 
-function roomFromCells(cells: Point[], goal: Point): ActivityRoom {
-  const xs = cells.map((cell) => cell.x);
-  const ys = cells.map((cell) => cell.y);
+function carveActivityRoom(grid: Cell[][], goal: Point): ActivityRoom {
+  const roomWidth = 4;
+  const roomHeight = 4;
+  const maxX = Math.max(1, grid[0].length - roomWidth - 1);
+  const maxY = Math.max(1, grid.length - roomHeight - 1);
+  const x = clampInt(goal.x - 1, 1, maxX);
+  const y = clampInt(goal.y - 1, 1, maxY);
+
+  for (let row = y; row < y + roomHeight; row++) {
+    for (let column = x; column < x + roomWidth; column++) {
+      grid[row][column] = same({ x: column, y: row }, goal) ? 'exit' : 'room';
+    }
+  }
+
   return {
-    x: Math.min(...xs),
-    y: Math.min(...ys),
-    width: Math.max(...xs) - Math.min(...xs) + 1,
-    height: Math.max(...ys) - Math.min(...ys) + 1,
+    x,
+    y,
+    width: roomWidth,
+    height: roomHeight,
     goal,
   };
+}
+
+function clampInt(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function moveClock(clockEnemy: ClockEnemy, player: Point, level: number, tick: number, grid: Cell[][]): ClockEnemy {

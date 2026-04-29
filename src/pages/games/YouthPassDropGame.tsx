@@ -215,6 +215,7 @@ export default function YouthPassDropGame() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (phaseRef.current !== 'playing' || isTypingTarget(event.target)) return;
       if (event.key === 'ArrowLeft' || event.key === 'a' || event.key === 'A') {
         event.preventDefault();
         directionRef.current = -1;
@@ -225,6 +226,7 @@ export default function YouthPassDropGame() {
       }
     };
     const onKeyUp = (event: KeyboardEvent) => {
+      if (phaseRef.current !== 'playing' || isTypingTarget(event.target)) return;
       if (['ArrowLeft', 'ArrowRight', 'a', 'A', 'd', 'D'].includes(event.key)) {
         directionRef.current = 0;
       }
@@ -593,6 +595,12 @@ function pickItem(config: ReturnType<typeof getLevelConfig>): ItemType {
   if (roll < config.waterChance + config.coffeeChance) return 'coffee';
   if (roll < config.waterChance + config.coffeeChance + config.beerChance) return 'beer';
   return 'vodka';
+}
+
+function isTypingTarget(target: EventTarget | null) {
+  const element = target as HTMLElement | null;
+  if (!element) return false;
+  return element.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName);
 }
 
 function clamp(value: number) {
