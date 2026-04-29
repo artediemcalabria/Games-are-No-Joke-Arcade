@@ -13,11 +13,13 @@ npm install
 npm run dev
 ```
 
-To enable the Gemini AI Trainer Coach locally, create `.env.local`:
+To connect the AI Coach to Gemini locally, create `.env.local` with the URL of a secure backend proxy:
 
 ```bash
-GEMINI_API_KEY="your_gemini_api_key_here"
+VITE_AI_COACH_ENDPOINT="https://your-worker.your-account.workers.dev/api/coach"
 ```
+
+If this variable is missing, the app still works with offline coaching templates.
 
 ## Online Deployment
 
@@ -29,4 +31,6 @@ After pushing to `main`, enable GitHub Pages in the repository settings with **G
 https://artediemcalabria.github.io/Games-are-No-Joke-Arcade/
 ```
 
-For Gemini online, add a repository secret named `GEMINI_API_KEY` before running the deployment workflow.
+For Gemini online, do not put `GEMINI_API_KEY` in GitHub Pages. Deploy a backend proxy, store `GEMINI_API_KEY` there, then add `VITE_AI_COACH_ENDPOINT` to the frontend build environment.
+
+An example Cloudflare Worker proxy is available in `workers/ai-coach-worker.js`.

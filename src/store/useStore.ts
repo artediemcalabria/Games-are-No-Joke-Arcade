@@ -1,12 +1,28 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export interface CoachSession {
+  id: string;
+  mode: string;
+  question: string;
+  answer: string;
+  createdAt: string;
+}
+
+export interface CoachNote {
+  id: string;
+  text: string;
+  createdAt: string;
+}
+
 interface ProgressState {
   unlockedTheories: string[];
   completedLessons: string[];
   completedGames: string[];
   gameTakeaways: Record<string, string>;
   gameNotes: Record<string, string>;
+  coachHistory: CoachSession[];
+  coachNotes: CoachNote[];
   quizScores: Record<string, number>;
   totalScore: number;
   prototype: Record<string, string>;
@@ -15,6 +31,9 @@ interface ProgressState {
   completeGame: (id: string, score?: number, takeaway?: string, note?: string) => void;
   saveGameTakeaway: (id: string, takeaway: string, note?: string) => void;
   saveGameNote: (id: string, note: string) => void;
+  saveCoachSession: (session: CoachSession) => void;
+  saveCoachNote: (note: CoachNote) => void;
+  clearCoachHistory: () => void;
   saveQuizScore: (quizId: string, score: number) => void;
   updatePrototypeField: (field: string, value: string) => void;
   resetProgress: () => void;
@@ -28,6 +47,8 @@ export const useStore = create<ProgressState>()(
       completedGames: [],
       gameTakeaways: {},
       gameNotes: {},
+      coachHistory: [],
+      coachNotes: [],
       quizScores: {},
       totalScore: 0,
       prototype: {},
@@ -68,6 +89,18 @@ export const useStore = create<ProgressState>()(
         gameNotes: { ...state.gameNotes, [id]: note },
       })),
 
+      saveCoachSession: (session) => set((state) => ({
+        coachHistory: [session, ...state.coachHistory].slice(0, 12),
+      })),
+
+      saveCoachNote: (note) => set((state) => ({
+        coachNotes: [note, ...state.coachNotes].slice(0, 12),
+      })),
+
+      clearCoachHistory: () => set({
+        coachHistory: [],
+      }),
+
       saveQuizScore: (quizId, score) => set((state) => ({
         quizScores: { ...state.quizScores, [quizId]: score },
         totalScore: state.quizScores[quizId] ? state.totalScore : state.totalScore + score
@@ -83,6 +116,8 @@ export const useStore = create<ProgressState>()(
         completedGames: [],
         gameTakeaways: {},
         gameNotes: {},
+        coachHistory: [],
+        coachNotes: [],
         quizScores: {},
         totalScore: 0,
         prototype: {}

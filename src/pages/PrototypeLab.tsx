@@ -4,7 +4,7 @@ import { gameCatalog, prototypeSteps } from '../data/course';
 import { useStore } from '../store/useStore';
 
 export default function PrototypeLab() {
-  const { prototype, gameTakeaways, gameNotes, updatePrototypeField } = useStore();
+  const { prototype, gameTakeaways, gameNotes, coachNotes, updatePrototypeField } = useStore();
   const completedSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
   const progressPercent = Math.round((completedSteps / prototypeSteps.length) * 100);
 
@@ -122,6 +122,32 @@ export default function PrototypeLab() {
                 >
                   Use as prompt
                 </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-black/60 border border-white/10 rounded-xl p-5">
+          <p className="text-xs text-green-300 font-bold uppercase tracking-widest">AI Coach Notes</p>
+          <div className="mt-4 space-y-3">
+            {coachNotes.length === 0 && <p className="text-sm text-gray-400">Saved coach notes will appear here.</p>}
+            {coachNotes.slice(0, 4).map((note) => (
+              <div key={note.id} className="rounded-lg border border-white/10 bg-black/50 p-3">
+                <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">{note.text}</p>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    onClick={() => updatePrototypeField('rules', note.text)}
+                    className="rounded border border-green-300/30 bg-green-300/10 px-3 py-2 text-[10px] font-bold uppercase text-green-100 hover:bg-green-300 hover:text-black"
+                  >
+                    Use for rules
+                  </button>
+                  <button
+                    onClick={() => updatePrototypeField('debriefQuestion', note.text)}
+                    className="rounded border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-[10px] font-bold uppercase text-cyan-100 hover:bg-cyan-300 hover:text-black"
+                  >
+                    Use for debrief
+                  </button>
+                </div>
               </div>
             ))}
           </div>

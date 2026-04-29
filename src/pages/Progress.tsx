@@ -1,10 +1,10 @@
 import { motion } from 'motion/react';
-import { CheckCircle2, ClipboardList, Gamepad2, Lock, Trophy } from 'lucide-react';
+import { Bot, CheckCircle2, ClipboardList, Gamepad2, Lock, Trophy } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { gameCatalog, lessons, prototypeSteps } from '../data/course';
 
 export default function Progress() {
-  const { completedLessons, completedGames, gameTakeaways, gameNotes, quizScores, totalScore, prototype, resetProgress } = useStore();
+  const { completedLessons, completedGames, gameTakeaways, gameNotes, coachHistory, coachNotes, quizScores, totalScore, prototype, resetProgress } = useStore();
   const completedCatalogGames = completedGames.filter((id) => gameCatalog.some((game) => game.id === id));
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
 
@@ -39,11 +39,18 @@ export default function Progress() {
     {
       title: 'Reflection / YouthPass',
       type: 'reflection',
-      items: [{
-        id: 'youthpass-reflection',
-        name: 'Learning Reflection',
-        completed: completedLessons.length === lessons.length && completedCatalogGames.length > 0,
-      }],
+      items: [
+        {
+          id: 'ai-coach',
+          name: 'AI Coach Session',
+          completed: coachHistory.length > 0 || coachNotes.length > 0,
+        },
+        {
+          id: 'youthpass-reflection',
+          name: 'Learning Reflection',
+          completed: completedLessons.length === lessons.length && completedCatalogGames.length > 0,
+        },
+      ],
     },
   ];
   const milestones = milestoneGroups.flatMap((group) => group.items.map((item) => ({ ...item, type: group.type })));
@@ -103,6 +110,25 @@ export default function Progress() {
         <p className="text-xs text-gray-400 mt-3">Fill the live prototype card.</p>
       </section>
 
+      <section className="md:col-span-12 bg-black/60 border border-white/10 p-5 rounded-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-arcade text-cyan-300 flex items-center gap-2"><Bot className="w-5 h-5" /> AI Coach</h3>
+            <p className="text-xs text-gray-400 mt-3">Use the coach to improve prototype, rules, debrief, inclusion, and playtest plan.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-center">
+            <div className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-4 py-3">
+              <p className="text-lg font-black text-white">{coachHistory.length}</p>
+              <p className="text-[10px] font-bold uppercase text-cyan-200">sessions</p>
+            </div>
+            <div className="rounded-lg border border-green-300/20 bg-green-300/10 px-4 py-3">
+              <p className="text-lg font-black text-white">{coachNotes.length}</p>
+              <p className="text-[10px] font-bold uppercase text-green-200">notes</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="md:col-span-12 arcade-border glass-panel p-6 rounded-xl mt-2">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-sm font-arcade text-cyan-400">Milestone Tracker</h3>
@@ -126,7 +152,8 @@ export default function Progress() {
                     <div className="flex items-center gap-3">
                       {group.type === 'game' && <Gamepad2 className="w-5 h-5 text-pink-400" />}
                       {group.type === 'lesson' && <Trophy className="w-5 h-5 text-cyan-400" />}
-                      {(group.type === 'prototype' || group.type === 'reflection') && <ClipboardList className="w-5 h-5 text-green-400" />}
+                      {group.type === 'prototype' && <ClipboardList className="w-5 h-5 text-green-400" />}
+                      {group.type === 'reflection' && (milestone.id === 'ai-coach' ? <Bot className="w-5 h-5 text-cyan-400" /> : <ClipboardList className="w-5 h-5 text-green-400" />)}
                       <div className="flex flex-col">
                         <span className={`text-sm font-bold uppercase ${milestone.completed ? 'text-white' : 'text-gray-500'}`}>
                           {milestone.name}
