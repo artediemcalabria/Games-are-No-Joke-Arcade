@@ -10,7 +10,6 @@ type GameState = 'intro' | 'playing' | 'won-level' | 'game-over' | 'completed';
 
 const game = gameCatalog.find((item) => item.id === 'castle-rush')!;
 const maxLevel = 10;
-const assetUrl = (name: string) => `${import.meta.env.BASE_URL}castle-rush/${name}.jpg`;
 const designNotes = [
   'Level 1: A clear goal helps players understand what to do immediately.',
   'Level 2: A small maze teaches movement before adding pressure.',
@@ -153,7 +152,7 @@ export default function CastleRushGame() {
   const nextLevel = () => startLevel(Math.min(level + 1, maxLevel));
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 max-w-7xl mx-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 max-w-5xl mx-auto">
       <section className="arcade-border-pink glass-panel-pink rounded-xl p-4 md:p-5 mb-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
@@ -178,57 +177,36 @@ export default function CastleRushGame() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[1fr_260px] gap-4">
-        <div className="arcade-border glass-panel rounded-xl p-2 md:p-3 bg-black/80">
-          <div className="relative mx-auto w-full max-w-[1120px] overflow-hidden rounded-xl border-[6px] border-stone-950 bg-stone-950 shadow-[0_0_28px_rgba(0,242,255,.2)]">
-            <div className="relative aspect-[16/9] min-h-[520px] overflow-hidden bg-[#191816]">
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,.42)_1px,transparent_1px),linear-gradient(rgba(0,0,0,.42)_1px,transparent_1px)] bg-[size:34px_24px] opacity-45" />
-              <div className="absolute inset-x-0 top-0 z-30 h-10 border-b-4 border-black bg-stone-800/95">
-                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,.12)_1px,transparent_1px)] bg-[size:44px_100%]" />
-                <div className="relative flex h-full items-center justify-between px-3 md:px-5 text-white [text-shadow:2px_2px_0_#000]">
-                  <span className="hidden sm:block text-[10px] md:text-sm font-arcade">TRAINER ANGER</span>
-                  <h2 className="text-[11px] sm:text-base md:text-xl font-arcade tracking-wide">Residenza Antico Borgo in Filadelfia</h2>
-                  <span className="text-[10px] md:text-sm font-arcade">LEVEL: {level}/10</span>
-                </div>
-              </div>
+      <section className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-4">
+        <div className="arcade-border glass-panel rounded-xl p-3 md:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-[10px] text-gray-500 font-bold uppercase">Level {level}/10</p>
+              <h2 className="text-sm font-arcade text-cyan-300">Castle Maze</h2>
+            </div>
+            <AngerBar anger={anger} timeLeft={timeLeft} />
+          </div>
 
-              <VerticalAngerBar anger={anger} timeLeft={timeLeft} />
-              <RoccoSpeech />
-
-              <div className="absolute left-[3%] right-[3%] top-[14%] bottom-[5%] md:left-[8%] md:right-[20%] flex items-center justify-center">
-                <div
-                  className="relative grid aspect-square max-h-full max-w-full overflow-hidden border-4 border-black bg-[#8b8774] shadow-[inset_0_0_0_4px_rgba(255,255,255,.18),6px_6px_0_rgba(0,0,0,.45)]"
-                  style={{
-                    width: 'min(100%, 70vh, 720px)',
-                    gridTemplateColumns: `repeat(${tileCount}, minmax(0, 1fr))`,
-                    gridTemplateRows: `repeat(${tileCount}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {maze.grid.map((row, y) =>
-                    row.map((cell, x) => (
-                      <Tile
-                        key={`${x}-${y}`}
-                        x={x}
-                        y={y}
-                        cell={cell}
-                        isPlayer={player.x === x && player.y === y}
-                        isExit={maze.exit.x === x && maze.exit.y === y}
-                        tick={tick}
-                      />
-                    )),
-                  )}
-                  <ActivityRoomOverlay exit={maze.exit} tileCount={tileCount} tick={tick} />
-                </div>
-              </div>
-
-              <div className="absolute bottom-3 right-3 z-40 hidden sm:flex gap-2">
-                <div className="grid h-14 w-14 place-items-center border-4 border-black bg-stone-300 text-stone-900 shadow-[4px_4px_0_#000]">
-                  <Gamepad2 className="w-7 h-7" />
-                </div>
-                <div className="grid h-14 w-14 place-items-center border-4 border-black bg-green-400 text-black shadow-[4px_4px_0_#000]">
-                  <span className="text-3xl font-black">✓</span>
-                </div>
-              </div>
+          <div className="mx-auto w-full max-w-[720px]">
+            <div
+              className="relative grid rounded-xl overflow-hidden border-4 border-stone-600 bg-stone-950 shadow-[0_0_24px_rgba(0,242,255,.18)]"
+              style={{
+                gridTemplateColumns: `repeat(${tileCount}, minmax(0, 1fr))`,
+                aspectRatio: '1 / 1',
+              }}
+            >
+              {maze.grid.map((row, y) =>
+                row.map((cell, x) => (
+                  <Tile
+                    key={`${x}-${y}`}
+                    cell={cell}
+                    isPlayer={player.x === x && player.y === y}
+                    isExit={maze.exit.x === x && maze.exit.y === y}
+                    tick={tick}
+                  />
+                )),
+              )}
+              <ActivityRoomOverlay exit={maze.exit} tileCount={tileCount} tick={tick} />
             </div>
           </div>
 
@@ -304,127 +282,55 @@ export default function CastleRushGame() {
   );
 }
 
-function Tile({ x, y, cell, isPlayer, isExit, tick }: { key?: string; x: number; y: number; cell: Cell; isPlayer: boolean; isExit: boolean; tick: number }) {
+function Tile({ cell, isPlayer, isExit, tick }: { key?: string; cell: Cell; isPlayer: boolean; isExit: boolean; tick: number }) {
   const isWall = cell === 'wall';
-  const floorAsset = (x + y) % 5 === 0 ? 'floor_alt' : 'floor';
-  const baseAsset = isWall ? ((x + y) % 7 === 0 ? 'wall_top' : 'wall') : floorAsset;
   return (
-    <div className="relative min-w-0 min-h-0 overflow-hidden bg-[#8b8774]">
-      <PixelAsset name={baseAsset} className="absolute inset-0 h-full w-full object-cover" />
-      <div className="absolute inset-0 border border-black/30" />
-      {cell === 'start' && <PixelAsset name="start" className="absolute left-[-8%] top-[-10%] z-20 h-[70%] w-[88%] object-contain" />}
-      {cell === 'rug' && <PixelAsset name="bench" className="absolute inset-x-[-45%] bottom-[8%] z-10 h-[58%] w-[190%] object-contain" />}
-      {cell === 'wrong' && <PixelAsset name={(x + y) % 2 === 0 ? 'door' : 'chest'} className="absolute inset-[7%] z-10 h-[86%] w-[86%] object-contain" />}
-      {cell === 'torch' && <Torch tick={tick} />}
-      {isExit && <div className="absolute inset-0 bg-green-400/10 border-2 border-green-300 shadow-[0_0_18px_rgba(57,255,20,.55)] z-10" />}
-      {isPlayer && <PlayerSprite />}
+    <div className={`relative min-w-0 min-h-0 ${isWall ? 'bg-stone-600 border border-stone-500' : 'bg-stone-900 border border-stone-800'}`}>
+      {!isWall && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.07),transparent_65%)]" />}
+      {cell === 'rug' && <div className="absolute inset-x-[15%] inset-y-[32%] rounded bg-red-700/70 border border-yellow-400/50" />}
+      {cell === 'wrong' && <div className="absolute inset-[18%] rounded border-2 border-purple-400/70 bg-purple-500/15" />}
+      {cell === 'torch' && <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-300 shadow-[0_0_10px_#fb923c]" />}
+      {isExit && <div className="absolute inset-0 bg-green-400/20 border-2 border-green-400 shadow-[0_0_18px_rgba(57,255,20,.55)] z-10" />}
+      {isPlayer && <div className="absolute inset-[18%] rounded-full bg-cyan-300 border-2 border-white shadow-[0_0_12px_rgba(0,242,255,.95)] z-20" />}
     </div>
   );
 }
 
 function ActivityRoomOverlay({ exit, tileCount, tick }: { exit: Point; tileCount: number; tick: number }) {
-  const emanuelOffset = tick % 2 === 0 ? 'left-[16%]' : 'left-[72%]';
+  const emanuelOffset = tick % 2 === 0 ? 'left-[12%]' : 'left-[70%]';
   const cell = 100 / tileCount;
-  const width = cell * 4;
-  const height = cell * 3.4;
-  const left = Math.max(0, Math.min(100 - width, (exit.x - 2) * cell));
-  const top = Math.max(0, Math.min(100 - height, (exit.y - 1.2) * cell));
+  const size = cell * 3;
+  const left = Math.max(0, Math.min(100 - size, (exit.x - 1) * cell));
+  const top = Math.max(0, Math.min(100 - size, (exit.y - 1) * cell));
   return (
     <div
-      className="absolute z-10 pointer-events-none overflow-hidden border-4 border-[#3b2119] bg-[#8f5944] shadow-[inset_0_0_0_4px_rgba(255,221,160,.18),0_0_22px_rgba(57,255,20,.4)]"
-      style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
+      className="absolute bg-green-400/15 border-2 border-green-400 shadow-[0_0_22px_rgba(57,255,20,.65)] z-10 pointer-events-none rounded"
+      style={{ left: `${left}%`, top: `${top}%`, width: `${size}%`, height: `${size}%` }}
     >
-      <PixelAsset name="floor_alt" className="absolute inset-0 h-full w-full object-cover opacity-90" />
-      <div className="absolute inset-[8%] rounded-sm border-4 border-[#2d1a13] bg-[#a9744d]/70" />
-      <PixelAsset name="table_large" className="absolute left-[22%] top-[36%] z-20 h-[28%] w-[58%] object-fill" />
-      <div className="absolute left-[14%] right-[14%] top-[14%] z-30 grid grid-cols-7 gap-[3px]">
-        {Array.from({ length: 14 }).map((_, index) => (
-          <ParticipantDot key={index} index={index} />
+      <p className="absolute left-1 top-1 text-[7px] font-black uppercase text-green-100 bg-black/50 px-1 rounded">Activity Room</p>
+      <div className="absolute left-[12%] right-[12%] top-[18%] grid grid-cols-7 gap-[2px]">
+        {Array.from({ length: 21 }).map((_, index) => (
+          <span key={index} className="aspect-square rounded-full bg-white/90 border border-cyan-200" />
         ))}
       </div>
-      <div className="absolute left-[14%] right-[14%] bottom-[18%] z-30 grid grid-cols-7 gap-[3px]">
-        {Array.from({ length: 7 }).map((_, index) => (
-          <ParticipantDot key={index + 14} index={index + 14} />
-        ))}
-      </div>
-      <div className={`absolute ${emanuelOffset} top-[9%] z-40 h-[24%] w-[16%] transition-all duration-500`}>
-        <PixelAsset name="rocco_walk_east_1" className="h-full w-full object-contain drop-shadow-[2px_2px_0_#000]" />
-      </div>
-      <p className="absolute bottom-[3%] left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] sm:text-[10px] md:text-xs font-arcade uppercase text-white [text-shadow:2px_2px_0_#000]">Activity Room</p>
+      <div className={`absolute ${emanuelOffset} bottom-[12%] h-[18%] w-[18%] rounded-full bg-yellow-300 border-2 border-black transition-all duration-500`} />
     </div>
   );
 }
 
-function VerticalAngerBar({ anger, timeLeft }: { anger: number; timeLeft: number }) {
+function AngerBar({ anger, timeLeft }: { anger: number; timeLeft: number }) {
   const color = anger > 78 ? 'bg-red-500' : anger > 48 ? 'bg-yellow-300' : 'bg-green-400';
   return (
-    <div className="absolute left-2 top-12 z-40 hidden sm:flex w-20 flex-col items-center text-center text-white [text-shadow:2px_2px_0_#000]">
-      <p className="text-[9px] md:text-[11px] font-arcade uppercase leading-tight">Trainer<br />Anger<br />Barometer</p>
-      <div className="relative mt-3 h-36 w-9 border-4 border-black bg-stone-300 p-1 shadow-[3px_3px_0_#000]">
-        <div className="relative h-full w-full overflow-hidden border-2 border-stone-700 bg-gray-900">
-          <div className={`absolute bottom-0 left-0 right-0 ${color} ${anger > 78 ? 'animate-pulse' : ''}`} style={{ height: `${anger}%` }} />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(255,255,255,.25)_48%,transparent_52%)] bg-[size:100%_18px]" />
-        </div>
-        {anger > 64 && (
-          <div className="absolute -right-6 -top-4 text-3xl animate-pulse drop-shadow-[2px_2px_0_#000]">🔥</div>
-        )}
+    <div className="w-full sm:w-72 bg-black/70 border border-white/10 rounded-xl p-3">
+      <div className="flex items-center justify-between text-[10px] font-bold uppercase mb-2">
+        <span className="text-gray-400">Emanuel Anger</span>
+        <span className={anger > 78 ? 'text-red-300' : 'text-white'}>{timeLeft}s</span>
       </div>
-      <p className="mt-2 text-[9px] md:text-[11px] font-arcade uppercase leading-tight">Anger<br />{timeLeft}s</p>
-      {anger > 78 && <p className="mt-1 text-[8px] font-black uppercase text-red-200 flex items-center gap-1"><Flame className="w-3 h-3" /> Fire</p>}
-    </div>
-  );
-}
-
-function RoccoSpeech() {
-  return (
-    <div className="absolute left-[16%] top-12 z-40 hidden md:flex items-start gap-3">
-      <div className="relative h-20 w-20">
-        <PixelAsset name="rocco_walk_south_1" className="absolute inset-0 h-full w-full object-contain drop-shadow-[3px_3px_0_#000]" />
-        <p className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs font-arcade text-white [text-shadow:2px_2px_0_#000]">Rocco</p>
+      <div className="h-4 rounded-full bg-gray-900 overflow-hidden border border-white/10">
+        <div className={`h-full ${color} ${anger > 78 ? 'animate-pulse' : ''}`} style={{ width: `${anger}%` }} />
       </div>
-      <div className="relative mt-1 max-w-[470px] border-4 border-black bg-white px-4 py-3 shadow-[4px_4px_0_#000]">
-        <div className="absolute -left-4 top-6 h-5 w-5 rotate-45 border-b-4 border-l-4 border-black bg-white" />
-        <p className="text-sm lg:text-lg font-black leading-tight text-black">You are late for the activities!<br />Emanuel, the Trainer, is getting angry!</p>
-      </div>
+      {anger > 78 && <p className="mt-2 text-[10px] text-red-300 font-black uppercase flex items-center gap-1"><Flame className="w-3 h-3" /> Barometer on fire</p>}
     </div>
-  );
-}
-
-function Torch({ tick }: { tick: number }) {
-  return (
-    <div className={`absolute inset-[10%] z-20 ${tick % 2 ? 'brightness-125' : 'brightness-100'}`}>
-      <PixelAsset name="torch" className="h-full w-full object-contain drop-shadow-[0_0_8px_#fb923c]" />
-    </div>
-  );
-}
-
-function PlayerSprite() {
-  return (
-    <div className="absolute inset-[4%] z-30">
-      <PixelAsset name="rocco_walk_south_1" className="h-full w-full object-contain drop-shadow-[2px_2px_0_#000]" />
-    </div>
-  );
-}
-
-function ParticipantDot({ index }: { key?: number; index: number }) {
-  const chair = index % 2 === 0 ? 'chair_front' : 'chair_side';
-  return (
-    <span className="relative aspect-square">
-      <PixelAsset name={chair} className="absolute inset-0 h-full w-full object-contain" />
-    </span>
-  );
-}
-
-function PixelAsset({ name, className }: { name: string; className?: string }) {
-  return (
-    <img
-      src={assetUrl(name)}
-      alt=""
-      aria-hidden="true"
-      draggable={false}
-      className={className}
-      style={{ imageRendering: 'pixelated' }}
-    />
   );
 }
 
