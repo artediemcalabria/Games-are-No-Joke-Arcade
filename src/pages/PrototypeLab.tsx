@@ -1,18 +1,37 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2, ClipboardList, Download, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Clipboard, ClipboardList, Download, RotateCcw } from 'lucide-react';
 import { gameCatalog, prototypeSteps } from '../data/course';
 import { useStore } from '../store/useStore';
 
 export default function PrototypeLab() {
   const { prototype, gameTakeaways, gameNotes, coachNotes, updatePrototypeField } = useStore();
+  const [actionMessage, setActionMessage] = useState('');
   const completedSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
   const progressPercent = Math.round((completedSteps / prototypeSteps.length) * 100);
 
-  const copyPrototypeCard = async () => {
-    const text = prototypeSteps
+  const buildPrototypeCardText = () => {
+    const fields = prototypeSteps
       .map((step) => `${step.label}: ${prototype[step.id]?.trim() || '-'}`)
       .join('\n');
-    await navigator.clipboard?.writeText(`Games Are No Joke - Prototype Card\n\n${text}`);
+    return `Games Are No Joke - Prototype Card\n\n${fields}`;
+  };
+
+  const copyPrototypeCard = async () => {
+    await navigator.clipboard?.writeText(buildPrototypeCardText());
+    setActionMessage('Prototype Card copied to clipboard.');
+  };
+
+  const savePrototypeCard = () => {
+    const blob = new Blob([buildPrototypeCardText()], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safeTitle = (prototype.topic || 'games-are-no-joke-prototype').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    link.href = url;
+    link.download = `${safeTitle || 'games-are-no-joke-prototype'}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setActionMessage('Prototype Card saved as a text file.');
   };
 
   return (
@@ -92,12 +111,18 @@ export default function PrototypeLab() {
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={copyPrototypeCard}
               className="flex items-center justify-center gap-2 rounded-lg border border-pink-400 bg-pink-400/10 px-3 py-3 text-xs font-bold uppercase text-pink-100 hover:bg-pink-400 hover:text-black transition-colors"
             >
-              <Download className="w-4 h-4" /> Copy Card
+              <Clipboard className="w-4 h-4" /> Copy Text
+            </button>
+            <button
+              onClick={savePrototypeCard}
+              className="flex items-center justify-center gap-2 rounded-lg border border-green-400 bg-green-400/10 px-3 py-3 text-xs font-bold uppercase text-green-100 hover:bg-green-400 hover:text-black transition-colors"
+            >
+              <Download className="w-4 h-4" /> Save File
             </button>
             <button
               onClick={() => prototypeSteps.forEach((step) => updatePrototypeField(step.id, ''))}
@@ -106,11 +131,15 @@ export default function PrototypeLab() {
               <RotateCcw className="w-4 h-4" /> Clear Draft
             </button>
           </div>
+          {actionMessage && <p className="mt-3 text-xs font-bold uppercase tracking-widest text-green-200">{actionMessage}</p>}
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="arcade-border glass-panel rounded-xl p-5">
-          <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Collection Takeaways</p>
+          <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Ideas From The Games</p>
+          <p className="mt-2 text-sm text-gray-400 leading-relaxed">
+            These are design lessons from the playable games. Use one if you need help filling a prototype field.
+          </p>
           <div className="mt-4 space-y-3">
             {gameCatalog.map((game) => (
               <div key={game.id} className="rounded-lg border border-white/10 bg-black/50 p-3">
@@ -129,7 +158,10 @@ export default function PrototypeLab() {
         </div>
 
         <div className="bg-black/60 border border-white/10 rounded-xl p-5">
-          <p className="text-xs text-green-300 font-bold uppercase tracking-widest">AI Coach Notes</p>
+          <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Saved AI Coach Suggestions</p>
+          <p className="mt-2 text-sm text-gray-400 leading-relaxed">
+            These are answers you saved from the AI Coach. Use them only if they help your prototype.
+          </p>
           <div className="mt-4 space-y-3">
             {coachNotes.length === 0 && <p className="text-sm text-gray-400">Saved coach notes will appear here.</p>}
             {coachNotes.slice(0, 4).map((note) => (
