@@ -34,7 +34,7 @@ export const partners = [
 export const lessons = [
   {
     id: 'power-of-play',
-    day: 'Day 1',
+    modelTag: 'Model 1/7',
     title: 'Why Games Work in Youth Work',
     icon: Sparkles,
     focus: 'Games can make learning active, social, and memorable.',
@@ -54,7 +54,7 @@ export const lessons = [
   },
   {
     id: 'fun-motivation-learning',
-    day: 'Day 2',
+    modelTag: 'Model 2/7',
     title: 'Fun, Motivation, and Learning',
     icon: Brain,
     focus: 'Fun often comes from seeing patterns, making choices, and improving.',
@@ -74,7 +74,7 @@ export const lessons = [
   },
   {
     id: 'mda',
-    day: 'Day 2',
+    modelTag: 'Model 3/7',
     title: 'MDA: Mechanics, Dynamics, Aesthetics',
     icon: Puzzle,
     focus: 'MDA helps you connect rules with player experience.',
@@ -94,7 +94,7 @@ export const lessons = [
   },
   {
     id: 'core-loop',
-    day: 'Day 4',
+    modelTag: 'Model 4/7',
     title: 'Core Loop, Goals, Rules, Feedback',
     icon: IterationCcw,
     focus: 'A prototype needs one repeated loop that players understand.',
@@ -114,7 +114,7 @@ export const lessons = [
   },
   {
     id: 'dialogue-and-polarization',
-    day: 'Day 3',
+    modelTag: 'Model 5/7',
     title: 'Games for Dialogue and Polarization',
     icon: MessageSquareText,
     focus: 'Games can slow down judgement and create space for dialogue.',
@@ -134,7 +134,7 @@ export const lessons = [
   },
   {
     id: 'prototype',
-    day: 'Day 4-5',
+    modelTag: 'Model 6/7',
     title: 'From Idea to Paper Prototype',
     icon: Gamepad2,
     focus: 'A prototype is a question you can play.',
@@ -154,7 +154,7 @@ export const lessons = [
   },
   {
     id: 'playtest-youthpass',
-    day: 'Day 6-7',
+    modelTag: 'Model 7/7',
     title: 'Playtesting, Debrief, and YouthPass',
     icon: HeartHandshake,
     focus: 'Playtesting shows what players understand, feel, and learn.',
@@ -217,5 +217,20 @@ export const gameCatalog = [
     difficulty: 'Starter',
     color: 'text-cyan-400',
     borderClass: 'arcade-border',
+  },
+  {
+    id: 'filadelfia-story',
+    title: 'Filadelfia Story',
+    subtitle: 'Choices, Consequences, Endings',
+    path: '/arcade/filadelfia-story',
+    inspiration: 'Branching narrative games, Erasmus+ group work, debrief logic, and social-impact design',
+    mechanic: 'Make choices during the Games Are No Joke project and see how hidden logic changes the ending.',
+    learningGoal: 'Understand how choices, flags, meters, and consequences can make learning visible.',
+    takeaway: 'Choices, hidden logic, and consequences can make learning visible.',
+    prototypePrompt: 'Branching choices + visible consequences = better debrief and stronger learning.',
+    duration: '6-10 min',
+    difficulty: 'Story',
+    color: 'text-green-400',
+    borderClass: 'arcade-border-green',
   },
 ];

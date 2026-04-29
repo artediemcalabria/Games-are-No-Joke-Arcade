@@ -23,7 +23,7 @@ export default function PrototypeLab() {
             <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Prototype Lab</p>
             <h1 className="text-2xl md:text-3xl font-arcade text-white mt-3">Design Your First Game Prototype</h1>
             <p className="text-sm text-gray-300 leading-relaxed mt-4 max-w-3xl">
-              Fill one small field at a time. Keep it simple. Your first version only needs to be clear enough to test with other participants.
+              Learn models, play design games, build a prototype, then reflect. Fill one small field at a time and keep the first version clear enough to test.
             </p>
           </div>
           <div className="bg-black/60 border border-green-400/30 rounded-xl p-4 min-w-[170px]">

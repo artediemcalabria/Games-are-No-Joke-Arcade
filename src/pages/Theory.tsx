@@ -22,7 +22,7 @@ export default function Theory() {
       <section className="lg:col-span-4 arcade-border glass-panel p-4 rounded-xl">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-arcade text-cyan-400">Theory Path</h2>
+            <h2 className="text-lg font-arcade text-cyan-400">Learning Models</h2>
             <p className="text-xs text-gray-400 mt-2">Simple English. Short models. Try it now.</p>
           </div>
           <span className="text-xs font-bold text-white bg-black/60 border border-cyan-400/30 rounded px-2 py-1">
@@ -31,7 +31,7 @@ export default function Theory() {
         </div>
 
         <div className="space-y-2">
-          {lessons.map((lesson) => {
+          {lessons.map((lesson, index) => {
             const done = completedLessons.includes(lesson.id);
             const isActive = lesson.id === activeLesson.id;
             return (
@@ -45,7 +45,7 @@ export default function Theory() {
                 <div className="flex items-start gap-3">
                   {done ? <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5" /> : <Circle className="w-5 h-5 text-gray-500 mt-0.5" />}
                   <div>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase">{lesson.day}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase">Model {index + 1}/{lessons.length}</p>
                     <p className="text-sm text-white font-bold leading-snug mt-1">{lesson.title}</p>
                   </div>
                 </div>
@@ -58,7 +58,7 @@ export default function Theory() {
       <section className="lg:col-span-8 arcade-border-pink glass-panel-pink p-5 md:p-6 rounded-xl">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-pink-500/30 pb-5">
           <div>
-            <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">{activeLesson.day}</p>
+            <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Learning Model</p>
             <h1 className="text-2xl font-arcade text-white mt-3 leading-tight">{activeLesson.title}</h1>
             <p className="text-gray-300 mt-4 leading-relaxed">{activeLesson.focus}</p>
           </div>

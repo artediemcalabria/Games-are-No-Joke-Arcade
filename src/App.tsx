@@ -10,6 +10,7 @@ import PrototypeLab from './pages/PrototypeLab';
 import GeminiCoach from './pages/GeminiCoach';
 import CastleRushGame from './pages/games/CastleRushGame';
 import YouthPassDropGame from './pages/games/YouthPassDropGame';
+import FiladelfiaStoryGame from './pages/games/FiladelfiaStoryGame';
 import { courseInfo } from './data/course';
 
 const Router = import.meta.env.BASE_URL === '/' ? BrowserRouter : HashRouter;
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="/arcade" element={<ArcadeList />} />
             <Route path="/arcade/castle-rush" element={<CastleRushGame />} />
             <Route path="/arcade/youthpass-drop" element={<YouthPassDropGame />} />
+            <Route path="/arcade/filadelfia-story" element={<FiladelfiaStoryGame />} />
             <Route path="/progress" element={<Progress />} />
             <Route path="/about" element={<About />} />
             <Route path="/quiz" element={<Quiz />} />

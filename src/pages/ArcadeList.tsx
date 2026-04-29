@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Coffee, Crown, Droplets, Flame, Gamepad2, Sparkles, Trophy } from 'lucide-react';
+import { Coffee, Crown, Droplets, Flame, Gamepad2, GitBranch, Sparkles, Trophy } from 'lucide-react';
 import { gameCatalog } from '../data/course';
 import { useStore } from '../store/useStore';
 
@@ -13,9 +13,9 @@ export default function ArcadeList() {
         <div className="flex justify-between items-start gap-4">
           <div>
             <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Games Are No Joke Collection</p>
-            <h2 className="text-xl md:text-2xl font-arcade text-pink-500 uppercase tracking-widest mt-2">First Playable Challenge</h2>
+            <h2 className="text-xl md:text-2xl font-arcade text-pink-500 uppercase tracking-widest mt-2">Games Are No Joke Collection</h2>
             <p className="text-sm text-gray-300 mt-3 max-w-2xl">
-              A growing set of simple Erasmus+ games about goals, pressure, resources, feedback, and debriefing.
+              Learn models, play design games, build a prototype, then reflect on what happened.
             </p>
           </div>
           <Gamepad2 className="w-10 h-10 text-pink-400 shrink-0" />
@@ -27,6 +27,7 @@ export default function ArcadeList() {
           const isDone = completedGames.includes(game.id);
           const takeaway = gameTakeaways[game.id];
           const note = gameNotes[game.id];
+          const status = isDone ? 'Completed' : note ? 'In progress' : 'Not started';
           return (
             <Link key={game.id} to={game.path}>
               <motion.div
@@ -44,7 +45,7 @@ export default function ArcadeList() {
                         <h3 className="font-arcade text-xl md:text-2xl text-white group-hover:text-arcade-green transition-colors mt-3 leading-tight">{game.title}</h3>
                       </div>
                       <span className={`text-[10px] font-bold px-2 py-1 bg-black/50 rounded uppercase ${isDone ? 'text-green-300' : 'text-gray-400'}`}>
-                        {isDone ? 'Completed' : note || '10 levels'}
+                        {status}
                       </span>
                     </div>
 
@@ -60,6 +61,7 @@ export default function ArcadeList() {
                       <Sparkles className="w-3 h-3" /> Design Takeaway
                     </p>
                     <p className="text-sm text-gray-200 leading-relaxed mt-2">{takeaway || 'Complete all 10 levels to unlock the design takeaway.'}</p>
+                    {note && <p className="text-[10px] text-cyan-300 font-bold uppercase mt-3">{note}</p>}
                     <p className="text-[10px] text-gray-500 font-bold uppercase mt-4">{game.duration} - {game.difficulty}</p>
                   </div>
                 </div>
@@ -82,6 +84,34 @@ function InfoLine({ label, value }: { label: string; value: string }) {
 }
 
 function GamePreview({ id }: { id: string }) {
+  if (id === 'filadelfia-story') {
+    return (
+      <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(57,255,20,.16),transparent_45%),linear-gradient(180deg,#07140c,#12051b)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-60" />
+        <GitBranch className="absolute left-7 top-7 w-12 h-12 text-green-300 rounded-xl border border-green-300/40 bg-green-300/10 p-2 shadow-[0_0_18px_rgba(57,255,20,.45)]" />
+        <div className="absolute left-8 right-8 top-24 grid grid-cols-3 gap-3">
+          {['Trust', 'Clarity', 'Learning'].map((meter, index) => (
+            <div key={meter} className="rounded-lg border border-white/10 bg-black/60 p-2">
+              <p className="text-[8px] font-bold uppercase text-gray-400">{meter}</p>
+              <div className="mt-2 h-2 rounded bg-gray-900 overflow-hidden">
+                <div className="h-full bg-green-300" style={{ width: `${55 + index * 12}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="absolute bottom-8 left-8 right-8 rounded-xl border border-green-300/40 bg-green-300/10 p-4">
+          <p className="text-[10px] font-black uppercase text-green-200">Ending logic unlocked</p>
+          <div className="mt-3 flex justify-between gap-2">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <span key={index} className="h-3 flex-1 rounded bg-green-300/30 border border-green-300/40" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (id === 'youthpass-drop') {
     return (
       <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">

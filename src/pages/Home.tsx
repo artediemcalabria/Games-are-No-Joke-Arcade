@@ -12,6 +12,13 @@ export default function Home() {
   const journeyTotal = lessons.length + gameCatalog.length + prototypeSteps.length;
   const journeyDone = completedLessons.length + completedCatalogGames.length + completedPrototypeSteps;
   const progressPercent = Math.round((journeyDone / journeyTotal) * 100);
+  const nextAction = completedLessons.length < lessons.length
+    ? { to: '/theory', label: 'Continue Learning Models', detail: 'Learn models -> Play design games -> Build prototype -> Reflect.' }
+    : completedCatalogGames.length < gameCatalog.length
+      ? { to: '/arcade', label: 'Play Next Design Game', detail: 'Use games to feel the design ideas, not only read them.' }
+      : completedPrototypeSteps < prototypeSteps.length
+        ? { to: '/prototype', label: 'Improve Prototype Card', detail: 'Turn takeaways into your first playable prototype.' }
+        : { to: '/progress', label: 'Review Your Journey', detail: 'Check your learning, games, prototype, and reflection.' };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 flex-grow pb-10">
@@ -25,6 +32,14 @@ export default function Home() {
               <p className="text-gray-300 text-sm leading-relaxed mt-4 max-w-2xl">
                 A mobile companion for youth workers learning how to design meaningful, fun, and inclusive games during the training in {courseInfo.venue}.
               </p>
+              <Link
+                to={nextAction.to}
+                className="mt-5 inline-flex items-center gap-3 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-3 text-xs font-bold uppercase tracking-widest text-cyan-100 hover:bg-cyan-400 hover:text-black transition-colors"
+              >
+                {nextAction.label}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <p className="text-xs text-gray-400 mt-3">{nextAction.detail}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -61,7 +76,7 @@ export default function Home() {
               <BookOpen className="w-8 h-8 text-arcade-cyan mb-4" />
               <h2 className="text-lg font-arcade text-arcade-cyan">Learning Path</h2>
               <p className="text-sm text-gray-300 leading-relaxed mt-3">
-                Simple English theory cards with quick checks and trainer prompts.
+                Simple English learning models with quick checks and trainer prompts.
               </p>
             </div>
             <div className="flex items-center justify-between text-sm font-bold text-white">

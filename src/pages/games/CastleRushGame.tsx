@@ -4,8 +4,9 @@ import { Flame, Gamepad2, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { gameCatalog } from '../../data/course';
 import { useStore } from '../../store/useStore';
 
-type Cell = 'wall' | 'floor' | 'start' | 'exit' | 'wrong' | 'torch' | 'rug';
+type Cell = 'wall' | 'floor' | 'start' | 'exit' | 'wrong' | 'torch' | 'rug' | 'room';
 type Point = { x: number; y: number };
+type ActivityRoom = { x: number; y: number; width: number; height: number; goal: Point };
 type GameState = 'intro' | 'playing' | 'won-level' | 'game-over' | 'completed';
 
 const game = gameCatalog.find((item) => item.id === 'castle-rush')!;
@@ -206,7 +207,7 @@ export default function CastleRushGame() {
                   />
                 )),
               )}
-              <ActivityRoomOverlay exit={maze.exit} tileCount={tileCount} tick={tick} />
+              <ActivityRoomOverlay room={maze.room} tileCount={tileCount} tick={tick} />
             </div>
           </div>
 
@@ -284,9 +285,17 @@ export default function CastleRushGame() {
 
 function Tile({ cell, isPlayer, isExit, tick }: { key?: string; cell: Cell; isPlayer: boolean; isExit: boolean; tick: number }) {
   const isWall = cell === 'wall';
+  const isRoom = cell === 'room' || cell === 'exit';
   return (
-    <div className={`relative min-w-0 min-h-0 ${isWall ? 'bg-stone-600 border border-stone-500' : 'bg-stone-900 border border-stone-800'}`}>
+    <div className={`relative min-w-0 min-h-0 ${
+      isWall
+        ? 'bg-stone-600 border border-stone-500'
+        : isRoom
+          ? 'bg-green-950 border border-green-700/70'
+          : 'bg-stone-900 border border-stone-800'
+    }`}>
       {!isWall && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.07),transparent_65%)]" />}
+      {isRoom && <div className="absolute inset-0 bg-green-400/10" />}
       {cell === 'rug' && <div className="absolute inset-x-[15%] inset-y-[32%] rounded bg-red-700/70 border border-yellow-400/50" />}
       {cell === 'wrong' && <div className="absolute inset-[18%] rounded border-2 border-purple-400/70 bg-purple-500/15" />}
       {cell === 'torch' && <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-300 shadow-[0_0_10px_#fb923c]" />}
@@ -296,24 +305,44 @@ function Tile({ cell, isPlayer, isExit, tick }: { key?: string; cell: Cell; isPl
   );
 }
 
-function ActivityRoomOverlay({ exit, tileCount, tick }: { exit: Point; tileCount: number; tick: number }) {
-  const emanuelOffset = tick % 2 === 0 ? 'left-[12%]' : 'left-[70%]';
+function ActivityRoomOverlay({ room, tileCount, tick }: { room: ActivityRoom; tileCount: number; tick: number }) {
   const cell = 100 / tileCount;
-  const size = cell * 3;
-  const left = Math.max(0, Math.min(100 - size, (exit.x - 1) * cell));
-  const top = Math.max(0, Math.min(100 - size, (exit.y - 1) * cell));
+  const left = room.x * cell;
+  const top = room.y * cell;
+  const width = room.width * cell;
+  const height = room.height * cell;
+  const emanuelLeft = tick % 2 === 0 ? 38 : 58;
+  const participants = Array.from({ length: 21 }).map((_, index) => {
+    const angle = Math.PI * 0.12 + (Math.PI * 1.76 * index) / 20;
+    return {
+      x: 50 + Math.cos(angle) * 36,
+      y: 52 + Math.sin(angle) * 34,
+    };
+  });
   return (
     <div
-      className="absolute bg-green-400/15 border-2 border-green-400 shadow-[0_0_22px_rgba(57,255,20,.65)] z-10 pointer-events-none rounded"
-      style={{ left: `${left}%`, top: `${top}%`, width: `${size}%`, height: `${size}%` }}
+      className="absolute bg-green-400/10 border-2 border-green-400 shadow-[0_0_22px_rgba(57,255,20,.55)] z-10 pointer-events-none rounded"
+      style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
     >
-      <p className="absolute left-1 top-1 text-[7px] font-black uppercase text-green-100 bg-black/50 px-1 rounded">Activity Room</p>
-      <div className="absolute left-[12%] right-[12%] top-[18%] grid grid-cols-7 gap-[2px]">
-        {Array.from({ length: 21 }).map((_, index) => (
-          <span key={index} className="aspect-square rounded-full bg-white/90 border border-cyan-200" />
-        ))}
+      <p className="absolute left-1 top-1 text-[7px] font-black uppercase text-green-100 bg-black/60 px-1 rounded">Activity Room</p>
+      <div className="absolute left-[30%] right-[30%] top-[37%] h-[22%] rounded-full border-2 border-yellow-200/60 bg-yellow-900/30" />
+      {participants.map((position, index) => (
+        <span
+          key={index}
+          className="absolute h-[8%] w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/90 border border-cyan-200 shadow-[0_0_5px_rgba(255,255,255,.35)]"
+          style={{ left: `${position.x}%`, top: `${position.y}%` }}
+        />
+      ))}
+      <div
+        className="absolute h-[13%] w-[13%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-300 border-2 border-black transition-all duration-500 shadow-[0_0_10px_rgba(253,224,71,.6)]"
+        style={{ left: `${emanuelLeft}%`, top: '48%' }}
+      />
+      <div
+        className="absolute h-[10%] w-[10%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-green-300 bg-green-300/40 animate-pulse"
+        style={{ left: `${((room.goal.x - room.x) / room.width) * 100 + 50 / room.width}%`, top: `${((room.goal.y - room.y) / room.height) * 100 + 50 / room.height}%` }}
+      >
+        <span className="sr-only">Goal</span>
       </div>
-      <div className={`absolute ${emanuelOffset} bottom-[12%] h-[18%] w-[18%] rounded-full bg-yellow-300 border-2 border-black transition-all duration-500`} />
     </div>
   );
 }
@@ -406,12 +435,34 @@ function generateCastleMaze(level: number) {
   }
 
   const start = { x: 1, y: 1 };
-  const exit = farthestFloor(grid, start);
+  const room = carveActivityRoom(grid, farthestFloor(grid, start), level);
+  const exit = room.goal;
   grid[start.y][start.x] = 'start';
   grid[exit.y][exit.x] = 'exit';
 
   decorate(grid, random, start, exit, level);
-  return { grid, start, exit };
+  return { grid, start, exit, room };
+}
+
+function carveActivityRoom(grid: Cell[][], anchor: Point, level: number): ActivityRoom {
+  const size = grid.length;
+  const roomWidth = size <= 9 ? 3 : size <= 11 ? 4 : 5;
+  const roomHeight = size <= 9 ? 3 : 4;
+  const x = clampInt(anchor.x - Math.floor(roomWidth / 2), 1, size - roomWidth - 1);
+  const y = clampInt(anchor.y - Math.floor(roomHeight / 2), 1, size - roomHeight - 1);
+  const goal = {
+    x: x + Math.floor(roomWidth / 2),
+    y: y + Math.floor(roomHeight / 2),
+  };
+
+  for (let roomY = y; roomY < y + roomHeight; roomY++) {
+    for (let roomX = x; roomX < x + roomWidth; roomX++) {
+      grid[roomY][roomX] = 'room';
+    }
+  }
+
+  grid[anchor.y][anchor.x] = 'room';
+  return { x, y, width: roomWidth, height: roomHeight, goal };
 }
 
 function decorate(grid: Cell[][], random: () => number, start: Point, exit: Point, level: number) {
@@ -464,4 +515,8 @@ function shuffle<T>(items: T[], random: () => number) {
 
 function same(a: Point, b: Point) {
   return a.x === b.x && a.y === b.y;
+}
+
+function clampInt(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }

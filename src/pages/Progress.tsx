@@ -8,26 +8,45 @@ export default function Progress() {
   const completedCatalogGames = completedGames.filter((id) => gameCatalog.some((game) => game.id === id));
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
 
-  const milestones = [
-    ...lessons.map((lesson) => ({
-      id: lesson.id,
-      name: lesson.title,
-      type: 'lesson',
-      completed: completedLessons.includes(lesson.id),
-    })),
-    ...gameCatalog.map((game) => ({
-      id: game.id,
-      name: game.title,
-      type: 'game',
-      completed: completedCatalogGames.includes(game.id),
-    })),
+  const milestoneGroups = [
     {
-      id: 'prototype-card',
-      name: 'Prototype Card',
+      title: 'Learning Models',
+      type: 'lesson',
+      items: lessons.map((lesson) => ({
+        id: lesson.id,
+        name: lesson.title,
+        completed: completedLessons.includes(lesson.id),
+      })),
+    },
+    {
+      title: 'Game Collection',
+      type: 'game',
+      items: gameCatalog.map((game) => ({
+        id: game.id,
+        name: game.title,
+        completed: completedCatalogGames.includes(game.id),
+      })),
+    },
+    {
+      title: 'Prototype Lab',
       type: 'prototype',
-      completed: completedPrototypeSteps === prototypeSteps.length,
+      items: [{
+        id: 'prototype-card',
+        name: 'Prototype Card',
+        completed: completedPrototypeSteps === prototypeSteps.length,
+      }],
+    },
+    {
+      title: 'Reflection / YouthPass',
+      type: 'reflection',
+      items: [{
+        id: 'youthpass-reflection',
+        name: 'Learning Reflection',
+        completed: completedLessons.length === lessons.length && completedCatalogGames.length > 0,
+      }],
     },
   ];
+  const milestones = milestoneGroups.flatMap((group) => group.items.map((item) => ({ ...item, type: group.type })));
 
   const completedCount = milestones.filter((milestone) => milestone.completed).length;
   const progressPercent = Math.round((completedCount / milestones.length) * 100);
@@ -43,7 +62,8 @@ export default function Progress() {
           <div>
             <h2 className="text-xl font-arcade text-pink-500 uppercase tracking-widest">Training Journey</h2>
             <p className="text-3xl font-bold text-white mt-2">{totalScore} XP</p>
-            <p className="text-xs text-gray-400 mt-2">Best quick-check score: {highestQuizScore}</p>
+            <p className="text-xs text-gray-400 mt-2">Learn models, play design games, build prototype, reflect.</p>
+            <p className="text-xs text-gray-500 mt-1">Best quick-check score: {highestQuizScore}</p>
           </div>
         </div>
 
@@ -61,10 +81,10 @@ export default function Progress() {
 
       <section className="md:col-span-4 arcade-border glass-panel p-5 rounded-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-arcade text-cyan-400">Theory</h3>
+          <h3 className="text-sm font-arcade text-cyan-400">Learning Models</h3>
           <span className="text-xs font-bold text-white">{completedLessons.length}/{lessons.length}</span>
         </div>
-        <p className="text-xs text-gray-400 mt-3">Complete lessons and quick checks.</p>
+        <p className="text-xs text-gray-400 mt-3">Complete short models and quick checks.</p>
       </section>
 
       <section className="md:col-span-4 arcade-border-pink glass-panel-pink p-5 rounded-xl">
@@ -89,29 +109,41 @@ export default function Progress() {
           <span className="text-xs px-2 py-1 bg-black/50 rounded font-bold text-gray-400">{completedCount} / {milestones.length} complete</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {milestones.map((milestone) => (
-            <div key={milestone.id} className={`p-4 rounded border-2 flex items-center justify-between transition-colors ${
-              milestone.completed ? 'border-cyan-400 bg-cyan-900/10' : 'border-gray-800 bg-black/40'
-            }`}>
-              <div className="flex items-center gap-3">
-                {milestone.type === 'game' && <Gamepad2 className="w-5 h-5 text-pink-400" />}
-                {milestone.type === 'lesson' && <Trophy className="w-5 h-5 text-cyan-400" />}
-                {milestone.type === 'prototype' && <ClipboardList className="w-5 h-5 text-green-400" />}
-                <div className="flex flex-col">
-                  <span className={`text-sm font-bold uppercase ${milestone.completed ? 'text-white' : 'text-gray-500'}`}>
-                    {milestone.name}
-                  </span>
-                  <span className="text-[10px] text-gray-500 capitalize">
-                    {milestone.type === 'game' && gameTakeaways[milestone.id]
-                      ? 'game - takeaway saved'
-                      : milestone.type === 'game' && gameNotes[milestone.id]
-                        ? `game - ${gameNotes[milestone.id]}`
-                        : milestone.type}
-                  </span>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {milestoneGroups.map((group) => (
+            <div key={group.title} className="rounded-xl border border-white/10 bg-black/40 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-arcade text-white">{group.title}</h4>
+                <span className="text-[10px] font-bold uppercase text-gray-500">
+                  {group.items.filter((item) => item.completed).length}/{group.items.length}
+                </span>
               </div>
-              {milestone.completed ? <CheckCircle2 className="w-6 h-6 text-cyan-400" /> : <Lock className="w-5 h-5 text-gray-600" />}
+              <div className="space-y-2">
+                {group.items.map((milestone) => (
+                  <div key={milestone.id} className={`p-3 rounded border flex items-center justify-between transition-colors ${
+                    milestone.completed ? 'border-cyan-400 bg-cyan-900/10' : 'border-gray-800 bg-black/40'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      {group.type === 'game' && <Gamepad2 className="w-5 h-5 text-pink-400" />}
+                      {group.type === 'lesson' && <Trophy className="w-5 h-5 text-cyan-400" />}
+                      {(group.type === 'prototype' || group.type === 'reflection') && <ClipboardList className="w-5 h-5 text-green-400" />}
+                      <div className="flex flex-col">
+                        <span className={`text-sm font-bold uppercase ${milestone.completed ? 'text-white' : 'text-gray-500'}`}>
+                          {milestone.name}
+                        </span>
+                        <span className="text-[10px] text-gray-500 capitalize">
+                          {group.type === 'game' && gameTakeaways[milestone.id]
+                            ? 'takeaway saved'
+                            : group.type === 'game' && gameNotes[milestone.id]
+                              ? gameNotes[milestone.id]
+                              : group.title}
+                        </span>
+                      </div>
+                    </div>
+                    {milestone.completed ? <CheckCircle2 className="w-6 h-6 text-cyan-400" /> : <Lock className="w-5 h-5 text-gray-600" />}
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
