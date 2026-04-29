@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, Coffee, Droplets, RotateCcw, Trophy, Volume2, VolumeX } from 'lucide-react';
 import { gameCatalog } from '../../data/course';
@@ -13,16 +13,35 @@ const game = gameCatalog.find((item) => item.id === 'youthpass-drop')!;
 const maxLevel = 10;
 
 const designNotes = [
-  'Level 1: One clear resource is enough to teach the main rule.',
+  'Level 1: Meters are not just scores. They show consequences players can feel.',
   'Level 2: Positive feedback makes players understand what helps them.',
-  'Level 3: A risk item becomes meaningful when its consequence is visible.',
-  'Level 4: Speed changes make the body feel the system.',
+  'Level 3: A risk item becomes meaningful when its later cost is visible.',
+  'Level 4: Speed changes make the body feel the resource system.',
   'Level 5: A good game does not only reward points. It changes what players can do.',
-  'Level 6: Difficulty can rise by reducing helpful resources.',
+  'Level 6: Difficulty can rise by reducing helpful resources, but it must stay fair.',
   'Level 7: Too much pressure can become unfair, so balance still matters.',
   'Level 8: Tradeoffs are stronger when there is no perfect move every second.',
   'Level 9: The final stretch should feel tense but possible.',
-  'Level 10: A simple mechanic can open a serious debrief.',
+  'Level 10: A simple resource mechanic can open a serious debrief.',
+];
+
+const trainingDays = [
+  'Arrival Day: find your rhythm after the trip.',
+  'First Workshop: stay focused during the learning models.',
+  'Team Building: keep energy without losing balance.',
+  'Intercultural Evening: enjoy the group and choose wisely.',
+  'Prototype Sprint: water helps more than panic.',
+  'Playtest Day: clear feedback keeps you moving.',
+  'Outdoor Break: good habits protect the next session.',
+  'Showcase Prep: pressure is high, balance matters.',
+  'Final Showcase: stay present until the end.',
+  'YouthPass Reflection: finish strong and remember the lesson.',
+];
+
+const reflectionPrompts = [
+  'What resource did you chase most in this level?',
+  'What feedback made you change strategy?',
+  'How could your prototype show consequences without lecturing?',
 ];
 
 const itemMeta: Record<ItemType, {
@@ -81,6 +100,7 @@ export default function YouthPassDropGame() {
   const config = useMemo(() => getLevelConfig(level), [level]);
   const progress = Math.min(100, Math.round((elapsed / config.duration) * 100));
   const displayName = playerName.trim() || 'Participant';
+  const canSubmitName = playerName.trim().length >= 2;
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -112,7 +132,7 @@ export default function YouthPassDropGame() {
     setPlayerX(50);
     setElapsed(0);
     setMeters({ life: 100, energy: 68, happiness: 55 });
-    setLastCatch('Catch water. Use coffee. Avoid most alcohol.');
+    setLastCatch('Catch water. Use coffee carefully. Avoid alcohol: the short reward creates real cost.');
     setPhase('playing');
     saveGameNote(game.id, `YouthPass pieces ${Math.max(0, nextLevel - 1)}/10`);
   }, [saveGameNote]);
@@ -144,9 +164,9 @@ export default function YouthPassDropGame() {
     const now = Date.now();
     if (type === 'water') {
       setMeters((current) => ({
-        life: clamp(current.life + 18),
-        energy: clamp(current.energy + 12),
-        happiness: clamp(current.happiness + 8),
+        life: clamp(current.life + 24),
+        energy: clamp(current.energy + 14),
+        happiness: clamp(current.happiness + 10),
       }));
       setLastCatch('Water helped your life, energy, and happiness.');
       playTone(520, 0.08, 'sine');
@@ -156,35 +176,35 @@ export default function YouthPassDropGame() {
     if (type === 'coffee') {
       boostUntilRef.current = now + 2600;
       setMeters((current) => ({
-        life: clamp(current.life + 3),
+        life: clamp(current.life + 2),
         energy: clamp(current.energy + 22),
-        happiness: clamp(current.happiness + 4),
+        happiness: clamp(current.happiness + 3),
       }));
-      setLastCatch('Coffee gave energy and a short speed boost.');
+      setLastCatch('Coffee gave energy and speed, but water is still the safest strategy.');
       playTone(720, 0.07, 'triangle');
       return;
     }
 
     if (type === 'beer') {
       setMeters((current) => ({
-        life: clamp(current.life - 8),
-        energy: clamp(current.energy - 12),
-        happiness: clamp(current.happiness + 10),
+        life: clamp(current.life - 12),
+        energy: clamp(current.energy - 16),
+        happiness: clamp(current.happiness + 8),
       }));
-      setLastCatch('Beer felt positive for a moment, but energy went down.');
+      setLastCatch('Beer gave a short positive feeling, then life and energy went down.');
       playTone(180, 0.12, 'square');
       return;
     }
 
     setMeters((current) => ({
       life: clamp(current.life - 22),
-      energy: clamp(current.energy - 30),
+      energy: clamp(current.energy - 34),
       happiness: clamp(current.happiness + 34),
     }));
     setLastCatch('Vodka gave a short spike, then happiness crashed.');
     playTone(120, 0.18, 'sawtooth');
     const timer = window.setTimeout(() => {
-      setMeters((current) => ({ ...current, happiness: clamp(current.happiness * 0.5) }));
+      setMeters((current) => ({ ...current, happiness: clamp(current.happiness * 0.45), life: clamp(current.life - 8) }));
     }, 850);
     timersRef.current.push(timer);
   }, [playTone]);
@@ -287,6 +307,12 @@ export default function YouthPassDropGame() {
 
   const restartCurrent = () => startPlaying(level);
   const startNext = () => startPlaying(Math.min(level + 1, maxLevel));
+  const submitName = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canSubmitName) return;
+    setPlayerName(playerName.trim());
+    setPhase('ready');
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 max-w-5xl mx-auto">
@@ -296,7 +322,7 @@ export default function YouthPassDropGame() {
             <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">{game.subtitle}</p>
             <h1 className="text-2xl md:text-3xl font-arcade text-white mt-3">{game.title}</h1>
             <p className="text-sm text-gray-300 leading-relaxed mt-4 max-w-2xl">
-              Survive the training day. Catch water, use coffee carefully, avoid most alcohol, and collect all 10 YouthPass pieces.
+              Survive each fictional training day. Catch water, use coffee carefully, avoid alcohol, and collect all 10 YouthPass pieces.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -323,6 +349,7 @@ export default function YouthPassDropGame() {
                 <span>Level {level}/10</span>
                 <span>{Math.max(0, Math.ceil(config.duration - elapsed))}s</span>
               </div>
+              <p className="mt-2 text-[10px] font-bold uppercase text-cyan-200">{trainingDays[level - 1]}</p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-900">
                 <div className="h-full bg-cyan-300" style={{ width: `${progress}%` }} />
               </div>
@@ -398,17 +425,35 @@ export default function YouthPassDropGame() {
 
       {phase === 'name' && (
         <Overlay title="Who Is Playing?" tone="cyan">
-          <p className="text-sm text-gray-300 leading-relaxed">Write your name. Your participant will try to reach YouthPass with water, energy, and smart choices.</p>
-          <input
-            value={playerName}
-            onChange={(event) => setPlayerName(event.target.value)}
-            maxLength={18}
-            className="mt-5 w-full rounded-lg border border-cyan-400/40 bg-black/70 px-4 py-3 text-center text-white outline-none focus:border-cyan-300"
-            placeholder="Your name"
-          />
-          <button onClick={() => setPhase('ready')} className="mt-5 arcade-border px-6 py-3 bg-cyan-900/40 text-cyan-200 text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 hover:text-black">
-            Continue
-          </button>
+          <form onSubmit={submitName} className="space-y-5">
+            <p className="text-sm text-gray-300 leading-relaxed">Write your name. Your participant will try to reach YouthPass with water, energy, and smart choices.</p>
+            <label className="block text-left">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-300">Player name</span>
+              <input
+                value={playerName}
+                onChange={(event) => setPlayerName(event.target.value)}
+                maxLength={18}
+                autoFocus
+                inputMode="text"
+                autoComplete="given-name"
+                enterKeyHint="done"
+                className="mt-2 w-full rounded-xl border-2 border-cyan-400/50 bg-black/80 px-4 py-4 text-center text-lg font-bold text-white caret-cyan-300 outline-none focus:border-cyan-200 focus:ring-4 focus:ring-cyan-300/20"
+                placeholder="Your name"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={!canSubmitName}
+              className={`arcade-border px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${
+                canSubmitName
+                  ? 'bg-cyan-900/40 text-cyan-200 hover:bg-cyan-400 hover:text-black'
+                  : 'cursor-not-allowed bg-gray-900/70 text-gray-600 opacity-70'
+              }`}
+            >
+              Continue
+            </button>
+            <p className="text-[10px] font-bold uppercase text-gray-500">Use at least 2 characters. Press Enter to continue.</p>
+          </form>
         </Overlay>
       )}
 
@@ -427,6 +472,11 @@ export default function YouthPassDropGame() {
           <Trophy className="w-10 h-10 text-yellow-300 mx-auto" />
           <p className="text-lg text-white font-black mt-4">Rocco and Emanuel give you YouthPass piece {pieces}/10 for Games Are No Joke.</p>
           <p className="text-sm text-gray-300 mt-4">{designNotes[level - 1]}</p>
+          <div className="mt-5 grid grid-cols-1 gap-2 text-left">
+            {reflectionPrompts.map((prompt) => (
+              <div key={prompt} className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm font-bold text-cyan-100">{prompt}</div>
+            ))}
+          </div>
           <button onClick={startNext} className="mt-6 arcade-border-green px-6 py-3 bg-green-900/40 text-green-200 text-xs font-bold uppercase tracking-widest hover:bg-green-400 hover:text-black">
             Next Level
           </button>

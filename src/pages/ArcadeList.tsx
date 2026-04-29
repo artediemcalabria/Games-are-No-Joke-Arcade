@@ -41,8 +41,9 @@ export default function ArcadeList() {
                   <div>
                     <div className="flex justify-between items-start gap-3">
                       <div>
-                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{game.subtitle}</p>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Step {gameCatalog.findIndex((item) => item.id === game.id) + 1}/3 - {bestMoment(game.id)}</p>
                         <h3 className="font-arcade text-lg md:text-2xl mobile-readable-arcade text-white group-hover:text-arcade-green transition-colors mt-3 leading-tight">{game.title}</h3>
+                        <p className="text-xs text-gray-400 font-bold uppercase mt-2">{game.subtitle}</p>
                       </div>
                       <span className={`text-[10px] font-bold px-2 py-1 bg-black/50 rounded uppercase ${isDone ? 'text-green-300' : 'text-gray-400'}`}>
                         {status}
@@ -50,9 +51,9 @@ export default function ArcadeList() {
                     </div>
 
                     <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <InfoLine label="Inspired by" value={game.inspiration} />
-                      <InfoLine label="Main mechanic" value={game.mechanic} />
-                      <InfoLine label="Learning goal" value={game.learningGoal} />
+                      <InfoLine label="What you practice" value={practiceText(game.id)} />
+                      <InfoLine label="Design lesson" value={game.learningGoal} />
+                      <InfoLine label="Best moment" value={bestMoment(game.id)} />
                     </div>
                   </div>
 
@@ -154,5 +155,17 @@ function GamePreview({ id }: { id: string }) {
 function lockedTakeawayText(id: string) {
   if (id === 'filadelfia-story') return 'Reach an ending to unlock the hidden logic and design takeaway.';
   if (id === 'youthpass-drop') return 'Collect YouthPass pieces to unlock the resource-system takeaway.';
-  return 'Complete the clock-chase levels to unlock the pressure and feedback takeaway.';
+  return 'Complete the fair route levels to unlock the level-design takeaway.';
+}
+
+function practiceText(id: string) {
+  if (id === 'castle-rush') return 'Readable goals, fair routes, checkpoints, pickups, and predictable pressure.';
+  if (id === 'youthpass-drop') return 'Meters, resource feedback, consequence loops, and healthy strategy.';
+  return 'Inclusive choices, hidden flags, social consequences, and debrief logic.';
+}
+
+function bestMoment(id: string) {
+  if (id === 'castle-rush') return 'Before level design and core loops';
+  if (id === 'youthpass-drop') return 'Before resource and feedback design';
+  return 'Before debriefing and social-impact design';
 }

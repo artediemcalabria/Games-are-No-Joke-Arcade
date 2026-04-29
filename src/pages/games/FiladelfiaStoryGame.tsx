@@ -48,6 +48,7 @@ type Ending = {
   summary: string;
   logic: string;
   howToReach: string;
+  trainerReflection: string;
 };
 
 const game = gameCatalog.find((item) => item.id === 'filadelfia-story')!;
@@ -89,12 +90,12 @@ const scenes: Scene[] = [
       },
       {
         id: 'trainer-mode',
-        label: 'Take control',
-        text: 'Tell everyone to stop joking and focus on the task now.',
-        effects: { clarity: 8, trust: -8, energy: -5, learning: 4 },
-        flags: ['controlledGroup'],
+        label: 'Guide the energy',
+        text: 'Smile, welcome the jokes, then invite the group to bring that energy into the first activity.',
+        effects: { clarity: 9, trust: 6, energy: 4, inclusion: 4, learning: 4 },
+        flags: ['guidedEnergy'],
         next: 'team',
-        feedback: 'Order arrived fast. Ownership became weaker.',
+        feedback: 'You did not shut the group down. You turned energy into a learning frame.',
       },
     ],
   },
@@ -294,38 +295,44 @@ const endings: Record<EndingId, Ending> = {
   'inclusive-showcase': {
     title: 'Inclusive Prototype Showcase',
     summary: 'Your game was clear, inclusive, and connected to learning. The group could play and reflect.',
-    logic: 'Learning, clarity, and inclusion stayed strong at the end.',
+    logic: 'The system worked because learning, clarity, and inclusion stayed strong together.',
     howToReach: 'Test the core loop, invite feedback, and use a safe debrief question.',
+    trainerReflection: 'Emanuel notices that good facilitation helped the group connect play with reflection.',
   },
   'fun-weak-learning': {
     title: 'Fun Game, Weak Learning',
     summary: 'Players laughed and moved fast, but the learning message did not live inside the rules.',
-    logic: 'Energy became high while learning stayed low.',
+    logic: 'The system produced energy, but the mechanics did not carry the learning goal.',
     howToReach: 'Choose fun-first options, skip debrief, and sell the game mainly as entertainment.',
+    trainerReflection: 'Emanuel would invite the team to keep the fun, then redesign one rule so the message is inside the play.',
   },
   'perfect-bored': {
     title: 'Perfect Rules, Bored Players',
     summary: 'The prototype looked controlled and clear, but players had low ownership and little energy.',
-    logic: 'The overbuilt prototype flag or high clarity with low energy triggered this ending.',
+    logic: 'The system valued polish before playtesting, so players received rules but not ownership.',
     howToReach: 'Spend too much time polishing rules and visuals before testing the core loop.',
+    trainerReflection: 'Emanuel would gently bring the group back to a fast playable test before more decoration.',
   },
   'conflict-returned': {
     title: 'Conflict Avoided, Conflict Returned',
     summary: 'The team avoided tension, but the same problem returned during the showcase.',
-    logic: 'Avoided conflict and low trust made unresolved tension visible again.',
+    logic: 'The system hid conflict instead of using it as feedback, so trust stayed fragile.',
     howToReach: 'Change subject during conflict and avoid turning disagreement into design feedback.',
+    trainerReflection: 'Emanuel would slow the group down and create a safer moment to name the tension.',
   },
   'collapsed-great-debrief': {
     title: 'Prototype Collapsed, Great Debrief',
     summary: 'The game broke during play, but the group learned a lot because the debrief was honest.',
-    logic: 'Ignored feedback or low clarity combined with enough learning triggered this ending.',
+    logic: 'The system failed as a game, but honest reflection converted the failure into learning.',
     howToReach: 'Ignore some feedback, then recover by asking strong reflection questions.',
+    trainerReflection: 'Emanuel would celebrate the learning and help the team turn it into a clearer next prototype.',
   },
   'shared-ownership': {
     title: 'Shared Ownership Breakthrough',
     summary: 'The prototype became a real Erasmus+ group creation. Quiet voices shaped the final design.',
-    logic: 'Listening, inclusion, shared ownership, and strong trust all stayed visible.',
+    logic: 'The system created shared ownership because quiet voices, trust, and reflection shaped the rules.',
     howToReach: 'Listen first, include quiet voices, map needs, and facilitate a reflection circle.',
+    trainerReflection: 'Emanuel sees the group using facilitation as design: everyone helped make the game stronger.',
   },
 };
 
@@ -614,6 +621,9 @@ function EndingPanel({ ending, endingId, chosenChoiceIds, flags, path, onSendTak
         <h2 className="text-2xl font-arcade text-white mt-3">{ending.title}</h2>
         <p className="text-sm text-gray-200 leading-relaxed mt-4">{ending.summary}</p>
         <p className="text-sm text-cyan-200 leading-relaxed mt-4">{ending.logic}</p>
+        <p className="text-sm text-green-100 leading-relaxed mt-4 rounded-lg border border-green-300/20 bg-green-300/10 p-3">
+          Trainer reflection: {ending.trainerReflection}
+        </p>
         <button
           onClick={onSendTakeaway}
           className="mt-5 arcade-border-green px-5 py-3 bg-green-900/40 text-green-100 text-xs font-bold uppercase tracking-widest hover:bg-green-400 hover:text-black"

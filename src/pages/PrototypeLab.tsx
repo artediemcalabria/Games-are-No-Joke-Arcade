@@ -114,8 +114,14 @@ export default function PrototypeLab() {
             {gameCatalog.map((game) => (
               <div key={game.id} className="rounded-lg border border-white/10 bg-black/50 p-3">
                 <p className="text-sm text-white font-bold">{game.title}</p>
-                <p className="text-xs text-gray-300 leading-relaxed mt-2">{gameTakeaways[game.id] || 'Play this game to unlock a design takeaway.'}</p>
+                <p className="text-xs text-gray-300 leading-relaxed mt-2">{gameTakeaways[game.id] || game.prototypePrompt}</p>
                 {gameNotes[game.id] && <p className="text-xs text-cyan-300 leading-relaxed mt-2">Prototype note: {gameNotes[game.id]}</p>}
+                <button
+                  onClick={() => updatePrototypeField(game.id === 'filadelfia-story' || game.id === 'youthpass-drop' ? 'debriefQuestion' : 'coreMechanic', game.prototypePrompt)}
+                  className="mt-3 rounded border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-[10px] font-bold uppercase text-cyan-100 hover:bg-cyan-300 hover:text-black"
+                >
+                  Use as prompt
+                </button>
               </div>
             ))}
           </div>
