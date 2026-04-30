@@ -80,6 +80,7 @@ export default function GeminiCoach() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  const [targetField, setTargetField] = useState(selectedMode.focusField);
 
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim());
   const missingPrototypeSteps = prototypeSteps.filter((step) => !prototype[step.id]?.trim());
@@ -94,6 +95,7 @@ export default function GeminiCoach() {
   const chooseMode = (mode: CoachMode) => {
     setSelectedModeId(mode.id);
     setPrompt(mode.prompt);
+    setTargetField(mode.focusField);
     setStatus('');
   };
 
@@ -138,8 +140,12 @@ export default function GeminiCoach() {
   };
 
   const copyAnswer = async () => {
-    await navigator.clipboard?.writeText(answer);
-    setStatus('Answer copied.');
+    try {
+      await navigator.clipboard?.writeText(answer);
+      setStatus('Answer copied.');
+    } catch {
+      setStatus('Copy did not work in this browser. Select the text and copy manually.');
+    }
   };
 
   const saveCurrentNote = () => {
@@ -154,8 +160,8 @@ export default function GeminiCoach() {
 
   const sendToPrototypeLab = () => {
     if (!answer.trim()) return;
-    updatePrototypeField(selectedMode.focusField, extractUsefulSnippet(answer));
-    setStatus(`Sent to Prototype Lab: ${fieldLabel(selectedMode.focusField)}.`);
+    updatePrototypeField(targetField, extractUsefulSnippet(answer));
+    setStatus(`Added to Prototype Lab: ${fieldLabel(targetField)}.`);
   };
 
   const retryShorter = () => {
@@ -210,16 +216,21 @@ export default function GeminiCoach() {
             </div>
           </div>
 
-          <div className="arcade-border glass-panel rounded-xl p-5">
+          <div className="reading-panel p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Prompt Builder</p>
                 <h2 className="mt-2 text-lg font-arcade text-white">{selectedMode.title}</h2>
               </div>
               <span className={`rounded border px-3 py-2 text-[10px] font-bold uppercase ${endpoint ? 'border-green-300/40 text-green-200 bg-green-300/10' : 'border-yellow-300/40 text-yellow-100 bg-yellow-300/10'}`}>
-                {endpoint ? 'Gemini proxy ready' : 'Offline template mode'}
+                {endpoint ? 'Connected to AI Coach backend' : 'Offline templates active'}
               </span>
             </div>
+            <p className="mt-3 rounded-lg border border-white/10 bg-black/45 p-3 text-xs leading-relaxed text-gray-300">
+              {endpoint
+                ? 'Gemini is called through the configured backend proxy. The API key is not stored in the public app.'
+                : 'No backend endpoint is configured yet, so the coach uses practical offline templates.'}
+            </p>
 
             <label className="mt-5 block text-xs text-gray-400 font-bold uppercase tracking-widest mb-2" htmlFor="coach-prompt">
               Your Question
@@ -261,10 +272,26 @@ export default function GeminiCoach() {
               </div>
               <p className="text-sm text-gray-100 leading-relaxed whitespace-pre-wrap">{answer}</p>
 
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+              <div className="mt-5 rounded-lg border border-white/10 bg-black/45 p-3">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400" htmlFor="coach-target-field">
+                  Send answer to Prototype Lab field
+                </label>
+                <select
+                  id="coach-target-field"
+                  value={targetField}
+                  onChange={(event) => setTargetField(event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-black px-3 py-3 text-sm text-white"
+                >
+                  {prototypeSteps.map((step) => (
+                    <option key={step.id} value={step.id}>{step.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
                 <ActionButton label="Copy answer" icon={<Clipboard className="w-4 h-4" />} onClick={copyAnswer} />
                 <ActionButton label="Save note" icon={<Save className="w-4 h-4" />} onClick={saveCurrentNote} />
-                <ActionButton label="Send to Lab" icon={<ClipboardList className="w-4 h-4" />} onClick={sendToPrototypeLab} />
+                <ActionButton label={`Add to ${fieldLabel(targetField)}`} icon={<ClipboardList className="w-4 h-4" />} onClick={sendToPrototypeLab} />
                 <ActionButton label="Shorter" icon={<Sparkles className="w-4 h-4" />} onClick={retryShorter} disabled={isLoading} />
                 <ActionButton label="Practical" icon={<Wand2 className="w-4 h-4" />} onClick={retryPractical} disabled={isLoading} />
               </div>
@@ -301,7 +328,7 @@ export default function GeminiCoach() {
           />
 
           <div className="arcade-border-green glass-panel-green rounded-xl p-5">
-            <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Game Takeaways</p>
+            <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Ideas From The Games</p>
             <div className="mt-4 space-y-3">
               {gameCatalog.map((game) => (
                 <div key={game.id} className="rounded-lg border border-white/10 bg-black/45 p-3">

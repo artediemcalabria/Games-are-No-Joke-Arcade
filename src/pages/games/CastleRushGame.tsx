@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
-import { Bell, Coffee, Clock, Flame, Focus, Gamepad2, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { Bell, Coffee, Clock, Flame, Focus, Gamepad2, Pause, Play, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { gameCatalog } from '../../data/course';
 import { useStore } from '../../store/useStore';
 
 type Cell = 'wall' | 'floor' | 'dot' | 'start' | 'exit' | 'room' | 'checkpoint' | 'coffee' | 'focus' | 'bell';
 type Point = { x: number; y: number };
 type ClockEnemy = { id: number; path: Point[]; step: number; direction: 1 | -1; alertUntil: number };
-type GameState = 'intro' | 'playing' | 'won-level' | 'game-over' | 'completed';
+type GameState = 'intro' | 'playing' | 'paused' | 'won-level' | 'game-over' | 'completed';
 type TokenKind = 'coffee' | 'focus' | 'bell';
 type ActivityRoom = { x: number; y: number; width: number; height: number; goal: Point };
 type LevelTemplate = {
@@ -50,6 +50,7 @@ const tokenLabels: Record<TokenKind, string> = {
 export default function CastleRushGame() {
   const { completeGame, saveGameNote, updatePrototypeField } = useStore();
   const [level, setLevel] = useState(1);
+  const [highestLevel, setHighestLevel] = useState(1);
   const [gameState, setGameState] = useState<GameState>('intro');
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [tick, setTick] = useState(0);
@@ -109,9 +110,11 @@ export default function CastleRushGame() {
     playTone(finalLevel ? 880 : 660, 0.16, 'sine');
     if (finalLevel) {
       setGameState('completed');
+      setHighestLevel(maxLevel);
       completeGame(game.id, 1000, game.takeaway, `Castle Rush completed: ${designNotes[maxLevel - 1]}`);
     } else {
       setGameState('won-level');
+      setHighestLevel((current) => Math.max(current, level + 1));
       saveGameNote(game.id, `Castle Rush: completed level ${level}/10 - ${designNotes[level - 1]}`);
     }
   }, [completeGame, level, playTone, saveGameNote]);
@@ -274,6 +277,14 @@ export default function CastleRushGame() {
               {audioEnabled ? <Volume2 className="w-4 h-4 inline mr-2" /> : <VolumeX className="w-4 h-4 inline mr-2" />}
               Sound
             </button>
+            <button
+              onClick={() => setGameState((state) => state === 'playing' ? 'paused' : state === 'paused' ? 'playing' : state)}
+              disabled={gameState !== 'playing' && gameState !== 'paused'}
+              className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-green-400 disabled:opacity-40"
+            >
+              {gameState === 'paused' ? <Play className="w-4 h-4 inline mr-2" /> : <Pause className="w-4 h-4 inline mr-2" />}
+              {gameState === 'paused' ? 'Resume' : 'Pause'}
+            </button>
             <button onClick={restart} className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-pink-400">
               <RotateCcw className="w-4 h-4 inline mr-2" /> Restart
             </button>
@@ -320,6 +331,23 @@ export default function CastleRushGame() {
           </div>
 
           <DPad onMove={movePlayer} />
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {Array.from({ length: maxLevel }).map((_, index) => {
+              const levelNumber = index + 1;
+              const unlocked = levelNumber <= highestLevel;
+              return (
+                <button
+                  key={levelNumber}
+                  onClick={() => unlocked && resetLevel(levelNumber)}
+                  disabled={!unlocked}
+                  className={`h-9 min-w-9 rounded border text-[10px] font-black ${level === levelNumber ? 'border-green-300 bg-green-300 text-black' : unlocked ? 'border-white/20 bg-black/50 text-gray-200 hover:border-cyan-300' : 'border-white/10 bg-black/20 text-gray-700'}`}
+                  aria-label={`Start Castle Rush level ${levelNumber}`}
+                >
+                  {levelNumber}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <aside className="space-y-4">
@@ -355,6 +383,16 @@ export default function CastleRushGame() {
           </p>
           <button onClick={() => resetLevel(1)} className="mt-6 arcade-border px-6 py-3 bg-cyan-900/40 text-cyan-200 text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 hover:text-black">
             Start Running
+          </button>
+        </Overlay>
+      )}
+
+      {gameState === 'paused' && (
+        <Overlay title="Paused" tone="pink">
+          <p className="text-lg text-white font-black leading-relaxed">Look at the route. Good level design gives players time to plan.</p>
+          <p className="text-sm text-gray-300 leading-relaxed mt-4">{designNotes[level - 1]}</p>
+          <button onClick={() => setGameState('playing')} className="mt-6 arcade-border px-6 py-3 bg-cyan-900/40 text-cyan-200 text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 hover:text-black">
+            Resume
           </button>
         </Overlay>
       )}
@@ -592,16 +630,17 @@ function charToCell(char: string): Cell {
 }
 
 function carveActivityRoom(grid: Cell[][], goal: Point): ActivityRoom {
-  const roomWidth = 4;
-  const roomHeight = 4;
+  const roomWidth = 5;
+  const roomHeight = 5;
   const maxX = Math.max(1, grid[0].length - roomWidth - 1);
   const maxY = Math.max(1, grid.length - roomHeight - 1);
-  const x = clampInt(goal.x - 1, 1, maxX);
-  const y = clampInt(goal.y - 1, 1, maxY);
+  const x = clampInt(goal.x - 2, 1, maxX);
+  const y = clampInt(goal.y - 2, 1, maxY);
+  const center = { x: x + Math.floor(roomWidth / 2), y: y + Math.floor(roomHeight / 2) };
 
   for (let row = y; row < y + roomHeight; row++) {
     for (let column = x; column < x + roomWidth; column++) {
-      grid[row][column] = same({ x: column, y: row }, goal) ? 'exit' : 'room';
+      grid[row][column] = same({ x: column, y: row }, center) ? 'exit' : 'room';
     }
   }
 
@@ -610,7 +649,7 @@ function carveActivityRoom(grid: Cell[][], goal: Point): ActivityRoom {
     y,
     width: roomWidth,
     height: roomHeight,
-    goal,
+    goal: center,
   };
 }
 

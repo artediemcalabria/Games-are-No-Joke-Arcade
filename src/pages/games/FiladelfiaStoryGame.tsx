@@ -1150,11 +1150,21 @@ function StoryStage({
           <h2 className="mt-2 text-base sm:text-xl font-arcade mobile-readable-arcade text-white">{node.title}</h2>
           <p className="mt-3 text-sm leading-relaxed text-gray-200">{formatText(node.text, protagonist)}</p>
 
+          <div className="mt-4 rounded-lg border border-white/10 bg-white/[.03] p-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-green-300">Story beat</p>
+            <p className="mt-2 text-sm leading-relaxed text-gray-100">{formatText(storyBeat(node.id), protagonist)}</p>
+          </div>
+
           <div className="mt-4 space-y-2">
             {node.dialogue.map((line, index) => (
-              <div key={`${line.speaker}-${index}`} className="rounded-lg border border-white/10 bg-white/[.04] p-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-cyan-300">{line.speaker}</p>
-                <p className="mt-1 text-sm leading-relaxed text-gray-100">"{formatText(line.text, protagonist)}"</p>
+              <div key={`${line.speaker}-${index}`} className="rounded-lg border border-white/10 bg-black/55 p-3">
+                <div className="flex items-start gap-3">
+                  <Avatar name={line.speaker} tone={line.speaker === protagonist.name || line.speaker === 'Narrator' ? 'bg-green-300' : 'bg-cyan-300'} />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-cyan-300">{line.speaker}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-gray-100">"{formatText(line.text, protagonist)}"</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -1432,11 +1442,56 @@ function FlagList({ flags }: { flags: string[] }) {
     <div className="mt-3 flex flex-wrap gap-2">
       {flags.map((flag) => (
         <span key={flag} className="rounded bg-green-400/10 border border-green-400/30 px-2 py-1 text-[10px] font-bold uppercase text-green-200">
-          {flag}
+          {humanFlag(flag)}
         </span>
       ))}
     </div>
   );
+}
+
+function humanFlag(flag: string) {
+  const labels: Record<string, string> = {
+    builtAlliance: 'Built an alliance',
+    includedQuietVoice: 'Invited a quiet voice',
+    watchedGroup: 'Observed the group',
+    ignoredTeam: 'Stayed outside the team',
+    sharedRoles: 'Shared roles',
+    learningInsideMechanic: 'Learning inside the mechanic',
+    soloDesigner: 'Worked mostly alone',
+    funFirst: 'Chose fun first',
+    usedPlaytest: 'Used playtesting',
+    polishedBeforeTesting: 'Polished before testing',
+    clearDebrief: 'Clear debrief',
+    ignoredFeedback: 'Ignored feedback',
+    avoidedConflict: 'Avoided conflict',
+    hidFailure: 'Hid a weak point',
+    reskinnedGame: 'Copied a known game',
+  };
+  if (flag.startsWith('perspective:')) return `Perspective: ${flag.split(':')[1]}`;
+  return labels[flag] ?? flag.replace(/([A-Z])/g, ' $1').toLowerCase();
+}
+
+function storyBeat(nodeId: StoryNodeId) {
+  const beats: Record<StoryNodeId, string> = {
+    arrival: '{you} has not chosen a board game yet. The first choice is how to enter the group.',
+    'circle-connect': 'The first bridge is built. Now the team must turn many topics into one playable system.',
+    'circle-distance': '{you} has good observations, but the team needs a real invitation before the idea moves too far.',
+    'circle-familiar': 'Comfort is useful, but staying comfortable can make the mixed team start without you.',
+    'team-shared': 'The game idea belongs to several people. The next danger is talking about the game instead of testing it.',
+    'team-solo': 'The rules are becoming clear, but the team is becoming an audience.',
+    'team-fun': 'The energy is high. The risk is that the youth-work message becomes only a speech after play.',
+    'prototype-playtest': 'The first test breaks the prototype. This is the moment where design becomes real.',
+    'prototype-polish': 'The board looks better than the rule system. Now the team must choose truth or decoration.',
+    'prototype-alone': '{you} can finish the object alone, but a group project also needs shared ownership.',
+    'conflict-listen': 'The team uses conflict as information. A weak rule can become the best lesson.',
+    'conflict-control': 'Control keeps the prototype stable, but it lowers trust and ownership.',
+    'conflict-avoid': 'Avoided tension returns with higher cost. The group must repair it or hide it.',
+    'night-repair': 'The team simplifies the game and finds one strong playable message.',
+    'night-solo': 'The prototype is complete, but the process is fragile.',
+    'night-honest': 'The team may not save the prototype, but it can still save the learning.',
+    showcase: 'The final result is not only the board. It is the story of how choices shaped the team and the game.',
+  };
+  return beats[nodeId];
 }
 
 function resolveEnding(meters: Meters, flags: string[]): EndingId {

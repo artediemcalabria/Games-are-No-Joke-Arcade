@@ -1,0 +1,18 @@
+{
+  "name": "Games Are No Joke Companion App",
+  "short_name": "Games No Joke",
+  "description": "Mobile companion app for the Erasmus+ Training Course Games Are No Joke in Filadelfia, Calabria.",
+  "start_url": "/Games-are-No-Joke-Arcade/",
+  "scope": "/Games-are-No-Joke-Arcade/",
+  "display": "standalone",
+  "background_color": "#060813",
+  "theme_color": "#060813",
+  "icons": [
+    {
+      "src": "ganj-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

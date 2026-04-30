@@ -68,9 +68,9 @@ export default function Progress() {
           </div>
           <div>
             <h2 className="text-xl font-arcade text-pink-500 uppercase tracking-widest">Training Journey</h2>
-            <p className="text-3xl font-bold text-white mt-2">{totalScore} XP</p>
+            <p className="text-2xl font-bold text-white mt-2">{completedCount}/{milestones.length} outcomes ready</p>
             <p className="text-xs text-gray-400 mt-2">Learn models, play design games, build prototype, reflect.</p>
-            <p className="text-xs text-gray-500 mt-1">Best quick-check score: {highestQuizScore}</p>
+            <p className="text-xs text-gray-500 mt-1">XP: {totalScore} - Best quick-check score: {highestQuizScore}</p>
           </div>
         </div>
 
@@ -96,7 +96,7 @@ export default function Progress() {
 
       <section className="md:col-span-4 arcade-border-pink glass-panel-pink p-5 rounded-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-arcade text-pink-500">Collection</h3>
+          <h3 className="text-sm font-arcade text-pink-500">Games</h3>
           <span className="text-xs font-bold text-white">{completedCatalogGames.length}/{gameCatalog.length}</span>
         </div>
         <p className="text-xs text-gray-400 mt-3">Play design games and unlock takeaways.</p>
@@ -178,7 +178,7 @@ export default function Progress() {
 
       <div className="md:col-span-12 text-center pt-8">
         <button onClick={resetProgress} className="text-gray-500 hover:text-red-500 text-xs font-bold uppercase tracking-widest transition-colors py-2 px-4 border border-transparent hover:border-red-500/30 rounded">
-          Factory Reset Memory
+          Reset my progress
         </button>
       </div>
     </motion.div>

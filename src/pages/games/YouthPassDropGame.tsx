@@ -434,12 +434,13 @@ export default function YouthPassDropGame() {
               <input
                 value={playerName}
                 onChange={(event) => setPlayerName(event.target.value)}
+                onKeyDown={(event) => event.stopPropagation()}
                 maxLength={18}
                 autoFocus
                 inputMode="text"
                 autoComplete="given-name"
                 enterKeyHint="done"
-                className="mt-2 w-full rounded-xl border-2 border-cyan-400/50 bg-black/80 px-4 py-4 text-center text-lg font-bold text-white caret-cyan-300 outline-none focus:border-cyan-200 focus:ring-4 focus:ring-cyan-300/20"
+                className="mt-2 w-full rounded-xl border-2 border-cyan-400/50 bg-black/80 px-4 py-4 text-center font-sans text-lg font-bold tracking-normal text-white caret-cyan-300 outline-none focus:border-cyan-200 focus:ring-4 focus:ring-cyan-300/20"
                 placeholder="Your name"
               />
             </label>

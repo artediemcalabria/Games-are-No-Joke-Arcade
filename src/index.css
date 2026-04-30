@@ -37,6 +37,15 @@
   input {
     -webkit-tap-highlight-color: transparent;
   }
+
+  button,
+  a,
+  textarea,
+  input,
+  select,
+  summary {
+    @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300;
+  }
 }
 
 @layer utilities {
@@ -85,12 +94,21 @@
   }
 
   .crt-flicker {
-    animation: flicker 0.15s infinite;
+    animation: flicker 1.8s infinite;
   }
 
   .mobile-readable-arcade {
     overflow-wrap: anywhere;
     hyphens: auto;
+  }
+
+  .reading-panel {
+    @apply border border-white/10 bg-black/55 rounded-xl;
+    box-shadow: 0 0 14px rgba(0, 242, 255, 0.08);
+  }
+
+  .readable-copy {
+    @apply font-sans tracking-normal leading-relaxed;
   }
 
   .safe-bottom {
@@ -99,9 +117,24 @@
 }
 
 @keyframes flicker {
-  0% { opacity: 0.95; }
+  0% { opacity: 0.985; }
   50% { opacity: 1; }
-  100% { opacity: 0.95; }
+  100% { opacity: 0.985; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .scanlines::before {
+    opacity: 0.25;
+  }
 }
 
 /* Custom Scrollbar */

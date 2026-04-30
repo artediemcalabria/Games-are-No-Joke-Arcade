@@ -26,6 +26,7 @@ interface ProgressState {
   quizScores: Record<string, number>;
   totalScore: number;
   prototype: Record<string, string>;
+  audioEnabled: boolean;
   unlockTheory: (id: string) => void;
   completeLesson: (id: string, score?: number) => void;
   completeGame: (id: string, score?: number, takeaway?: string, note?: string) => void;
@@ -36,6 +37,7 @@ interface ProgressState {
   clearCoachHistory: () => void;
   saveQuizScore: (quizId: string, score: number) => void;
   updatePrototypeField: (field: string, value: string) => void;
+  setAudioEnabled: (enabled: boolean) => void;
   resetProgress: () => void;
 }
 
@@ -52,6 +54,7 @@ export const useStore = create<ProgressState>()(
       quizScores: {},
       totalScore: 0,
       prototype: {},
+      audioEnabled: true,
       
       unlockTheory: (id) => set((state) => ({
         unlockedTheories: state.unlockedTheories.includes(id) 
@@ -110,6 +113,10 @@ export const useStore = create<ProgressState>()(
         prototype: { ...state.prototype, [field]: value }
       })),
 
+      setAudioEnabled: (enabled) => set({
+        audioEnabled: enabled,
+      }),
+
       resetProgress: () => set({
         unlockedTheories: ['intro'],
         completedLessons: [],
@@ -125,6 +132,11 @@ export const useStore = create<ProgressState>()(
     }),
     {
       name: 'games-are-no-joke-storage',
+      version: 2,
+      migrate: (persistedState) => ({
+        ...(persistedState as ProgressState),
+        audioEnabled: (persistedState as Partial<ProgressState>).audioEnabled ?? true,
+      }) as ProgressState,
     }
   )
 );

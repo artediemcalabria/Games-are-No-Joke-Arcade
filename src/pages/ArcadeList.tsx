@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Clock, Coffee, Droplets, Gamepad2, GitBranch, Sparkles, Trophy } from 'lucide-react';
+import { Beer, Clock, Coffee, Droplets, Gamepad2, GitBranch, Globe2, Sparkles, Trophy, Users, Wine } from 'lucide-react';
 import { gameCatalog } from '../data/course';
 import { useStore } from '../store/useStore';
 
@@ -33,7 +33,7 @@ export default function ArcadeList() {
               <motion.div
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                className={`${game.borderClass} glass-panel p-4 sm:p-5 min-h-[320px] grid grid-cols-1 lg:grid-cols-[0.75fr_1.25fr] gap-5 group hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden`}
+                className={`${game.borderClass} glass-panel p-4 sm:p-5 min-h-[320px] grid grid-cols-1 lg:grid-cols-[0.75fr_1.25fr] gap-5 group hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden focus-within:ring-2 focus-within:ring-cyan-300`}
               >
                 <GamePreview id={game.id} />
 
@@ -41,7 +41,7 @@ export default function ArcadeList() {
                   <div>
                     <div className="flex justify-between items-start gap-3">
                       <div>
-                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Step {gameCatalog.findIndex((item) => item.id === game.id) + 1}/3 - {bestMoment(game.id)}</p>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Step {gameCatalog.findIndex((item) => item.id === game.id) + 1}/{gameCatalog.length} - {bestMoment(game.id)}</p>
                         <h3 className="font-arcade text-lg md:text-2xl mobile-readable-arcade text-white group-hover:text-arcade-green transition-colors mt-3 leading-tight">{game.title}</h3>
                         <p className="text-xs text-gray-400 font-bold uppercase mt-2">{game.subtitle}</p>
                       </div>
@@ -120,7 +120,8 @@ function GamePreview({ id }: { id: string }) {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-60" />
         <Droplets className="absolute left-[18%] top-[18%] w-12 h-12 text-cyan-200 rounded-xl border border-cyan-300/50 bg-cyan-300/15 p-2 shadow-[0_0_18px_rgba(34,211,238,.55)]" />
         <Coffee className="absolute right-[20%] top-[30%] w-12 h-12 text-yellow-200 rounded-xl border border-yellow-300/50 bg-yellow-300/15 p-2" />
-        <span className="absolute left-[35%] top-[48%] rounded-xl border-2 border-red-300 bg-red-500/20 px-3 py-3 text-xs font-black text-red-100 shadow-[0_0_16px_rgba(248,113,113,.5)]">VOD</span>
+        <Beer className="absolute left-[32%] top-[47%] w-12 h-12 text-orange-100 rounded-xl border border-orange-300/60 bg-orange-400/20 p-2 shadow-[0_0_16px_rgba(251,146,60,.45)]" />
+        <Wine className="absolute right-[30%] top-[55%] w-12 h-12 text-red-100 rounded-xl border border-red-300/60 bg-red-500/20 p-2 shadow-[0_0_16px_rgba(248,113,113,.45)]" />
         <div className="absolute left-1/2 bottom-8 h-14 w-14 -translate-x-1/2 rounded-full border-4 border-white bg-cyan-300 shadow-[0_0_20px_rgba(34,211,238,.8)]" />
         <div className="absolute left-5 right-5 top-5 flex gap-1">
           {Array.from({ length: 10 }).map((_, index) => (
@@ -128,6 +129,39 @@ function GamePreview({ id }: { id: string }) {
           ))}
         </div>
         <Trophy className="absolute right-6 bottom-7 w-9 h-9 text-yellow-300" />
+      </div>
+    );
+  }
+
+  if (id === 'future-exchange') {
+    return (
+      <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(253,224,71,.20),transparent_42%),linear-gradient(180deg,#1d1304,#06121f)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-60" />
+        <Globe2 className="absolute left-7 top-7 w-12 h-12 text-yellow-200 rounded-xl border border-yellow-300/50 bg-yellow-300/15 p-2 shadow-[0_0_18px_rgba(253,224,71,.45)]" />
+        <div className="absolute left-8 right-8 top-20 grid grid-cols-7 gap-1">
+          {Array.from({ length: 7 }).map((_, index) => (
+            <span key={index} className={`h-8 rounded border ${index < 3 ? 'border-green-300 bg-green-300/60' : 'border-white/10 bg-black/60'}`} />
+          ))}
+        </div>
+        <div className="absolute left-7 top-36 right-7 rounded-xl border border-cyan-300/30 bg-cyan-300/10 p-3">
+          <p className="text-[9px] font-black uppercase text-cyan-100">Collect + Craft + Trade</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {['PAP', 'TRU', 'CRE', 'KEY', 'ACT', 'SAFE'].map((token, index) => (
+              <span key={token} className={`rounded border px-2 py-1 text-[9px] font-black ${index < 4 ? 'border-yellow-300 bg-yellow-300/20 text-yellow-100' : 'border-green-300 bg-green-300/20 text-green-100'}`}>
+                {token}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="absolute bottom-7 left-7 right-7 grid grid-cols-4 gap-2">
+          {['Andrea', 'Slave', 'Ivalina', 'Rocco'].map((name) => (
+            <div key={name} className="rounded-lg border border-white/10 bg-black/60 p-2 text-center">
+              <Users className="mx-auto h-4 w-4 text-cyan-200" />
+              <p className="mt-1 text-[7px] font-bold uppercase text-gray-300">{name}</p>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -155,17 +189,20 @@ function GamePreview({ id }: { id: string }) {
 function lockedTakeawayText(id: string) {
   if (id === 'filadelfia-story') return 'Reach an ending to unlock the hidden logic and design takeaway.';
   if (id === 'youthpass-drop') return 'Collect YouthPass pieces to unlock the resource-system takeaway.';
+  if (id === 'future-exchange') return 'Build the KA152 board to unlock the crafting-systems takeaway.';
   return 'Complete the fair route levels to unlock the level-design takeaway.';
 }
 
 function practiceText(id: string) {
   if (id === 'castle-rush') return 'Readable goals, fair routes, checkpoints, pickups, and predictable pressure.';
   if (id === 'youthpass-drop') return 'Meters, resource feedback, consequence loops, and healthy strategy.';
+  if (id === 'future-exchange') return 'Collecting, crafting, trading, resource systems, and project assembly.';
   return 'Inclusive choices, hidden flags, social consequences, and debrief logic.';
 }
 
 function bestMoment(id: string) {
   if (id === 'castle-rush') return 'Before level design and core loops';
   if (id === 'youthpass-drop') return 'Before resource and feedback design';
+  if (id === 'future-exchange') return 'Before project-design simulations';
   return 'Before debriefing and social-impact design';
 }
