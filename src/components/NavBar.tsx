@@ -7,11 +7,11 @@ import { useStore } from '../store/useStore';
 
 const navItems = [
   { path: '/theory', label: 'Theory', icon: BookOpen },
-  { path: '/reports', label: 'Reports', icon: Newspaper },
   { path: '/prototype', label: 'Prototype', icon: ClipboardList },
   { path: '/coach', label: 'AI Coach', icon: Bot },
   { path: '/arcade', label: 'Arcade', icon: Gamepad2 },
   { path: '/progress', label: 'Progress', icon: Trophy },
+  { path: '/reports', label: 'Reports', icon: Newspaper },
   { path: '/about', label: 'About', icon: Info },
 ];
 
@@ -35,19 +35,20 @@ export function NavBar() {
                   isActive ? "bg-cyan-300/10 text-arcade-cyan" : "text-gray-500 hover:bg-white/5 hover:text-white"
                 )}
               >
-                <div className="relative">
+                <div>
                   <item.icon className="w-5 h-5" />
-                  {isActive && (
-                    <motion.div
-                      layoutId="active-nav"
-                      className="absolute -bottom-2 left-1/2 w-1 h-1 bg-arcade-pink rounded-full shadow-[0_0_8px_#ff00ff]"
-                      style={{ x: "-50%" }}
-                    />
-                  )}
                 </div>
                 <span className="mt-1 max-w-full truncate text-[9px] font-bold uppercase leading-tight sm:text-[10px]">
                   {item.label}
                 </span>
+                <div className="mt-1 flex h-1 items-center justify-center">
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-nav"
+                      className="h-1 w-1 rounded-full bg-arcade-pink shadow-[0_0_8px_#ff00ff]"
+                    />
+                  )}
+                </div>
               </Link>
             </li>
           );
