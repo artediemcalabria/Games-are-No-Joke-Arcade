@@ -870,6 +870,7 @@ async function downloadLessonModule(lesson: Lesson) {
   y = drawModulePdfSection(pdf, 'Trainer backup', lesson.trainerBackup, y);
   y = drawModulePdfSection(pdf, 'Quick check', `${lesson.checkpoint.question}\nCorrect answer: ${lesson.checkpoint.options[lesson.checkpoint.answer]}`, y);
   drawModulePdfBullets(pdf, 'Sources and references', lesson.sources, y);
+  appendLessonCardsToPdf(pdf, lesson, erasmusLogo, courseLogo);
 
   pdf.save(`${lesson.id}-module.pdf`);
 }
@@ -966,6 +967,25 @@ function drawPdfHeader(pdf: PdfDocument, lesson: Lesson, erasmusLogo: string, co
   pdf.setTextColor(114, 102, 84);
   pdf.text(`${courseInfo.programme} | ${courseInfo.dates} | ${courseInfo.venue}`, margin, 28);
   pdf.text(courseInfo.code, margin, 34);
+}
+
+function appendLessonCardsToPdf(pdf: PdfDocument, lesson: Lesson, erasmusLogo: string, courseLogo: string) {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 14;
+  const headerHeight = 34;
+  const cardGap = 8;
+  const cardHeight = (pageHeight - margin * 2 - headerHeight - cardGap) / 2;
+  const cardWidth = pageWidth - margin * 2;
+
+  lesson.cardDeck.forEach((card, index) => {
+    if (index === 0 || index % 2 === 0) {
+      pdf.addPage();
+      drawPdfHeader(pdf, lesson, erasmusLogo, courseLogo);
+    }
+    const y = margin + headerHeight + (index % 2) * (cardHeight + cardGap);
+    drawTheoryPdfCard(pdf, card, index, lesson.cardDeck.length, margin, y, cardWidth, cardHeight);
+  });
 }
 
 function drawPdfImageContain(pdf: PdfDocument, imageDataUrl: string, x: number, y: number, maxWidth: number, maxHeight: number, align: 'center' | 'right' = 'center') {
