@@ -831,26 +831,7 @@ function QuickCheckPanel({
 async function downloadLessonCards(lesson: Lesson) {
   const { jsPDF } = await import('jspdf');
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const [erasmusLogo, courseLogo] = await Promise.all([
-    imageToDataUrl(erasmusLogoPath),
-    imageToDataUrl(courseLogoPath),
-  ]);
-
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 14;
-  const headerHeight = 34;
-  const cardGap = 8;
-  const cardHeight = (pageHeight - margin * 2 - headerHeight - cardGap) / 2;
-  const cardWidth = pageWidth - margin * 2;
-
-  lesson.cardDeck.forEach((card, index) => {
-    if (index > 0 && index % 2 === 0) pdf.addPage();
-    if (index % 2 === 0) drawPdfHeader(pdf, lesson, erasmusLogo, courseLogo);
-    const y = margin + headerHeight + (index % 2) * (cardHeight + cardGap);
-    drawTheoryPdfCard(pdf, card, index, lesson.cardDeck.length, margin, y, cardWidth, cardHeight);
-  });
-
+  drawPrintableCardsPdf(pdf, lesson);
   pdf.save(`${lesson.id}-theory-cards.pdf`);
 }
 
@@ -975,23 +956,48 @@ function drawPdfHeader(pdf: PdfDocument, lesson: Lesson, erasmusLogo: string, co
   pdf.text(courseInfo.code, margin, 34);
 }
 
-function appendLessonCardsToPdf(pdf: PdfDocument, lesson: Lesson, erasmusLogo: string, courseLogo: string) {
+function appendLessonCardsToPdf(pdf: PdfDocument, lesson: Lesson, _erasmusLogo: string, _courseLogo: string) {
+  pdf.addPage();
+  drawPrintableCardsPdf(pdf, lesson);
+}
+
+function drawPrintableCardsPdf(pdf: PdfDocument, lesson: Lesson) {
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 14;
-  const headerHeight = 34;
-  const cardGap = 8;
-  const cardHeight = (pageHeight - margin * 2 - headerHeight - cardGap) / 2;
-  const cardWidth = pageWidth - margin * 2;
+  const headerBottom = 42;
+  const cardGap = 6;
+  const cardWidth = (pageWidth - margin * 2 - cardGap) / 2;
+  const cardHeight = (pageHeight - headerBottom - margin - cardGap) / 2;
 
   lesson.cardDeck.forEach((card, index) => {
-    if (index === 0 || index % 2 === 0) {
+    if (index > 0 && index % 4 === 0) {
       pdf.addPage();
-      drawPdfHeader(pdf, lesson, erasmusLogo, courseLogo);
     }
-    const y = margin + headerHeight + (index % 2) * (cardHeight + cardGap);
-    drawTheoryPdfCard(pdf, card, index, lesson.cardDeck.length, margin, y, cardWidth, cardHeight);
+    if (index % 4 === 0) drawPrintableCardsPdfHeader(pdf, lesson);
+    const position = index % 4;
+    const x = margin + (position % 2) * (cardWidth + cardGap);
+    const y = headerBottom + Math.floor(position / 2) * (cardHeight + cardGap);
+    drawTheoryPdfCard(pdf, card, index, lesson.cardDeck.length, x, y, cardWidth, cardHeight);
   });
+}
+
+function drawPrintableCardsPdfHeader(pdf: PdfDocument, lesson: Lesson) {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const margin = 14;
+
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(0, 0, pageWidth, pdf.internal.pageSize.getHeight(), 'F');
+  pdf.setTextColor(37, 32, 24);
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(20);
+  pdf.text(`${courseInfo.title} - ${lesson.title}`, margin, 16, { maxWidth: pageWidth - margin * 2 });
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10.5);
+  pdf.setTextColor(91, 82, 69);
+  pdf.text(`${courseInfo.programme} | ${courseInfo.dates} | ${courseInfo.venue} | ${courseInfo.code}`, margin, 26, { maxWidth: pageWidth - margin * 2 });
+  pdf.setDrawColor(155, 135, 104);
+  pdf.line(margin, 38, pageWidth - margin, 38);
 }
 
 function drawPdfImageContain(pdf: PdfDocument, imageDataUrl: string, x: number, y: number, maxWidth: number, maxHeight: number, align: 'center' | 'right' = 'center') {
@@ -1063,45 +1069,48 @@ function ensurePdfSpace(pdf: PdfDocument, y: number, needed: number) {
 }
 
 function drawTheoryPdfCard(pdf: PdfDocument, card: TheoryCard, index: number, total: number, x: number, y: number, width: number, height: number) {
-  const inner = 8;
+  const inner = 6;
   pdf.setDrawColor(155, 135, 104);
-  pdf.setFillColor(255, 250, 240);
-  pdf.roundedRect(x, y, width, height, 4, 4, 'FD');
+  pdf.setLineWidth(0.25);
+  pdf.setFillColor(255, 255, 255);
+  pdf.roundedRect(x, y, width, height, 3.5, 3.5, 'FD');
 
   pdf.setTextColor(124, 79, 36);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(7.5);
-  pdf.text(`${card.category.toUpperCase()}  ${index + 1}/${total}`, x + inner, y + 10);
+  pdf.setFontSize(6.8);
+  pdf.text(card.category.toUpperCase(), x + inner, y + 9);
 
   pdf.setTextColor(37, 32, 24);
-  pdf.setFontSize(18);
-  pdf.text(card.front, x + inner, y + 22, { maxWidth: width - inner * 2 });
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(15);
+  pdf.text(card.front, x + inner, y + 20, { maxWidth: width - inner * 2 });
 
-  pdf.setFontSize(10);
+  pdf.setTextColor(53, 95, 112);
+  pdf.setFontSize(9.5);
   pdf.setFont('helvetica', 'bold');
   const frontHintLines = pdf.splitTextToSize(card.frontHint, width - inner * 2);
-  pdf.text(frontHintLines, x + inner, y + 34);
+  pdf.text(frontHintLines.slice(0, 3), x + inner, y + 31);
 
-  const dividerY = y + 44;
-  pdf.setDrawColor(200, 188, 164);
+  const dividerY = y + 43;
+  pdf.setDrawColor(155, 155, 155);
   pdf.line(x + inner, dividerY, x + width - inner, dividerY);
 
+  pdf.setTextColor(37, 32, 24);
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
+  pdf.setFontSize(9.5);
   const backLines = pdf.splitTextToSize(card.back, width - inner * 2);
-  pdf.text(backLines.slice(0, 8), x + inner, dividerY + 8);
+  pdf.text(backLines.slice(0, 7), x + inner, dividerY + 8);
 
-  const promptY = y + height - 25;
-  pdf.setFillColor(239, 243, 235);
-  pdf.roundedRect(x + inner, promptY, width - inner * 2, 17, 3, 3, 'F');
+  const promptY = y + height - 28;
   pdf.setTextColor(66, 107, 61);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(7.5);
-  pdf.text('PROTOTYPE PROMPT', x + inner + 3, promptY + 5);
+  pdf.setFontSize(9);
+  pdf.text('Prototype prompt', x + inner, promptY);
   pdf.setTextColor(37, 32, 24);
-  pdf.setFontSize(8.5);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(9);
   const promptLines = pdf.splitTextToSize(card.prompt, width - inner * 2 - 6);
-  pdf.text(promptLines.slice(0, 2), x + inner + 3, promptY + 11);
+  pdf.text(promptLines.slice(0, 3), x + inner, promptY + 7);
 }
 
 function escapeHtml(value: string) {
