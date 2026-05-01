@@ -682,40 +682,93 @@
   }
 
   .theme-notebook .theme-game-screen {
-    color: #ffffff !important;
+    color: var(--notebook-ink) !important;
   }
 
   .theme-notebook .theme-game-screen .glass-panel,
   .theme-notebook .theme-game-screen .glass-panel-pink,
   .theme-notebook .theme-game-screen .glass-panel-green,
   .theme-notebook .theme-game-screen .reading-panel {
-    background: rgba(4, 8, 20, 0.82) !important;
-    border-color: rgba(0, 242, 255, 0.28) !important;
-    box-shadow: 0 0 22px rgba(0, 242, 255, 0.12) !important;
-    backdrop-filter: blur(8px) !important;
+    background: rgba(255, 250, 240, 0.9) !important;
+    border-color: rgba(88, 72, 47, 0.34) !important;
+    box-shadow: 0 16px 34px rgba(68, 52, 31, 0.12) !important;
+    backdrop-filter: blur(2px) !important;
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .theme-game-screen .arcade-border,
+  .theme-notebook .theme-game-screen .arcade-border-pink,
+  .theme-notebook .theme-game-screen .arcade-border-green {
+    border-color: rgba(88, 72, 47, 0.34) !important;
+    box-shadow: 0 16px 34px rgba(68, 52, 31, 0.12) !important;
   }
 
   .theme-notebook .theme-game-screen [class*="bg-black"] {
-    background-color: rgba(0, 0, 0, 0.72) !important;
+    background-color: rgba(18, 23, 27, 0.78) !important;
+    color: #ffffff !important;
   }
 
   .theme-notebook .theme-game-screen [class*="bg-slate"] {
-    background-color: rgba(15, 23, 42, 0.82) !important;
+    background-color: rgba(28, 36, 43, 0.78) !important;
+    color: #ffffff !important;
   }
 
   .theme-notebook .theme-game-screen [class*="bg-pink-900"] {
-    background-color: rgba(80, 7, 36, 0.72) !important;
+    background-color: rgba(124, 79, 36, 0.2) !important;
+    color: var(--notebook-ink) !important;
   }
 
   .theme-notebook .theme-game-screen [class*="bg-green-900"] {
-    background-color: rgba(5, 46, 22, 0.72) !important;
+    background-color: rgba(66, 107, 61, 0.16) !important;
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .theme-game-screen .glass-panel [class*="text-white"],
+  .theme-notebook .theme-game-screen .glass-panel-pink [class*="text-white"],
+  .theme-notebook .theme-game-screen .glass-panel-green [class*="text-white"],
+  .theme-notebook .theme-game-screen .glass-panel [class*="text-gray-100"],
+  .theme-notebook .theme-game-screen .glass-panel-pink [class*="text-gray-100"],
+  .theme-notebook .theme-game-screen .glass-panel-green [class*="text-gray-100"],
+  .theme-notebook .theme-game-screen .glass-panel [class*="text-gray-200"],
+  .theme-notebook .theme-game-screen .glass-panel-pink [class*="text-gray-200"],
+  .theme-notebook .theme-game-screen .glass-panel-green [class*="text-gray-200"],
+  .theme-notebook .theme-game-screen .glass-panel [class*="text-gray-300"],
+  .theme-notebook .theme-game-screen .glass-panel-pink [class*="text-gray-300"],
+  .theme-notebook .theme-game-screen .glass-panel-green [class*="text-gray-300"] {
+    color: var(--notebook-ink) !important;
   }
 
   .theme-notebook .theme-game-screen [class*="text-white"],
   .theme-notebook .theme-game-screen [class*="text-gray-100"],
   .theme-notebook .theme-game-screen [class*="text-gray-200"],
   .theme-notebook .theme-game-screen [class*="text-gray-300"] {
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .theme-game-screen [class*="bg-black"] [class*="text-white"],
+  .theme-notebook .theme-game-screen [class*="bg-black"] [class*="text-gray-100"],
+  .theme-notebook .theme-game-screen [class*="bg-black"] [class*="text-gray-200"],
+  .theme-notebook .theme-game-screen [class*="bg-black"] [class*="text-gray-300"],
+  .theme-notebook .theme-game-screen [class*="bg-slate"] [class*="text-white"],
+  .theme-notebook .theme-game-screen [class*="bg-slate"] [class*="text-gray-100"],
+  .theme-notebook .theme-game-screen [class*="bg-slate"] [class*="text-gray-200"],
+  .theme-notebook .theme-game-screen [class*="bg-slate"] [class*="text-gray-300"] {
     color: #ffffff !important;
+  }
+
+  .theme-notebook .theme-game-screen [class*="text-cyan"],
+  .theme-notebook .theme-game-screen [class*="text-blue"] {
+    color: var(--notebook-blue) !important;
+  }
+
+  .theme-notebook .theme-game-screen [class*="text-pink"],
+  .theme-notebook .theme-game-screen [class*="text-yellow"],
+  .theme-notebook .theme-game-screen [class*="text-amber"] {
+    color: var(--notebook-accent) !important;
+  }
+
+  .theme-notebook .theme-game-screen [class*="text-green"] {
+    color: var(--notebook-green) !important;
   }
 
   .theme-notebook .theme-game-screen [class*="border-white"] {
