@@ -38,6 +38,14 @@ app.get('/', (_request, response) => {
   response.json({ ok: true, service: 'Games Are No Joke Firebase AI backend' });
 });
 
+app.get('/api/health', (_request, response) => {
+  response.json({
+    ok: true,
+    service: 'Games Are No Joke Firebase AI backend',
+    geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+  });
+});
+
 app.post('/api/coach', async (request, response) => {
   if (!isAllowedOrigin(request)) {
     response.status(403).json({ error: 'This origin is not allowed.' });

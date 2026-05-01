@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 import { Bot, CheckCircle2, Clipboard, ClipboardList, History, Loader2, MessageSquareText, RotateCcw, Save, Send, Sparkles, Wand2 } from 'lucide-react';
 import { courseInfo, gameCatalog, prototypeSteps } from '../data/course';
@@ -15,6 +15,7 @@ type CoachMode = {
 };
 
 const endpoint = normalizeAiEndpoint(import.meta.env.VITE_AI_COACH_ENDPOINT, '/api/coach');
+const healthEndpoint = endpoint.replace(/\/api\/coach$/, '/api/health');
 
 const coachModes: CoachMode[] = [
   {
@@ -87,6 +88,8 @@ export default function GeminiCoach() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [connectionMessage, setConnectionMessage] = useState('Checking AI backend...');
   const [targetField, setTargetField] = useState(selectedMode.focusField);
 
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim());
@@ -98,6 +101,33 @@ export default function GeminiCoach() {
       .join('\n');
     return filled || 'No prototype fields filled yet.';
   }, [prototype]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkConnection = async () => {
+      setConnectionStatus('checking');
+      setConnectionMessage('Checking AI backend...');
+      try {
+        const response = await fetch(healthEndpoint, { headers: { Accept: 'application/json' } });
+        const data = await response.json() as { ok?: boolean; geminiConfigured?: boolean; error?: string };
+        if (!response.ok || !data.ok) throw new Error(data.error || `Backend health check returned ${response.status}.`);
+        if (!data.geminiConfigured) throw new Error('AI backend is online, but GEMINI_API_KEY is not configured.');
+        if (cancelled) return;
+        setConnectionStatus('connected');
+        setConnectionMessage('AI Coach backend connected.');
+      } catch (caught) {
+        if (cancelled) return;
+        setConnectionStatus('error');
+        setConnectionMessage(caught instanceof Error ? caught.message : 'AI backend is not reachable.');
+      }
+    };
+
+    void checkConnection();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const chooseMode = (mode: CoachMode) => {
     setSelectedModeId(mode.id);
@@ -227,12 +257,18 @@ export default function GeminiCoach() {
                 <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Prompt Builder</p>
                 <h2 className="mt-2 text-lg font-arcade text-white">{selectedMode.title}</h2>
               </div>
-              <span className={`rounded border px-3 py-2 text-[10px] font-bold uppercase ${endpoint ? 'border-green-300/40 text-green-200 bg-green-300/10' : 'border-yellow-300/40 text-yellow-100 bg-yellow-300/10'}`}>
-                Connected to AI Coach backend
+              <span className={`rounded border px-3 py-2 text-[10px] font-bold uppercase ${
+                connectionStatus === 'connected'
+                  ? 'border-green-300/40 text-green-200 bg-green-300/10'
+                  : connectionStatus === 'checking'
+                    ? 'border-cyan-300/40 text-cyan-200 bg-cyan-300/10'
+                    : 'border-yellow-300/40 text-yellow-100 bg-yellow-300/10'
+              }`}>
+                {connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'checking' ? 'Checking' : 'Backend issue'}
               </span>
             </div>
             <p className="notebook-muted-card mt-3 rounded-lg border border-white/10 bg-black/45 p-3 text-xs leading-relaxed text-gray-300">
-              Gemini is called through the Firebase backend. The API key is not stored in the public app.
+              {connectionMessage} Gemini is called through Firebase; the API key is not stored in the public app.
             </p>
 
             <label className="mt-5 block text-xs text-gray-400 font-bold uppercase tracking-widest mb-2" htmlFor="coach-prompt">
