@@ -953,7 +953,7 @@ function drawPdfHeader(pdf: PdfDocument, lesson: Lesson, erasmusLogo: string, co
   pdf.setFillColor(244, 237, 223);
   pdf.rect(0, 0, pageWidth, 48, 'F');
   drawPdfImageContain(pdf, erasmusLogo, pageWidth - margin - 48, 8, 48, 16);
-  drawPdfImageContain(pdf, courseLogo, pageWidth - margin - 82, 25, 82, 18);
+  drawPdfImageContain(pdf, courseLogo, pageWidth - margin - 82, 25, 82, 18, 'right');
 
   pdf.setTextColor(37, 32, 24);
   pdf.setFont('helvetica', 'bold');
@@ -968,14 +968,15 @@ function drawPdfHeader(pdf: PdfDocument, lesson: Lesson, erasmusLogo: string, co
   pdf.text(courseInfo.code, margin, 34);
 }
 
-function drawPdfImageContain(pdf: PdfDocument, imageDataUrl: string, x: number, y: number, maxWidth: number, maxHeight: number) {
+function drawPdfImageContain(pdf: PdfDocument, imageDataUrl: string, x: number, y: number, maxWidth: number, maxHeight: number, align: 'center' | 'right' = 'center') {
   const properties = pdf.getImageProperties(imageDataUrl);
   const imageWidth = properties.width || maxWidth;
   const imageHeight = properties.height || maxHeight;
   const scale = Math.min(maxWidth / imageWidth, maxHeight / imageHeight);
   const width = imageWidth * scale;
   const height = imageHeight * scale;
-  pdf.addImage(imageDataUrl, 'PNG', x + (maxWidth - width) / 2, y + (maxHeight - height) / 2, width, height);
+  const offsetX = align === 'right' ? maxWidth - width : (maxWidth - width) / 2;
+  pdf.addImage(imageDataUrl, 'PNG', x + offsetX, y + (maxHeight - height) / 2, width, height);
 }
 
 function drawModulePdfSection(pdf: PdfDocument, title: string, text: string, y: number) {
