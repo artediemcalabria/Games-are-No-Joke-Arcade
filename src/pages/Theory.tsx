@@ -213,7 +213,7 @@ function TheorySidebar({
   onSelect: (id: string) => void;
 }) {
   return (
-    <aside className="theory-sidebar notebook-surface arcade-border glass-panel rounded-xl p-4 lg:col-span-4 lg:sticky lg:top-4 lg:self-start">
+    <aside className="theory-sidebar notebook-sidebar-frame notebook-surface arcade-border glass-panel rounded-xl p-4 lg:col-span-4 lg:sticky lg:top-4 lg:self-start">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-arcade text-cyan-400">Theory Path</h2>
