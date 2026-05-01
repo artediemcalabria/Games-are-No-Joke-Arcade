@@ -364,7 +364,7 @@ function TheoryCardFace({ card, index, total, isBack }: { card: TheoryCard; inde
           </div>
 
           <div className="theory-card-muted p-4">
-            <p className="theory-muted text-[10px] font-black uppercase tracking-widest">Prototype prompt</p>
+            <p className="theory-muted text-[10px] font-black uppercase tracking-widest">Debriefing</p>
             <p className="mt-2 text-sm font-bold leading-relaxed">{card.prompt}</p>
           </div>
         </div>
@@ -879,7 +879,7 @@ function buildPrintableLessonHtml(lesson: Lesson) {
       <p class="hint">${escapeHtml(card.frontHint)}</p>
       <hr />
       <p>${escapeHtml(card.back)}</p>
-      <strong>Prototype prompt</strong>
+      <strong>Debriefing</strong>
       <p>${escapeHtml(card.prompt)}</p>
     </article>
   `).join('');
@@ -1105,7 +1105,7 @@ function drawTheoryPdfCard(pdf: PdfDocument, card: TheoryCard, index: number, to
   pdf.setTextColor(66, 107, 61);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(9);
-  pdf.text('Prototype prompt', x + inner, promptY);
+  pdf.text('Debriefing', x + inner, promptY);
   pdf.setTextColor(37, 32, 24);
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(9);
