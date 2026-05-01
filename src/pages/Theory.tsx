@@ -81,7 +81,7 @@ export default function Theory() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-4 pb-10 lg:grid-cols-12">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 items-start gap-4 pb-10 lg:grid-cols-12">
       <TheorySidebar
         activeLessonId={activeLesson.id}
         completedLessons={completedLessons}
@@ -213,7 +213,7 @@ function TheorySidebar({
   onSelect: (id: string) => void;
 }) {
   return (
-    <aside className="theory-sidebar notebook-sidebar-frame notebook-surface arcade-border glass-panel rounded-xl p-4 lg:col-span-4 lg:sticky lg:top-4 lg:self-start">
+    <aside className="theory-sidebar notebook-sidebar-frame notebook-surface arcade-border glass-panel rounded-xl p-4 lg:col-span-4 lg:sticky lg:top-0 lg:self-start">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-arcade text-cyan-400">Theory Path</h2>
