@@ -689,8 +689,9 @@ Image goal:
 - The box should look finished and professional, like a real tabletop game product.
 - Place the game box immersed in the world/context described below, not on a blank background.
 - Around the box, show a few board-game components: cards, tokens, dice, route/map board, or character standees if relevant.
-- Leave a small clean readable area in the top-left corner because the app will apply a small official Erasmus+/Arte Diem/Agenzia logo there after generation.
-- Leave a small clean readable area in the bottom-right corner because the app will apply the project name and dates there after generation.
+- Do not create any blank label, white plaque, beige plate, square panel, sticker, or reserved box for logos or project text.
+- Keep the top-left and bottom-right visually calm enough for a small transparent overlay, but the background must remain part of the scene.
+- The app will apply the official Erasmus+/Arte Diem/Agenzia logo and project text after generation, so do not generate them inside the scene.
 - Do not invent copyrighted logos or brand marks.
 - Use warm cinematic lighting and clear readable composition.
 - If text appears on the box, use the title: "${title || 'Games Are No Joke Prototype'}".
@@ -874,26 +875,24 @@ async function composeLogoOnImage(imageDataUrl: string, logoUrl: string) {
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Could not prepare image preview.');
 
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-  const padding = Math.round(canvas.width * 0.028);
+  const padding = Math.round(canvas.width * 0.018);
   const maxLogoWidth = Math.round(canvas.width * 0.18);
-  const maxLogoHeight = Math.round(canvas.height * 0.095);
+  const maxLogoHeight = Math.round(canvas.height * 0.09);
   const scale = Math.min(maxLogoWidth / logo.width, maxLogoHeight / logo.height);
   const logoWidth = Math.round(logo.width * scale);
   const logoHeight = Math.round(logo.height * scale);
-  const platePadding = Math.round(canvas.width * 0.008);
-  const plateWidth = logoWidth + platePadding * 2;
-  const plateHeight = logoHeight + platePadding * 2;
-  const radius = Math.round(canvas.width * 0.012);
 
   context.save();
-  context.globalAlpha = 0.94;
-  context.fillStyle = '#fffdf7';
-  roundedRect(context, padding, padding, plateWidth, plateHeight, radius);
-  context.fill();
-  context.globalAlpha = 1;
-  context.drawImage(logo, padding + platePadding, padding + platePadding, logoWidth, logoHeight);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  context.shadowColor = 'rgba(255, 255, 255, 0.68)';
+  context.shadowBlur = Math.max(7, canvas.width * 0.006);
+  context.shadowOffsetY = 0;
+  context.drawImage(logo, padding, padding, logoWidth, logoHeight);
   context.restore();
 
   drawProjectSignature(context, canvas.width, canvas.height);
@@ -902,44 +901,32 @@ async function composeLogoOnImage(imageDataUrl: string, logoUrl: string) {
 }
 
 function drawProjectSignature(context: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number) {
-  const padding = Math.round(canvasWidth * 0.028);
-  const platePaddingX = Math.round(canvasWidth * 0.014);
-  const platePaddingY = Math.round(canvasHeight * 0.012);
-  const titleFontSize = Math.max(18, Math.round(canvasWidth * 0.02));
-  const metaFontSize = Math.max(12, Math.round(canvasWidth * 0.012));
+  const padding = Math.round(canvasWidth * 0.018);
+  const titleFontSize = Math.max(18, Math.round(canvasWidth * 0.018));
+  const metaFontSize = Math.max(12, Math.round(canvasWidth * 0.011));
   const title = courseInfo.title;
   const meta = `${courseInfo.dates} · ${courseInfo.venue}`;
 
   context.save();
   context.textAlign = 'right';
   context.textBaseline = 'alphabetic';
+  context.shadowColor = 'rgba(255, 255, 255, 0.9)';
+  context.shadowBlur = Math.max(8, canvasWidth * 0.007);
+  context.lineJoin = 'round';
+  const textRight = canvasWidth - padding;
+  const y = canvasHeight - padding - metaFontSize * 1.35;
+  context.strokeStyle = 'rgba(255, 253, 247, 0.92)';
+  context.lineWidth = Math.max(4, Math.round(canvasWidth * 0.004));
   context.font = `800 ${titleFontSize}px Inter, Arial, sans-serif`;
-  const titleWidth = context.measureText(title).width;
-  context.font = `700 ${metaFontSize}px Inter, Arial, sans-serif`;
-  const metaWidth = context.measureText(meta).width;
-  const plateWidth = Math.ceil(Math.max(titleWidth, metaWidth) + platePaddingX * 2);
-  const plateHeight = Math.ceil(titleFontSize + metaFontSize + platePaddingY * 2.8);
-  const x = canvasWidth - padding - plateWidth;
-  const y = canvasHeight - padding - plateHeight;
-  const radius = Math.round(canvasWidth * 0.012);
-
-  context.globalAlpha = 0.88;
-  context.fillStyle = '#fffdf7';
-  roundedRect(context, x, y, plateWidth, plateHeight, radius);
-  context.fill();
-  context.globalAlpha = 1;
-  context.strokeStyle = 'rgba(21, 32, 43, 0.18)';
-  context.lineWidth = Math.max(1, Math.round(canvasWidth * 0.001));
-  roundedRect(context, x, y, plateWidth, plateHeight, radius);
-  context.stroke();
-
-  const textRight = x + plateWidth - platePaddingX;
+  context.strokeText(title, textRight, y);
   context.fillStyle = '#172033';
-  context.font = `800 ${titleFontSize}px Inter, Arial, sans-serif`;
-  context.fillText(title, textRight, y + platePaddingY + titleFontSize);
-  context.fillStyle = '#27536c';
+  context.fillText(title, textRight, y);
   context.font = `700 ${metaFontSize}px Inter, Arial, sans-serif`;
-  context.fillText(meta, textRight, y + platePaddingY + titleFontSize + metaFontSize * 1.45);
+  context.strokeStyle = 'rgba(255, 253, 247, 0.92)';
+  context.lineWidth = Math.max(3, Math.round(canvasWidth * 0.003));
+  context.strokeText(meta, textRight, y + metaFontSize * 1.45);
+  context.fillStyle = '#27536c';
+  context.fillText(meta, textRight, y + metaFontSize * 1.45);
   context.restore();
 }
 
