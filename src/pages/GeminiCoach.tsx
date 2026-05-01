@@ -89,7 +89,6 @@ export default function GeminiCoach() {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
-  const [connectionMessage, setConnectionMessage] = useState('Checking AI backend...');
   const [targetField, setTargetField] = useState(selectedMode.focusField);
 
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim());
@@ -107,7 +106,6 @@ export default function GeminiCoach() {
 
     const checkConnection = async () => {
       setConnectionStatus('checking');
-      setConnectionMessage('Checking AI backend...');
       try {
         const response = await fetch(healthEndpoint, { headers: { Accept: 'application/json' } });
         const data = await response.json() as { ok?: boolean; geminiConfigured?: boolean; error?: string };
@@ -115,11 +113,9 @@ export default function GeminiCoach() {
         if (!data.geminiConfigured) throw new Error('AI backend is online, but GEMINI_API_KEY is not configured.');
         if (cancelled) return;
         setConnectionStatus('connected');
-        setConnectionMessage('AI Coach backend connected.');
       } catch (caught) {
         if (cancelled) return;
         setConnectionStatus('error');
-        setConnectionMessage(caught instanceof Error ? caught.message : 'AI backend is not reachable.');
       }
     };
 
@@ -267,10 +263,6 @@ export default function GeminiCoach() {
                 {connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'checking' ? 'Checking' : 'Backend issue'}
               </span>
             </div>
-            <p className="notebook-muted-card mt-3 rounded-lg border border-white/10 bg-black/45 p-3 text-xs leading-relaxed text-gray-300">
-              {connectionMessage} Gemini is called through Firebase; the API key is not stored in the public app.
-            </p>
-
             <label className="mt-5 block text-xs text-gray-400 font-bold uppercase tracking-widest mb-2" htmlFor="coach-prompt">
               Your Question
             </label>
