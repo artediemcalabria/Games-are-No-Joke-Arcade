@@ -185,7 +185,7 @@ function GamePreview({ id }: { id: string }) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,.18),transparent_45%),linear-gradient(180deg,#051722,#071019)]" />
       <div className="absolute left-6 right-6 top-6 rounded-xl border border-cyan-300/35 bg-black/55 p-4">
         <p className="text-[10px] font-black uppercase text-cyan-200">Castle Rush</p>
-        <p className="mt-2 text-sm font-black leading-snug text-white">Rocco is late. Emanuel and the group are waiting.</p>
+        <p className="mt-2 text-sm font-black leading-snug text-white">Participants are late. Rocco reminds everyone to reach the activity on time.</p>
       </div>
       <div className="absolute left-8 top-32 flex items-center gap-3">
         <div className="h-14 w-14 rounded-full border-4 border-yellow-100 bg-yellow-300 shadow-[0_0_18px_rgba(250,204,21,.65)]" />
