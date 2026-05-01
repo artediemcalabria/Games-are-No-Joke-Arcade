@@ -1,9 +1,11 @@
-const CACHE_NAME = 'games-are-no-joke-v1';
+const CACHE_NAME = 'games-are-no-joke-v2';
+const scope = new URL(self.registration.scope);
+const appUrl = (path = '') => new URL(path, scope).toString();
 const APP_SHELL = [
-  '/Games-are-No-Joke-Arcade/',
-  '/Games-are-No-Joke-Arcade/ganj-logo.png',
-  '/Games-are-No-Joke-Arcade/ganj-cover.jpeg',
-  '/Games-are-No-Joke-Arcade/manifest.webmanifest'
+  appUrl(),
+  appUrl('ganj-logo.png'),
+  appUrl('ganj-cover.jpeg'),
+  appUrl('manifest.webmanifest')
 ];
 
 self.addEventListener('install', (event) => {
@@ -22,11 +24,28 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.pathname.startsWith(`${scope.pathname}api/`)) return;
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(appUrl(), copy)).catch(() => undefined);
+          return response;
+        })
+        .catch(() => caches.match(appUrl()))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
       const copy = response.clone();
       caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => undefined);
       return response;
-    }).catch(() => caches.match('/Games-are-No-Joke-Arcade/')))
+    }).catch(() => caches.match(appUrl())))
   );
 });
