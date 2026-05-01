@@ -108,7 +108,7 @@ export default function Theory() {
                 </button>
               </div>
               <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Learning model</p>
-              <p className="mt-2 text-sm font-black leading-snug text-white">{activeLesson.model}</p>
+              <p className="mt-2 text-sm font-black leading-snug text-white">{formatModelArrows(activeLesson.model)}</p>
               {isDone && <p className="mt-3 rounded-lg bg-green-300/15 px-3 py-2 text-[10px] font-black uppercase text-green-200">{activeLesson.rewardBadge}</p>}
             </div>
           </div>
@@ -272,6 +272,10 @@ function InfoBlock({ label, text }: { label: string; text: string }) {
       <p className="mt-3 text-sm font-semibold leading-relaxed text-gray-100">{text}</p>
     </article>
   );
+}
+
+function formatModelArrows(model: string) {
+  return model.replaceAll('->', '→');
 }
 
 function ModelDeck({ lesson }: { lesson: Lesson }) {
