@@ -12,6 +12,7 @@ type Phase = 'intro' | 'playing' | 'paused' | 'won-level' | 'game-over' | 'compl
 type ClockKind = 'direct' | 'ambush' | 'patrol' | 'wander';
 type ClockMode = 'scatter' | 'chase' | 'warning' | 'stunned';
 type CollectibleKind = 'dot' | 'coffee' | 'focus' | 'bell' | 'star';
+type FlagId = 'eu' | 'italy' | 'macedonia' | 'turkiye' | 'france' | 'romania' | 'serbia' | 'bulgaria';
 
 type ClockEnemy = {
   id: number;
@@ -78,6 +79,7 @@ type GameRun = {
   roccoHint: string;
   lastLesson: string;
   discoveredStar: boolean;
+  participantFlag: FlagId;
 };
 
 const game = gameCatalog.find((item) => item.id === 'castle-rush')!;
@@ -96,6 +98,8 @@ const clockStyles: Record<ClockKind, { color: string; name: string }> = {
   patrol: { color: '#44d7ff', name: 'Patrol Clock' },
   wander: { color: '#b56bff', name: 'Wander Clock' },
 };
+
+const partnerFlags: FlagId[] = ['eu', 'italy', 'macedonia', 'turkiye', 'france', 'romania', 'serbia', 'bulgaria'];
 
 const designNotes = [
   'Readable enemies are fairer than random enemies.',
@@ -152,6 +156,7 @@ export default function CastleRushGame() {
   const frameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const runRef = useRef<GameRun | null>(null);
+  const matchCounterRef = useRef(0);
   const levelRef = useRef(1);
   const phaseRef = useRef<Phase>('intro');
   const [level, setLevel] = useState(1);
@@ -220,6 +225,7 @@ export default function CastleRushGame() {
       roccoHint: template.briefing,
       lastLesson: designNotes[nextLevel - 1],
       discoveredStar: false,
+      participantFlag: partnerFlags[matchCounterRef.current++ % partnerFlags.length],
     };
     levelRef.current = nextLevel;
     runRef.current = run;
@@ -273,6 +279,7 @@ export default function CastleRushGame() {
       roccoHint: levelTemplates[0].briefing,
       lastLesson: designNotes[0],
       discoveredStar: false,
+      participantFlag: 'eu',
     };
   }, []);
 
@@ -518,25 +525,50 @@ function updateRun(run: GameRun, parsed: ParsedLevel, delta: number, finishLevel
 function movePlayer(run: GameRun, parsed: ParsedLevel, delta: number) {
   const player = run.player;
   const speed = levelTemplates[run.level - 1].playerSpeed * (run.coffeeUntil > run.elapsed ? 1.22 : 1);
-  const center = nearestCenter(player);
-  const nearCenter = Math.abs(player.x - center.x) < 0.11 && Math.abs(player.y - center.y) < 0.11;
-  if (nearCenter && !sameDir(player.desired, zero) && canMove(parsed, cellAt(player), player.desired)) {
-    player.x = center.x;
-    player.y = center.y;
-    player.dir = player.desired;
-  }
-  if (nearCenter && !canMove(parsed, cellAt(player), player.dir)) {
-    player.x = center.x;
-    player.y = center.y;
-    player.dir = zero;
-  }
-  player.x += player.dir.x * speed * delta;
-  player.y += player.dir.y * speed * delta;
-  const afterCenter = nearestCenter(player);
-  if (!canOccupy(parsed, { x: Math.floor(player.x), y: Math.floor(player.y) })) {
-    player.x = afterCenter.x;
-    player.y = afterCenter.y;
-    player.dir = zero;
+  let distanceLeft = speed * delta;
+
+  while (distanceLeft > 0) {
+    const center = nearestCenter(player);
+    const distanceToCenter = Math.hypot(player.x - center.x, player.y - center.y);
+
+    if (distanceToCenter <= 0.035) {
+      player.x = center.x;
+      player.y = center.y;
+      const currentCell = cellAt(player);
+
+      if (!sameDir(player.desired, zero) && canMove(parsed, currentCell, player.desired)) {
+        player.dir = player.desired;
+      } else if (!sameDir(player.dir, zero) && !canMove(parsed, currentCell, player.dir)) {
+        player.dir = zero;
+      }
+    }
+
+    if (sameDir(player.dir, zero)) break;
+
+    const currentCenter = nearestCenter(player);
+    const targetCenter = {
+      x: currentCenter.x + player.dir.x,
+      y: currentCenter.y + player.dir.y,
+    };
+    const targetCell = { x: Math.floor(targetCenter.x), y: Math.floor(targetCenter.y) };
+    if (!canOccupy(parsed, targetCell)) {
+      player.x = currentCenter.x;
+      player.y = currentCenter.y;
+      player.dir = zero;
+      break;
+    }
+
+    const distanceToTarget = Math.hypot(targetCenter.x - player.x, targetCenter.y - player.y);
+    const step = Math.min(distanceLeft, distanceToTarget);
+    const ratio = distanceToTarget > 0 ? step / distanceToTarget : 1;
+    player.x += (targetCenter.x - player.x) * ratio;
+    player.y += (targetCenter.y - player.y) * ratio;
+    distanceLeft -= step;
+
+    if (distanceToTarget <= step + 0.0001) {
+      player.x = targetCenter.x;
+      player.y = targetCenter.y;
+    }
   }
 }
 
@@ -788,59 +820,51 @@ function drawActivityRoom(context: CanvasRenderingContext2D, run: GameRun, parse
   const rawY = offsetY + minY * tile;
   const rawWidth = (maxX - minX + 1) * tile;
   const rawHeight = (maxY - minY + 1) * tile;
-  const width = Math.max(rawWidth, tile * 4.8);
-  const height = Math.max(rawHeight, tile * 4.25);
+  const width = Math.max(rawWidth, tile * 4.2);
+  const height = Math.max(rawHeight, tile * 3.35);
   const x = rawX + rawWidth / 2 - width / 2;
   const y = rawY + rawHeight / 2 - height / 2;
-  context.fillStyle = 'rgba(15, 118, 110, .18)';
-  context.strokeStyle = run.readiness >= levelTemplates[run.level - 1].requiredReadiness ? '#86efac' : 'rgba(134,239,172,.42)';
-  context.lineWidth = Math.max(2, tile * 0.05);
-  roundRect(context, x + tile * 0.12, y + tile * 0.12, width - tile * 0.24, height - tile * 0.24, tile * 0.38);
+  const ready = run.readiness >= levelTemplates[run.level - 1].requiredReadiness;
+  context.fillStyle = '#07111f';
+  context.fillRect(x - tile * 0.08, y - tile * 0.08, width + tile * 0.16, height + tile * 0.16);
+  context.fillStyle = ready ? 'rgba(16, 185, 129, .24)' : 'rgba(8, 145, 178, .16)';
+  context.strokeStyle = ready ? '#86efac' : '#67e8f9';
+  context.lineWidth = Math.max(2.5, tile * 0.07);
+  roundRect(context, x + tile * 0.10, y + tile * 0.18, width - tile * 0.20, height - tile * 0.30, tile * 0.22);
   context.fill();
   context.stroke();
-  context.fillStyle = 'rgba(250, 204, 21, .10)';
-  context.strokeStyle = 'rgba(253, 224, 71, .55)';
   const centerX = offsetX + (parsed.goal.x + 0.5) * tile;
   const centerY = offsetY + (parsed.goal.y + 0.5) * tile;
+
+  const doorWidth = tile * 1.38;
+  context.fillStyle = '#07111f';
+  context.fillRect(centerX - doorWidth / 2, y + height - tile * 0.42, doorWidth, tile * 0.48);
+  context.strokeStyle = '#facc15';
+  context.lineWidth = Math.max(2, tile * 0.045);
   context.beginPath();
-  context.ellipse(centerX, centerY + height * 0.03, width * 0.26, height * 0.18, 0, 0, Math.PI * 2);
-  context.fill();
+  context.moveTo(centerX - doorWidth / 2, y + height - tile * 0.24);
+  context.lineTo(centerX + doorWidth / 2, y + height - tile * 0.24);
   context.stroke();
 
-  const participantColors = ['#60a5fa', '#f97316', '#22c55e', '#e879f9', '#38bdf8', '#f43f5e', '#a3e635', '#facc15', '#c084fc', '#fb7185', '#2dd4bf', '#f59e0b'];
-  for (let index = 0; index < 12; index++) {
-    const angle = -Math.PI * 0.08 + (Math.PI * 2.16 * index) / 11;
-    const chairX = centerX + Math.cos(angle) * width * 0.36;
-    const chairY = centerY + Math.sin(angle) * height * 0.27 + height * 0.04;
-    context.fillStyle = 'rgba(120, 53, 15, .88)';
-    roundRect(context, chairX - tile * 0.12, chairY + tile * 0.06, tile * 0.24, tile * 0.16, tile * 0.04);
-    context.fill();
-    context.fillStyle = participantColors[index % participantColors.length];
-    context.beginPath();
-    context.arc(chairX, chairY - tile * 0.03, tile * 0.12, 0, Math.PI * 2);
-    context.fill();
-    context.strokeStyle = '#f8fafc';
-    context.lineWidth = Math.max(1, tile * 0.025);
-    context.stroke();
-  }
-
-  const emanuelX = centerX;
-  const emanuelY = y + height * 0.28;
-  context.fillStyle = '#2563eb';
-  context.beginPath();
-  context.arc(emanuelX, emanuelY, tile * 0.18, 0, Math.PI * 2);
+  context.fillStyle = 'rgba(15, 23, 42, .78)';
+  roundRect(context, x + tile * 0.45, y + tile * 0.42, width - tile * 0.9, tile * 0.58, tile * 0.10);
   context.fill();
   context.fillStyle = '#f8fafc';
-  context.font = `800 ${tile * 0.18}px sans-serif`;
+  context.font = `900 ${tile * 0.22}px sans-serif`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  context.fillText('E', emanuelX, emanuelY + tile * 0.01);
-  context.fillStyle = '#fefce8';
-  context.font = `700 ${tile * 0.15}px sans-serif`;
-  context.fillText('Emanuel', emanuelX, emanuelY - tile * 0.33);
-  context.fillStyle = 'rgba(236, 253, 245, .95)';
-  context.font = `800 ${tile * 0.16}px sans-serif`;
-  context.fillText('Activity Room', centerX, y + height - tile * 0.36);
+  context.fillText('ACTIVITY ROOM', centerX, y + tile * 0.72);
+
+  context.fillStyle = '#2563eb';
+  context.beginPath();
+  context.arc(centerX, centerY, tile * 0.22, 0, Math.PI * 2);
+  context.fill();
+  context.strokeStyle = '#dbeafe';
+  context.lineWidth = Math.max(1.5, tile * 0.04);
+  context.stroke();
+  context.fillStyle = '#f8fafc';
+  context.font = `900 ${tile * 0.20}px sans-serif`;
+  context.fillText('E', centerX, centerY + tile * 0.01);
 }
 
 function drawPathHint(context: CanvasRenderingContext2D, run: GameRun, parsed: ParsedLevel, tile: number, offsetX: number, offsetY: number) {
@@ -859,17 +883,10 @@ function drawPlayer(context: CanvasRenderingContext2D, run: GameRun, tile: numbe
   const y = offsetY + run.player.y * tile;
   const pulse = 1 + Math.sin(run.elapsed * 12) * 0.04;
   const radius = tile * 0.37 * pulse;
-  context.fillStyle = run.player.invulnerable > 0 && Math.floor(run.elapsed * 10) % 2 === 0 ? '#60a5fa' : '#24459b';
   context.shadowBlur = tile * 0.35;
-  context.shadowColor = '#60a5fa';
-  context.beginPath();
-  context.arc(x, y, radius, 0, Math.PI * 2);
-  context.fill();
-  context.strokeStyle = '#f8fafc';
-  context.lineWidth = Math.max(2, tile * 0.055);
-  context.stroke();
+  context.shadowColor = run.participantFlag === 'turkiye' ? '#ef4444' : '#60a5fa';
+  drawFlagAvatar(context, run.participantFlag, x, y, radius, run.player.invulnerable > 0 && Math.floor(run.elapsed * 10) % 2 === 0);
   context.shadowBlur = 0;
-  drawEuStars(context, x, y, radius * 0.58, tile * 0.055);
   const direction = sameDir(run.player.dir, zero) ? run.player.desired : run.player.dir;
   if (!sameDir(direction, zero)) {
     context.strokeStyle = '#fef08a';
@@ -879,6 +896,81 @@ function drawPlayer(context: CanvasRenderingContext2D, run: GameRun, tile: numbe
     context.lineTo(x + direction.x * radius * 0.68, y + direction.y * radius * 0.68);
     context.stroke();
   }
+}
+
+function drawFlagAvatar(context: CanvasRenderingContext2D, flag: FlagId, x: number, y: number, radius: number, blink: boolean) {
+  context.save();
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.clip();
+  if (blink) {
+    context.fillStyle = '#fef3c7';
+    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+  } else if (flag === 'eu') {
+    context.fillStyle = '#24459b';
+    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+    drawEuStars(context, x, y, radius * 0.58, radius * 0.16);
+  } else if (flag === 'italy') {
+    drawVerticalStripes(context, x, y, radius, ['#009246', '#f8fafc', '#ce2b37']);
+  } else if (flag === 'france') {
+    drawVerticalStripes(context, x, y, radius, ['#0055a4', '#f8fafc', '#ef4135']);
+  } else if (flag === 'romania') {
+    drawVerticalStripes(context, x, y, radius, ['#002b7f', '#fcd116', '#ce1126']);
+  } else if (flag === 'serbia') {
+    drawHorizontalStripes(context, x, y, radius, ['#c6363c', '#0c4076', '#f8fafc']);
+  } else if (flag === 'bulgaria') {
+    drawHorizontalStripes(context, x, y, radius, ['#f8fafc', '#00966e', '#d62612']);
+  } else if (flag === 'turkiye') {
+    context.fillStyle = '#e30a17';
+    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+    context.fillStyle = '#f8fafc';
+    context.beginPath();
+    context.arc(x - radius * 0.12, y, radius * 0.34, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = '#e30a17';
+    context.beginPath();
+    context.arc(x - radius * 0.02, y, radius * 0.27, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = '#f8fafc';
+    drawStar(context, x + radius * 0.34, y, radius * 0.14, radius * 0.06, 5);
+  } else {
+    context.fillStyle = '#d82126';
+    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+    context.fillStyle = '#f8d616';
+    const sunRadius = radius * 0.24;
+    context.beginPath();
+    context.arc(x, y, sunRadius, 0, Math.PI * 2);
+    context.fill();
+    for (let index = 0; index < 8; index++) {
+      const angle = (Math.PI * 2 * index) / 8;
+      context.beginPath();
+      context.moveTo(x, y);
+      context.lineTo(x + Math.cos(angle) * radius * 0.58, y + Math.sin(angle) * radius * 0.58);
+      context.lineWidth = radius * 0.08;
+      context.strokeStyle = '#f8d616';
+      context.stroke();
+    }
+  }
+  context.restore();
+  context.strokeStyle = '#f8fafc';
+  context.lineWidth = Math.max(2, radius * 0.16);
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.stroke();
+}
+
+function drawVerticalStripes(context: CanvasRenderingContext2D, x: number, y: number, radius: number, colors: string[]) {
+  colors.forEach((color, index) => {
+    context.fillStyle = color;
+    context.fillRect(x - radius + (radius * 2 * index) / colors.length, y - radius, (radius * 2) / colors.length, radius * 2);
+  });
+}
+
+function drawHorizontalStripes(context: CanvasRenderingContext2D, x: number, y: number, radius: number, colors: string[]) {
+  colors.forEach((color, index) => {
+    context.fillStyle = color;
+    context.fillRect(x - radius, y - radius + (radius * 2 * index) / colors.length, radius * 2, (radius * 2) / colors.length);
+  });
 }
 
 function drawEuStars(context: CanvasRenderingContext2D, x: number, y: number, radius: number, starRadius: number) {
