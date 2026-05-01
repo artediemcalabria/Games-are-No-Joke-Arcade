@@ -545,7 +545,7 @@
   }
 
   .theme-notebook .theory-sidebar {
-    background: rgba(255, 250, 240, 0.58) !important;
+    background: rgba(255, 250, 240, 0.82) !important;
     border: 1px solid rgba(88, 72, 47, 0.26) !important;
     box-shadow: 0 16px 34px rgba(68, 52, 31, 0.1) !important;
     backdrop-filter: blur(1px) !important;
@@ -556,7 +556,7 @@
   }
 
   .theme-notebook .theory-sidebar .notebook-list-button {
-    background: rgba(255, 250, 240, 0.58) !important;
+    background: rgba(255, 250, 240, 0.82) !important;
   }
 
   .theme-notebook .theory-sidebar .notebook-list-button:hover {
@@ -838,7 +838,7 @@
     position: relative;
     overflow: hidden;
     background:
-      linear-gradient(180deg, rgba(255, 250, 240, 0.94), rgba(246, 237, 219, 0.86)) !important;
+      linear-gradient(180deg, rgba(255, 250, 240, 0.82), rgba(255, 250, 240, 0.82)) !important;
     border: 1.5px solid rgba(88, 72, 47, 0.34) !important;
     box-shadow:
       0 18px 36px rgba(68, 52, 31, 0.14),
