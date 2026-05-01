@@ -115,7 +115,7 @@ const manualSections: ManualSection[] = [
     title: 'Goal',
     items: [
       'You are a participant trying to reach the Activity Room on time.',
-      'Collect enough check-in dots to become ready, then enter the center of the Activity Room.',
+      'Collect enough check-in icons, then enter the center of the Activity Room.',
       'Rocco gives supportive logistics reminders. Emanuel and the group are waiting inside.',
     ],
   },
@@ -169,6 +169,7 @@ export default function CastleRushGame() {
     lesson: designNotes[0],
   });
   const audioRef = useRef<AudioContext | null>(null);
+  const currentDotCount = parseLevel(levelTemplates[level - 1]).dotCount;
 
   const playTone = useCallback((frequency: number, duration = 0.08, type: OscillatorType = 'sine', gainValue = 0.065) => {
     if (!audioEnabled) return;
@@ -349,7 +350,7 @@ export default function CastleRushGame() {
               <p className="text-xs font-black uppercase tracking-[0.24em] text-pink-200">{game.subtitle}</p>
               <h1 className="mt-2 text-2xl font-arcade text-white mobile-readable-arcade md:text-4xl">{game.title}</h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-200">
-                A polished clock-chase about arriving on time, reading pressure, and reaching the Activity Room with enough readiness.
+                A polished clock-chase about arriving on time, reading pressure, collecting check-ins, and reaching Emanuel in the Activity Room.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -373,7 +374,7 @@ export default function CastleRushGame() {
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_310px]">
         <div className="overflow-hidden rounded-2xl border border-cyan-300/35 bg-black shadow-[0_0_40px_rgba(0,242,255,.14)]">
-          <CompactHud level={level} hud={hud} required={levelTemplates[level - 1].requiredReadiness} />
+          <CompactHud level={level} hud={hud} required={levelTemplates[level - 1].requiredReadiness} dotCount={currentDotCount} />
           <div className="relative aspect-square w-full bg-[#030714]">
             <canvas ref={canvasRef} className="h-full w-full touch-none" aria-label="Castle Rush game board" />
           </div>
@@ -433,7 +434,7 @@ export default function CastleRushGame() {
 
       {phase === 'won-level' && (
         <Overlay title="Activity Reached">
-          <p className="text-lg font-black text-white">You reached the Activity Room with enough readiness.</p>
+          <p className="text-lg font-black text-white">You collected enough check-ins and reached Emanuel in the Activity Room.</p>
           <p className="mt-4 text-sm text-gray-300">{designNotes[levelRef.current - 1]}</p>
           <button onClick={nextLevel} className="mt-6 rounded-xl border-2 border-green-300 bg-green-300 px-6 py-3 text-xs font-black uppercase tracking-widest text-black">
             Next Level
@@ -501,7 +502,9 @@ function updateRun(run: GameRun, parsed: ParsedLevel, delta: number, finishLevel
     if (run.readiness >= template.requiredReadiness) {
       finishLevel();
     } else {
-      run.roccoHint = `Rocco says: the Activity Room is open, but collect more check-ins first (${Math.round(run.readiness)}%/${template.requiredReadiness}%).`;
+      const collected = countCollectedDots(run, parsed);
+      const needed = Math.ceil((template.requiredReadiness / 100) * parsed.dotCount);
+      run.roccoHint = `Rocco says: Emanuel is waiting, but collect more check-ins first (${collected}/${needed}).`;
     }
   }
 
@@ -668,10 +671,7 @@ function drawCollectibles(context: CanvasRenderingContext2D, run: GameRun, parse
     const x = offsetX + (item.x + 0.5) * tile;
     const y = offsetY + (item.y + 0.5) * tile;
     if (item.kind === 'dot') {
-      context.fillStyle = 'rgba(190, 244, 255, 0.78)';
-      context.beginPath();
-      context.arc(x, y, tile * 0.08, 0, Math.PI * 2);
-      context.fill();
+      drawCheckInIcon(context, x, y, tile);
       continue;
     }
     const color = item.kind === 'coffee' ? '#facc15' : item.kind === 'focus' ? '#86efac' : item.kind === 'bell' ? '#f0abfc' : '#fde68a';
@@ -682,12 +682,96 @@ function drawCollectibles(context: CanvasRenderingContext2D, run: GameRun, parse
     context.arc(x, y, tile * 0.28, 0, Math.PI * 2);
     context.fill();
     context.shadowBlur = 0;
-    context.fillStyle = '#08111f';
-    context.font = `${tile * 0.34}px sans-serif`;
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillText(item.kind === 'coffee' ? 'C' : item.kind === 'focus' ? 'F' : item.kind === 'bell' ? 'B' : '★', x, y + tile * 0.02);
+    if (item.kind === 'coffee') drawCoffeeIcon(context, x, y, tile);
+    if (item.kind === 'focus') drawFocusIcon(context, x, y, tile);
+    if (item.kind === 'bell') drawBellIcon(context, x, y, tile);
+    if (item.kind === 'star') drawYouthPassIcon(context, x, y, tile);
   }
+}
+
+function drawCheckInIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
+  const size = tile * 0.26;
+  context.fillStyle = 'rgba(165, 243, 252, 0.92)';
+  context.strokeStyle = 'rgba(8, 47, 73, 0.95)';
+  context.lineWidth = Math.max(1.2, tile * 0.035);
+  roundRect(context, x - size * 0.48, y - size * 0.42, size * 0.96, size * 0.84, size * 0.18);
+  context.fill();
+  context.stroke();
+  context.strokeStyle = '#064e3b';
+  context.lineWidth = Math.max(1.3, tile * 0.045);
+  context.beginPath();
+  context.moveTo(x - size * 0.25, y + size * 0.02);
+  context.lineTo(x - size * 0.05, y + size * 0.22);
+  context.lineTo(x + size * 0.30, y - size * 0.20);
+  context.stroke();
+}
+
+function drawCoffeeIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
+  context.strokeStyle = '#111827';
+  context.fillStyle = '#111827';
+  context.lineWidth = Math.max(1.5, tile * 0.045);
+  roundRect(context, x - tile * 0.14, y - tile * 0.08, tile * 0.25, tile * 0.18, tile * 0.04);
+  context.stroke();
+  context.beginPath();
+  context.arc(x + tile * 0.14, y, tile * 0.07, -Math.PI / 2, Math.PI / 2);
+  context.stroke();
+  context.beginPath();
+  context.moveTo(x - tile * 0.12, y - tile * 0.16);
+  context.lineTo(x - tile * 0.06, y - tile * 0.24);
+  context.moveTo(x + tile * 0.02, y - tile * 0.16);
+  context.lineTo(x + tile * 0.08, y - tile * 0.24);
+  context.stroke();
+}
+
+function drawFocusIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
+  context.strokeStyle = '#052e16';
+  context.lineWidth = Math.max(1.6, tile * 0.045);
+  for (const radius of [0.18, 0.10]) {
+    context.beginPath();
+    context.arc(x, y, tile * radius, 0, Math.PI * 2);
+    context.stroke();
+  }
+  context.beginPath();
+  context.moveTo(x - tile * 0.23, y);
+  context.lineTo(x + tile * 0.23, y);
+  context.moveTo(x, y - tile * 0.23);
+  context.lineTo(x, y + tile * 0.23);
+  context.stroke();
+}
+
+function drawBellIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
+  context.strokeStyle = '#2e1065';
+  context.fillStyle = '#2e1065';
+  context.lineWidth = Math.max(1.5, tile * 0.045);
+  context.beginPath();
+  context.moveTo(x - tile * 0.16, y + tile * 0.08);
+  context.quadraticCurveTo(x - tile * 0.11, y - tile * 0.17, x, y - tile * 0.17);
+  context.quadraticCurveTo(x + tile * 0.11, y - tile * 0.17, x + tile * 0.16, y + tile * 0.08);
+  context.lineTo(x - tile * 0.16, y + tile * 0.08);
+  context.stroke();
+  context.beginPath();
+  context.arc(x, y + tile * 0.14, tile * 0.035, 0, Math.PI * 2);
+  context.fill();
+}
+
+function drawYouthPassIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
+  context.fillStyle = '#111827';
+  context.strokeStyle = '#111827';
+  context.lineWidth = Math.max(1.3, tile * 0.035);
+  roundRect(context, x - tile * 0.15, y - tile * 0.18, tile * 0.30, tile * 0.36, tile * 0.04);
+  context.stroke();
+  context.beginPath();
+  for (let point = 0; point < 5; point++) {
+    const angle = -Math.PI / 2 + point * (Math.PI * 2 / 5);
+    const outer = { x: x + Math.cos(angle) * tile * 0.10, y: y + Math.sin(angle) * tile * 0.10 };
+    const innerAngle = angle + Math.PI / 5;
+    const inner = { x: x + Math.cos(innerAngle) * tile * 0.045, y: y + Math.sin(innerAngle) * tile * 0.045 };
+    if (point === 0) context.moveTo(outer.x, outer.y);
+    else context.lineTo(outer.x, outer.y);
+    context.lineTo(inner.x, inner.y);
+  }
+  context.closePath();
+  context.fill();
 }
 
 function drawActivityRoom(context: CanvasRenderingContext2D, run: GameRun, parsed: ParsedLevel, tile: number, offsetX: number, offsetY: number) {
@@ -700,35 +784,63 @@ function drawActivityRoom(context: CanvasRenderingContext2D, run: GameRun, parse
   const minY = Math.min(...roomCells.map((cell) => cell.y));
   const maxX = Math.max(...roomCells.map((cell) => cell.x));
   const maxY = Math.max(...roomCells.map((cell) => cell.y));
-  const x = offsetX + minX * tile;
-  const y = offsetY + minY * tile;
-  const width = (maxX - minX + 1) * tile;
-  const height = (maxY - minY + 1) * tile;
-  context.fillStyle = 'rgba(34,197,94,.12)';
+  const rawX = offsetX + minX * tile;
+  const rawY = offsetY + minY * tile;
+  const rawWidth = (maxX - minX + 1) * tile;
+  const rawHeight = (maxY - minY + 1) * tile;
+  const width = Math.max(rawWidth, tile * 4.8);
+  const height = Math.max(rawHeight, tile * 4.25);
+  const x = rawX + rawWidth / 2 - width / 2;
+  const y = rawY + rawHeight / 2 - height / 2;
+  context.fillStyle = 'rgba(15, 118, 110, .18)';
   context.strokeStyle = run.readiness >= levelTemplates[run.level - 1].requiredReadiness ? '#86efac' : 'rgba(134,239,172,.42)';
   context.lineWidth = Math.max(2, tile * 0.05);
-  roundRect(context, x + tile * 0.12, y + tile * 0.12, width - tile * 0.24, height - tile * 0.24, tile * 0.45);
+  roundRect(context, x + tile * 0.12, y + tile * 0.12, width - tile * 0.24, height - tile * 0.24, tile * 0.38);
   context.fill();
   context.stroke();
+  context.fillStyle = 'rgba(250, 204, 21, .10)';
+  context.strokeStyle = 'rgba(253, 224, 71, .55)';
   const centerX = offsetX + (parsed.goal.x + 0.5) * tile;
   const centerY = offsetY + (parsed.goal.y + 0.5) * tile;
-  for (let index = 0; index < 18; index++) {
-    const angle = (Math.PI * 2 * index) / 18;
-    const chairX = centerX + Math.cos(angle) * width * 0.32;
-    const chairY = centerY + Math.sin(angle) * height * 0.30;
-    context.fillStyle = '#f8fafc';
-    context.beginPath();
-    context.arc(chairX, chairY, tile * 0.11, 0, Math.PI * 2);
-    context.fill();
-  }
-  context.fillStyle = '#facc15';
   context.beginPath();
-  context.arc(centerX, centerY, tile * 0.22, 0, Math.PI * 2);
+  context.ellipse(centerX, centerY + height * 0.03, width * 0.26, height * 0.18, 0, 0, Math.PI * 2);
   context.fill();
-  context.fillStyle = '#052e16';
-  context.font = `${tile * 0.32}px sans-serif`;
+  context.stroke();
+
+  const participantColors = ['#60a5fa', '#f97316', '#22c55e', '#e879f9', '#38bdf8', '#f43f5e', '#a3e635', '#facc15', '#c084fc', '#fb7185', '#2dd4bf', '#f59e0b'];
+  for (let index = 0; index < 12; index++) {
+    const angle = -Math.PI * 0.08 + (Math.PI * 2.16 * index) / 11;
+    const chairX = centerX + Math.cos(angle) * width * 0.36;
+    const chairY = centerY + Math.sin(angle) * height * 0.27 + height * 0.04;
+    context.fillStyle = 'rgba(120, 53, 15, .88)';
+    roundRect(context, chairX - tile * 0.12, chairY + tile * 0.06, tile * 0.24, tile * 0.16, tile * 0.04);
+    context.fill();
+    context.fillStyle = participantColors[index % participantColors.length];
+    context.beginPath();
+    context.arc(chairX, chairY - tile * 0.03, tile * 0.12, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = '#f8fafc';
+    context.lineWidth = Math.max(1, tile * 0.025);
+    context.stroke();
+  }
+
+  const emanuelX = centerX;
+  const emanuelY = y + height * 0.28;
+  context.fillStyle = '#2563eb';
+  context.beginPath();
+  context.arc(emanuelX, emanuelY, tile * 0.18, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = '#f8fafc';
+  context.font = `800 ${tile * 0.18}px sans-serif`;
   context.textAlign = 'center';
-  context.fillText('E', centerX, centerY + tile * 0.11);
+  context.textBaseline = 'middle';
+  context.fillText('E', emanuelX, emanuelY + tile * 0.01);
+  context.fillStyle = '#fefce8';
+  context.font = `700 ${tile * 0.15}px sans-serif`;
+  context.fillText('Emanuel', emanuelX, emanuelY - tile * 0.33);
+  context.fillStyle = 'rgba(236, 253, 245, .95)';
+  context.font = `800 ${tile * 0.16}px sans-serif`;
+  context.fillText('Activity Room', centerX, y + height - tile * 0.36);
 }
 
 function drawPathHint(context: CanvasRenderingContext2D, run: GameRun, parsed: ParsedLevel, tile: number, offsetX: number, offsetY: number) {
@@ -746,17 +858,48 @@ function drawPlayer(context: CanvasRenderingContext2D, run: GameRun, tile: numbe
   const x = offsetX + run.player.x * tile;
   const y = offsetY + run.player.y * tile;
   const pulse = 1 + Math.sin(run.elapsed * 12) * 0.04;
-  context.fillStyle = run.player.invulnerable > 0 && Math.floor(run.elapsed * 10) % 2 === 0 ? '#fef08a' : '#fde047';
+  const radius = tile * 0.37 * pulse;
+  context.fillStyle = run.player.invulnerable > 0 && Math.floor(run.elapsed * 10) % 2 === 0 ? '#60a5fa' : '#24459b';
   context.shadowBlur = tile * 0.35;
-  context.shadowColor = '#facc15';
+  context.shadowColor = '#60a5fa';
   context.beginPath();
-  context.arc(x, y, tile * 0.36 * pulse, 0.25 * Math.PI, 1.75 * Math.PI);
-  context.lineTo(x, y);
+  context.arc(x, y, radius, 0, Math.PI * 2);
   context.fill();
+  context.strokeStyle = '#f8fafc';
+  context.lineWidth = Math.max(2, tile * 0.055);
+  context.stroke();
   context.shadowBlur = 0;
-  context.fillStyle = '#111827';
+  drawEuStars(context, x, y, radius * 0.58, tile * 0.055);
+  const direction = sameDir(run.player.dir, zero) ? run.player.desired : run.player.dir;
+  if (!sameDir(direction, zero)) {
+    context.strokeStyle = '#fef08a';
+    context.lineWidth = Math.max(1.5, tile * 0.035);
+    context.beginPath();
+    context.moveTo(x + direction.x * radius * 0.22, y + direction.y * radius * 0.22);
+    context.lineTo(x + direction.x * radius * 0.68, y + direction.y * radius * 0.68);
+    context.stroke();
+  }
+}
+
+function drawEuStars(context: CanvasRenderingContext2D, x: number, y: number, radius: number, starRadius: number) {
+  context.fillStyle = '#ffd500';
+  for (let index = 0; index < 12; index++) {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / 12;
+    drawStar(context, x + Math.cos(angle) * radius, y + Math.sin(angle) * radius, starRadius, starRadius * 0.42, 5);
+  }
+}
+
+function drawStar(context: CanvasRenderingContext2D, x: number, y: number, outer: number, inner: number, points: number) {
   context.beginPath();
-  context.arc(x + tile * 0.11, y - tile * 0.14, tile * 0.055, 0, Math.PI * 2);
+  for (let index = 0; index < points * 2; index++) {
+    const angle = -Math.PI / 2 + (Math.PI * index) / points;
+    const radius = index % 2 === 0 ? outer : inner;
+    const px = x + Math.cos(angle) * radius;
+    const py = y + Math.sin(angle) * radius;
+    if (index === 0) context.moveTo(px, py);
+    else context.lineTo(px, py);
+  }
+  context.closePath();
   context.fill();
 }
 
@@ -786,11 +929,13 @@ function drawClock(context: CanvasRenderingContext2D, clock: ClockEnemy, run: Ga
   context.stroke();
 }
 
-function CompactHud({ level, hud, required }: { level: number; hud: { readiness: number; lateness: number; score: number; latePasses: number; mode: ClockMode }; required: number }) {
+function CompactHud({ level, hud, required, dotCount }: { level: number; hud: { readiness: number; lateness: number; score: number; latePasses: number; mode: ClockMode }; required: number; dotCount: number }) {
+  const collected = Math.min(dotCount, Math.round((hud.readiness / 100) * dotCount));
+  const needed = Math.ceil((required / 100) * dotCount);
   return (
     <div className="grid grid-cols-2 gap-2 border-b border-cyan-300/20 bg-slate-950/95 p-3 text-xs font-black uppercase text-gray-100 md:grid-cols-5">
       <HudItem label="Level" value={`${level}/10`} />
-      <HudItem label="Readiness" value={`${Math.round(hud.readiness)}%/${required}%`} tone="cyan" />
+      <HudItem label="Check-ins" value={`${collected}/${needed}`} tone="cyan" />
       <HudItem label="Lateness" value={`${Math.round(hud.lateness)}%`} tone={hud.lateness > 75 ? 'pink' : 'yellow'} />
       <HudItem label="Late Passes" value={String(Math.max(0, hud.latePasses))} tone="green" />
       <HudItem label="Score" value={String(hud.score)} />
@@ -1340,7 +1485,7 @@ const levelTemplates: LevelTemplate[] = [
   },
   {
     title: 'Final Arrival',
-    briefing: 'Rocco says: master the pattern. The Activity Room is close, but readiness still matters.',
+    briefing: 'Rocco says: master the pattern. The Activity Room is close, but you still need enough check-ins.',
     requiredReadiness: 74,
     latePasses: 2,
     latenessRate: 3.85,
