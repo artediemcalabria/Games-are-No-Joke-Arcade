@@ -1,4 +1,4 @@
-const CACHE_NAME = 'games-are-no-joke-v2';
+const CACHE_NAME = 'games-are-no-joke-v3';
 const scope = new URL(self.registration.scope);
 const appUrl = (path = '') => new URL(path, scope).toString();
 const APP_SHELL = [
@@ -42,10 +42,17 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
-      const copy = response.clone();
-      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => undefined);
-      return response;
-    }).catch(() => caches.match(appUrl())))
+    caches.match(event.request).then((cached) => (
+      fetch(event.request).then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => undefined);
+        }
+        return response;
+      }).catch(() => {
+        if (cached) return cached;
+        throw new Error('Cached asset unavailable');
+      })
+    ))
   );
 });

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef, type ComponentType } from 'react';
 import { BrowserRouter, HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { BookOpen, Gamepad2, Volume2, VolumeX } from 'lucide-react';
 import { NavBar } from './components/NavBar';
@@ -6,19 +6,19 @@ import { courseInfo } from './data/course';
 import { installAudioUnlock, playSound } from './lib/audio';
 import { useStore } from './store/useStore';
 
-const Home = lazy(() => import('./pages/Home'));
-const Theory = lazy(() => import('./pages/Theory'));
-const ArcadeList = lazy(() => import('./pages/ArcadeList'));
-const Progress = lazy(() => import('./pages/Progress'));
-const About = lazy(() => import('./pages/About'));
-const Reports = lazy(() => import('./pages/Reports'));
-const Quiz = lazy(() => import('./pages/Quiz'));
-const PrototypeLab = lazy(() => import('./pages/PrototypeLab'));
-const GeminiCoach = lazy(() => import('./pages/GeminiCoach'));
-const CastleRushGame = lazy(() => import('./pages/games/CastleRushGame'));
-const YouthPassDropGame = lazy(() => import('./pages/games/YouthPassDropGame'));
-const FiladelfiaStoryGame = lazy(() => import('./pages/games/FiladelfiaStoryGame'));
-const FutureExchangeGame = lazy(() => import('./pages/games/FutureExchangeGame'));
+const Home = lazyWithReload(() => import('./pages/Home'));
+const Theory = lazyWithReload(() => import('./pages/Theory'));
+const ArcadeList = lazyWithReload(() => import('./pages/ArcadeList'));
+const Progress = lazyWithReload(() => import('./pages/Progress'));
+const About = lazyWithReload(() => import('./pages/About'));
+const Reports = lazyWithReload(() => import('./pages/Reports'));
+const Quiz = lazyWithReload(() => import('./pages/Quiz'));
+const PrototypeLab = lazyWithReload(() => import('./pages/PrototypeLab'));
+const GeminiCoach = lazyWithReload(() => import('./pages/GeminiCoach'));
+const CastleRushGame = lazyWithReload(() => import('./pages/games/CastleRushGame'));
+const YouthPassDropGame = lazyWithReload(() => import('./pages/games/YouthPassDropGame'));
+const FiladelfiaStoryGame = lazyWithReload(() => import('./pages/games/FiladelfiaStoryGame'));
+const FutureExchangeGame = lazyWithReload(() => import('./pages/games/FutureExchangeGame'));
 
 const Router = import.meta.env.BASE_URL === '/' ? BrowserRouter : HashRouter;
 const routerBasename = import.meta.env.BASE_URL === '/'
@@ -117,4 +117,26 @@ function AppShell() {
         <NavBar />
       </div>
   );
+}
+
+function lazyWithReload<T extends ComponentType<unknown>>(loader: () => Promise<{ default: T }>) {
+  return lazy(async () => {
+    try {
+      const module = await loader();
+      sessionStorage.removeItem('ganj-lazy-reload');
+      return module;
+    } catch (error) {
+      if (isChunkLoadError(error) && !sessionStorage.getItem('ganj-lazy-reload')) {
+        sessionStorage.setItem('ganj-lazy-reload', '1');
+        window.location.reload();
+        return new Promise<{ default: T }>(() => undefined);
+      }
+      throw error;
+    }
+  });
+}
+
+function isChunkLoadError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk|ChunkLoadError/i.test(message);
 }
