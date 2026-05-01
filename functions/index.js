@@ -1,13 +1,19 @@
-import express from 'express';
+const express = require('express');
+const { onRequest } = require('firebase-functions/v2/https');
 
 const app = express();
-const port = process.env.PORT || 8080;
+
 const allowedOrigins = new Set([
   'https://artediemcalabria.github.io',
+  'https://artediemcalabria.github.io/Games-are-No-Joke-Arcade',
+  'https://games-are-no-joke.web.app',
+  'https://games-are-no-joke.firebaseapp.com',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:4173',
   'http://127.0.0.1:4173',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
 ]);
@@ -19,7 +25,7 @@ app.use((request, response, next) => {
     response.setHeader('Access-Control-Allow-Origin', origin);
   }
   response.setHeader('Vary', 'Origin');
-  response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (request.method === 'OPTIONS') {
     response.status(204).end();
@@ -29,7 +35,7 @@ app.use((request, response, next) => {
 });
 
 app.get('/', (_request, response) => {
-  response.json({ ok: true, service: 'Games Are No Joke AI backend' });
+  response.json({ ok: true, service: 'Games Are No Joke Firebase AI backend' });
 });
 
 app.post('/api/coach', async (request, response) => {
@@ -88,9 +94,16 @@ app.post('/api/prototype-image', async (request, response) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Games Are No Joke AI backend listening on ${port}`);
-});
+exports.api = onRequest(
+  {
+    region: 'europe-west1',
+    secrets: ['GEMINI_API_KEY'],
+    timeoutSeconds: 120,
+    memory: '512MiB',
+    invoker: 'public',
+  },
+  app,
+);
 
 function isAllowedOrigin(request) {
   const origin = request.headers.origin || '';
@@ -169,6 +182,8 @@ If mode is "gdd-import":
 - Do not use markdown fences.
 - Keep exact keys requested by the frontend.
 - Improve the GDD text in Simple English.
+- Fill missing fields when the source gives enough context to infer them.
+- If a field is inferred or expanded by you instead of clearly present in the source, begin that field value with "AI Suggested: ".
 - Use short emoji bullets only when they improve readability.
 
 For normal coach answers, use this format:

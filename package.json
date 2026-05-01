@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "firebase:build": "npm run build",
+    "firebase:deploy": "npm run build && firebase deploy",
+    "firebase:serve": "npm run build && firebase emulators:start --only hosting,functions"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
@@ -18,7 +21,9 @@
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.546.0",
+    "mammoth": "^1.12.0",
     "motion": "^12.23.24",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",

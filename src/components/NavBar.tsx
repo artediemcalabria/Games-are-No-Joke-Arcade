@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Gamepad2, BookOpen, Trophy, Info, ClipboardList, Bot } from 'lucide-react';
+import { Gamepad2, BookOpen, Trophy, Info, ClipboardList, Bot, Newspaper } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { playSound } from '../lib/audio';
@@ -7,6 +7,7 @@ import { useStore } from '../store/useStore';
 
 const navItems = [
   { path: '/theory', label: 'Theory', icon: BookOpen },
+  { path: '/reports', label: 'Reports', icon: Newspaper },
   { path: '/prototype', label: 'Prototype', icon: ClipboardList },
   { path: '/coach', label: 'AI Coach', icon: Bot },
   { path: '/arcade', label: 'Arcade', icon: Gamepad2 },
@@ -19,8 +20,8 @@ export function NavBar() {
   const { audioEnabled } = useStore();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 w-full bg-black/85 backdrop-blur-md border-t border-white/10 px-1.5 py-2 z-[70] safe-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-      <ul className="grid grid-cols-6 items-stretch gap-1 max-w-5xl mx-auto">
+    <nav className="notebook-surface fixed bottom-0 left-0 right-0 w-full bg-black/85 backdrop-blur-md border-t border-white/10 px-1.5 py-2 z-[70] safe-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+      <ul className="grid grid-cols-7 items-stretch gap-1 max-w-5xl mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
@@ -30,7 +31,7 @@ export function NavBar() {
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => playSound('select', audioEnabled)}
                 className={cn(
-                  "flex h-full min-h-14 flex-col items-center justify-center rounded-lg px-1.5 py-2 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300",
+                  "notebook-list-button flex h-full min-h-14 flex-col items-center justify-center rounded-lg px-1.5 py-2 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300",
                   isActive ? "bg-cyan-300/10 text-arcade-cyan" : "text-gray-500 hover:bg-white/5 hover:text-white"
                 )}
               >

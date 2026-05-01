@@ -1004,7 +1004,7 @@ export default function FiladelfiaStoryGame() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 max-w-6xl mx-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen pb-10 max-w-6xl mx-auto">
       <section className="arcade-border-green glass-panel-green rounded-xl p-4 md:p-5 mb-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>

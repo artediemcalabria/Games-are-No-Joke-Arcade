@@ -35,7 +35,8 @@ jobs:
         run: npm run build
         env:
           GITHUB_PAGES: 'true'
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          VITE_AI_COACH_ENDPOINT: ${{ vars.VITE_AI_COACH_ENDPOINT }}
+          VITE_AI_IMAGE_ENDPOINT: ${{ vars.VITE_AI_IMAGE_ENDPOINT }}
 
       - name: Add SPA fallback
         run: cp dist/index.html dist/404.html

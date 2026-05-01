@@ -259,7 +259,7 @@ export default function CastleRushGame() {
   const nextLevel = () => resetLevel(Math.min(level + 1, maxLevel));
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 max-w-6xl mx-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen pb-10 max-w-6xl mx-auto">
       <section className="arcade-border-pink glass-panel-pink rounded-xl p-4 md:p-5 mb-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
@@ -431,7 +431,7 @@ export default function CastleRushGame() {
             ))}
           </div>
           <button
-            onClick={() => updatePrototypeField('coreMechanic', game.prototypePrompt)}
+            onClick={() => updatePrototypeField('gameplayMechanics', game.prototypePrompt)}
             className="mt-6 arcade-border-green px-6 py-3 bg-green-900/40 text-green-200 text-xs font-bold uppercase tracking-widest hover:bg-green-400 hover:text-black"
           >
             Send Takeaway to Prototype Lab

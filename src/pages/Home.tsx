@@ -3,19 +3,22 @@ import { motion } from 'motion/react';
 import { ArrowRight, BookOpen, Bot, ClipboardList, Gamepad2, Sparkles } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { courseInfo, gameCatalog, lessons, prototypeSteps } from '../data/course';
+import { projectReports } from '../data/reports';
 
 export default function Home() {
-  const { totalScore, completedLessons, completedGames, prototype } = useStore();
+  const { totalScore, completedLessons, completedGames, prototype, readReports } = useStore();
   const assetBase = import.meta.env.BASE_URL;
   const completedCatalogGames = completedGames.filter((id) => gameCatalog.some((game) => game.id === id));
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
-  const journeyTotal = lessons.length + gameCatalog.length + prototypeSteps.length;
-  const journeyDone = completedLessons.length + completedCatalogGames.length + completedPrototypeSteps;
+  const journeyTotal = lessons.length + projectReports.length + gameCatalog.length + prototypeSteps.length;
+  const journeyDone = completedLessons.length + readReports.length + completedCatalogGames.length + completedPrototypeSteps;
   const progressPercent = Math.round((journeyDone / journeyTotal) * 100);
   const nextGame = gameCatalog.find((game) => !completedCatalogGames.includes(game.id)) ?? gameCatalog[0];
   const nextModel = lessons.find((lesson) => !completedLessons.includes(lesson.id)) ?? lessons[0];
   const nextAction = completedLessons.length < lessons.length
-    ? { to: '/theory', label: 'Continue Learning Models', detail: 'Learn models -> Play design games -> Build prototype -> Reflect.' }
+    ? { to: '/theory', label: 'Continue Learning Models', detail: 'Learn models -> Read reports -> Play design games -> Build prototype -> Reflect.' }
+    : readReports.length < projectReports.length
+      ? { to: '/reports', label: 'Read Project Reports', detail: 'Connect the daily activities with the prototype work.' }
     : completedCatalogGames.length < gameCatalog.length
       ? { to: '/arcade', label: 'Play Next Design Game', detail: 'Use games to feel the design ideas, not only read them.' }
       : completedPrototypeSteps < prototypeSteps.length
@@ -24,7 +27,7 @@ export default function Home() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 flex-grow pb-10">
-      <section className="md:col-span-12 overflow-hidden rounded-xl arcade-border-pink bg-black/70 shadow-lg">
+      <section className="notebook-surface md:col-span-12 overflow-hidden rounded-xl arcade-border-pink bg-black/70 shadow-lg">
         <div className="grid grid-cols-1 md:grid-cols-[1.15fr_0.85fr] min-h-[320px]">
           <div className="p-5 md:p-8 flex flex-col justify-between gap-6">
             <div>
@@ -45,15 +48,15 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="bg-pink-500/10 border border-pink-500/40 rounded-lg p-3">
+              <div className="notebook-muted-card bg-pink-500/10 border border-pink-500/40 rounded-lg p-3">
                 <p className="text-[10px] text-pink-300 font-bold uppercase">Dates</p>
                 <p className="text-sm text-white font-bold mt-1">{courseInfo.dates}</p>
               </div>
-              <div className="bg-cyan-500/10 border border-cyan-500/40 rounded-lg p-3">
+              <div className="notebook-muted-card bg-cyan-500/10 border border-cyan-500/40 rounded-lg p-3">
                 <p className="text-[10px] text-cyan-300 font-bold uppercase">Project Code</p>
                 <p className="text-xs text-white font-bold mt-1 break-words">{courseInfo.code}</p>
               </div>
-              <div className="bg-green-500/10 border border-green-500/40 rounded-lg p-3">
+              <div className="notebook-muted-card bg-green-500/10 border border-green-500/40 rounded-lg p-3">
                 <p className="text-[10px] text-green-300 font-bold uppercase">Journey</p>
                 <p className="text-sm text-white font-bold mt-1">{progressPercent}% ready</p>
               </div>
@@ -72,7 +75,7 @@ export default function Home() {
       </section>
 
       <section className="md:col-span-12 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-4">
-        <div className="arcade-border-pink glass-panel-pink rounded-xl p-5">
+        <div className="notebook-surface arcade-border-pink glass-panel-pink rounded-xl p-5">
           <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Featured Next Game</p>
           <div className="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -90,7 +93,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="arcade-border glass-panel rounded-xl p-5">
+        <div className="notebook-surface arcade-border glass-panel rounded-xl p-5">
           <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Next Learning Model</p>
           <h2 className="text-base sm:text-lg font-arcade mobile-readable-arcade text-white mt-4">{nextModel.title}</h2>
           <p className="text-sm text-gray-300 leading-relaxed mt-3">{nextModel.focus}</p>
@@ -101,9 +104,27 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="md:col-span-12">
+        <Link to="/reports" className="block group">
+          <motion.div whileHover={{ scale: 1.01 }} className="reading-panel p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs text-yellow-300 font-bold uppercase tracking-widest">Project Reports</p>
+              <h2 className="mt-2 text-lg font-arcade text-white">Day by Day Documentation</h2>
+              <p className="mt-3 text-sm leading-relaxed text-gray-300">
+                Read the daily activities, field research outputs, group reflections, and prototype material from Filadelfia.
+              </p>
+            </div>
+            <div className="notebook-card flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-black/45 p-3 md:min-w-48">
+              <span className="text-sm font-bold text-white">{readReports.length}/{projectReports.length} reports</span>
+              <ArrowRight className="w-5 h-5 text-yellow-300 opacity-70 group-hover:opacity-100" />
+            </div>
+          </motion.div>
+        </Link>
+      </section>
+
       <section className="md:col-span-4">
         <Link to="/theory" className="block h-full group">
-          <motion.div whileHover={{ scale: 1.01 }} className="arcade-border glass-panel p-5 h-full flex flex-col justify-between gap-5">
+          <motion.div whileHover={{ scale: 1.01 }} className="notebook-surface arcade-border glass-panel p-5 h-full flex flex-col justify-between gap-5">
             <div>
               <BookOpen className="w-8 h-8 text-arcade-cyan mb-4" />
               <h2 className="text-lg font-arcade text-arcade-cyan">Learning Path</h2>
@@ -121,7 +142,7 @@ export default function Home() {
 
       <section className="md:col-span-4">
         <Link to="/arcade" className="block h-full group">
-          <motion.div whileHover={{ scale: 1.01 }} className="arcade-border-pink glass-panel-pink p-5 h-full flex flex-col justify-between gap-5">
+          <motion.div whileHover={{ scale: 1.01 }} className="notebook-surface arcade-border-pink glass-panel-pink p-5 h-full flex flex-col justify-between gap-5">
             <div>
               <Gamepad2 className="w-8 h-8 text-pink-500 mb-4" />
               <h2 className="text-lg font-arcade text-pink-500">Game Collection</h2>
@@ -139,7 +160,7 @@ export default function Home() {
 
       <section className="md:col-span-4">
         <Link to="/prototype" className="block h-full group">
-          <motion.div whileHover={{ scale: 1.01 }} className="arcade-border-green glass-panel-green p-5 h-full flex flex-col justify-between gap-5">
+          <motion.div whileHover={{ scale: 1.01 }} className="notebook-surface arcade-border-green glass-panel-green p-5 h-full flex flex-col justify-between gap-5">
             <div>
               <ClipboardList className="w-8 h-8 text-green-400 mb-4" />
               <h2 className="text-lg font-arcade text-green-400">Prototype Lab</h2>
@@ -155,7 +176,7 @@ export default function Home() {
         </Link>
       </section>
 
-      <section className="md:col-span-12 arcade-border bg-blue-900/20 p-5 flex flex-col md:flex-row items-center justify-between gap-6">
+      <section className="notebook-surface md:col-span-12 arcade-border bg-blue-900/20 p-5 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="max-w-2xl">
           <h2 className="text-lg font-arcade text-cyan-400 flex items-center gap-3 mb-2">
             <Sparkles className="w-5 h-5" /> Your Trainer Toolkit
@@ -165,19 +186,19 @@ export default function Home() {
           </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:w-auto">
-          <div className="bg-black/60 border border-white/10 rounded-lg p-3 text-center">
+          <div className="notebook-muted-card bg-black/60 border border-white/10 rounded-lg p-3 text-center">
             <p className="text-xl font-bold text-white">{totalScore}</p>
             <p className="text-[9px] text-gray-500 font-bold uppercase mt-1">XP</p>
           </div>
-          <div className="bg-black/60 border border-white/10 rounded-lg p-3 text-center">
+          <div className="notebook-muted-card bg-black/60 border border-white/10 rounded-lg p-3 text-center">
             <p className="text-xl font-bold text-white">{lessons.length}</p>
             <p className="text-[9px] text-gray-500 font-bold uppercase mt-1">Models</p>
           </div>
-          <div className="bg-black/60 border border-white/10 rounded-lg p-3 text-center">
+          <div className="notebook-muted-card bg-black/60 border border-white/10 rounded-lg p-3 text-center">
             <p className="text-xl font-bold text-white">{gameCatalog.length}</p>
             <p className="text-[9px] text-gray-500 font-bold uppercase mt-1">Games</p>
           </div>
-          <Link to="/coach" className="bg-black/60 border border-cyan-400/40 rounded-lg p-3 text-center hover:bg-cyan-400/10 transition-colors">
+          <Link to="/coach" className="notebook-muted-card bg-black/60 border border-cyan-400/40 rounded-lg p-3 text-center hover:bg-cyan-400/10 transition-colors">
             <Bot className="w-6 h-6 text-cyan-300 mx-auto" />
             <p className="text-[9px] text-cyan-300 font-bold uppercase mt-2">AI Coach</p>
           </Link>

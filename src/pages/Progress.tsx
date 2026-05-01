@@ -1,10 +1,11 @@
 import { motion } from 'motion/react';
-import { Bot, CheckCircle2, ClipboardList, Gamepad2, Lock, Trophy } from 'lucide-react';
+import { Bot, CheckCircle2, ClipboardList, Gamepad2, Lock, Newspaper, Trophy } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { gameCatalog, lessons, prototypeSteps } from '../data/course';
+import { projectReports } from '../data/reports';
 
 export default function Progress() {
-  const { completedLessons, completedGames, gameTakeaways, gameNotes, coachHistory, coachNotes, quizScores, totalScore, prototype, resetProgress } = useStore();
+  const { completedLessons, completedGames, gameTakeaways, gameNotes, coachHistory, coachNotes, readReports, gddImports, quizScores, totalScore, prototype, resetProgress } = useStore();
   const completedCatalogGames = completedGames.filter((id) => gameCatalog.some((game) => game.id === id));
   const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
 
@@ -16,6 +17,15 @@ export default function Progress() {
         id: lesson.id,
         name: lesson.title,
         completed: completedLessons.includes(lesson.id),
+      })),
+    },
+    {
+      title: 'Project Reports',
+      type: 'report',
+      items: projectReports.map((report) => ({
+        id: report.id,
+        name: `${report.title} - ${report.date}`,
+        completed: readReports.includes(report.id),
       })),
     },
     {
@@ -41,6 +51,11 @@ export default function Progress() {
       type: 'reflection',
       items: [
         {
+          id: 'gdd-import',
+          name: 'GDD Imported',
+          completed: gddImports.length > 0,
+        },
+        {
           id: 'ai-coach',
           name: 'AI Coach Session',
           completed: coachHistory.length > 0 || coachNotes.length > 0,
@@ -61,7 +76,7 @@ export default function Progress() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pb-10 grid grid-cols-1 md:grid-cols-12 gap-4">
-      <section className="md:col-span-12 arcade-border-pink glass-panel-pink p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
+      <section className="notebook-surface md:col-span-12 arcade-border-pink glass-panel-pink p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
         <div className="flex items-center gap-6">
           <div className="bg-black/60 p-4 rounded-full border-2 border-pink-500">
             <Trophy className="w-12 h-12 text-pink-500" />
@@ -74,7 +89,7 @@ export default function Progress() {
           </div>
         </div>
 
-        <div className="w-full md:w-1/3 bg-black/60 p-4 rounded border border-pink-500/30">
+        <div className="notebook-card w-full md:w-1/3 bg-black/60 p-4 rounded border border-pink-500/30">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold text-pink-500 uppercase">Completion Rate</span>
             <span className="text-xs font-bold text-white">{progressPercent}%</span>
@@ -86,7 +101,7 @@ export default function Progress() {
         </div>
       </section>
 
-      <section className="md:col-span-4 arcade-border glass-panel p-5 rounded-xl">
+      <section className="notebook-surface md:col-span-4 arcade-border glass-panel p-5 rounded-xl">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-arcade text-cyan-400">Learning Models</h3>
           <span className="text-xs font-bold text-white">{completedLessons.length}/{lessons.length}</span>
@@ -94,7 +109,7 @@ export default function Progress() {
         <p className="text-xs text-gray-400 mt-3">Complete short models and quick checks.</p>
       </section>
 
-      <section className="md:col-span-4 arcade-border-pink glass-panel-pink p-5 rounded-xl">
+      <section className="notebook-surface md:col-span-4 arcade-border-pink glass-panel-pink p-5 rounded-xl">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-arcade text-pink-500">Games</h3>
           <span className="text-xs font-bold text-white">{completedCatalogGames.length}/{gameCatalog.length}</span>
@@ -102,26 +117,34 @@ export default function Progress() {
         <p className="text-xs text-gray-400 mt-3">Play design games and unlock takeaways.</p>
       </section>
 
-      <section className="md:col-span-4 arcade-border-green glass-panel-green p-5 rounded-xl">
+      <section className="notebook-surface md:col-span-4 arcade-border glass-panel p-5 rounded-xl">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-arcade text-yellow-300">Reports</h3>
+          <span className="text-xs font-bold text-white">{readReports.length}/{projectReports.length}</span>
+        </div>
+        <p className="text-xs text-gray-400 mt-3">Read the daily training reports.</p>
+      </section>
+
+      <section className="notebook-surface md:col-span-12 arcade-border-green glass-panel-green p-5 rounded-xl">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-arcade text-green-400">Prototype</h3>
           <span className="text-xs font-bold text-white">{completedPrototypeSteps}/{prototypeSteps.length}</span>
         </div>
-        <p className="text-xs text-gray-400 mt-3">Fill the live prototype card.</p>
+        <p className="text-xs text-gray-400 mt-3">Fill the live prototype card. GDD imports: {gddImports.length}</p>
       </section>
 
-      <section className="md:col-span-12 bg-black/60 border border-white/10 p-5 rounded-xl">
+      <section className="notebook-surface md:col-span-12 bg-black/60 border border-white/10 p-5 rounded-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-arcade text-cyan-300 flex items-center gap-2"><Bot className="w-5 h-5" /> AI Coach</h3>
             <p className="text-xs text-gray-400 mt-3">Use the coach to improve prototype, rules, debrief, inclusion, and playtest plan.</p>
           </div>
           <div className="grid grid-cols-2 gap-3 text-center">
-            <div className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-4 py-3">
+            <div className="notebook-muted-card rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-4 py-3">
               <p className="text-lg font-black text-white">{coachHistory.length}</p>
               <p className="text-[10px] font-bold uppercase text-cyan-200">sessions</p>
             </div>
-            <div className="rounded-lg border border-green-300/20 bg-green-300/10 px-4 py-3">
+            <div className="notebook-muted-card rounded-lg border border-green-300/20 bg-green-300/10 px-4 py-3">
               <p className="text-lg font-black text-white">{coachNotes.length}</p>
               <p className="text-[10px] font-bold uppercase text-green-200">notes</p>
             </div>
@@ -129,7 +152,7 @@ export default function Progress() {
         </div>
       </section>
 
-      <section className="md:col-span-12 arcade-border glass-panel p-6 rounded-xl mt-2">
+      <section className="notebook-surface md:col-span-12 arcade-border glass-panel p-6 rounded-xl mt-2">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-sm font-arcade text-cyan-400">Milestone Tracker</h3>
           <span className="text-xs px-2 py-1 bg-black/50 rounded font-bold text-gray-400">{completedCount} / {milestones.length} complete</span>
@@ -137,7 +160,7 @@ export default function Progress() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {milestoneGroups.map((group) => (
-            <div key={group.title} className="rounded-xl border border-white/10 bg-black/40 p-4">
+            <div key={group.title} className="notebook-card rounded-xl border border-white/10 bg-black/40 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-xs font-arcade text-white">{group.title}</h4>
                 <span className="text-[10px] font-bold uppercase text-gray-500">
@@ -152,6 +175,7 @@ export default function Progress() {
                     <div className="flex items-center gap-3">
                       {group.type === 'game' && <Gamepad2 className="w-5 h-5 text-pink-400" />}
                       {group.type === 'lesson' && <Trophy className="w-5 h-5 text-cyan-400" />}
+                      {group.type === 'report' && <Newspaper className="w-5 h-5 text-yellow-300" />}
                       {group.type === 'prototype' && <ClipboardList className="w-5 h-5 text-green-400" />}
                       {group.type === 'reflection' && (milestone.id === 'ai-coach' ? <Bot className="w-5 h-5 text-cyan-400" /> : <ClipboardList className="w-5 h-5 text-green-400" />)}
                       <div className="flex flex-col">

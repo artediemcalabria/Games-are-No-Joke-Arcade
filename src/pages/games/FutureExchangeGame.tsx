@@ -17,8 +17,6 @@ import {
   Map,
   MessageCircle,
   MonitorUp,
-  Network,
-  PackagePlus,
   Pencil,
   Presentation,
   Projector,
@@ -28,7 +26,6 @@ import {
   Sparkles,
   Target,
   Ticket,
-  Timer,
   Truck,
   Users,
   Utensils,
@@ -43,422 +40,367 @@ import { playSound } from '../../lib/audio';
 import { useStore } from '../../store/useStore';
 
 type ResourceId =
-  | 'paper' | 'pencils' | 'projector' | 'speaker' | 'roomKeys' | 'budgetTokens' | 'travelTickets' | 'food' | 'cards' | 'dice'
-  | 'friendship' | 'trust' | 'energy' | 'inclusion' | 'localConnection' | 'youthVoice' | 'reflection' | 'focus' | 'creativity'
-  | 'structure' | 'rules' | 'sharedAgreement' | 'welcomeMoment' | 'partnerTeamReady' | 'youthpassCards' | 'communityPresentation' | 'carePackage'
-  | 'activityCards' | 'learningGoal' | 'presentationSetup' | 'safeGroupClimate' | 'logisticsReady' | 'communityImpact';
-type Inventory = Record<ResourceId, number>;
+  | 'paper' | 'pencils' | 'creativity' | 'cards' | 'focus'
+  | 'materialsKit' | 'ideaSketch' | 'clearNotes' | 'promptCards' | 'activityCards' | 'rules' | 'structure' | 'fairRules' | 'activityPlan' | 'playtestPlan' | 'youthLedGame'
+  | 'trust' | 'youthVoice' | 'sharedVoice' | 'friendship' | 'inclusion' | 'energy' | 'safeGroupClimate' | 'welcomeMoment' | 'sharedAgreement'
+  | 'teamBond' | 'reflection' | 'learningGoal' | 'debriefCircle' | 'youthpassCards'
+  | 'budgetTokens' | 'travelTickets' | 'travelPlan' | 'roomKeys' | 'projector' | 'speaker' | 'presentationSetup' | 'showcaseSpace' | 'food' | 'carePackage' | 'logisticsReady'
+  | 'localConnection' | 'communityImpact' | 'communityPresentation';
+type GroupId = 'materials' | 'people' | 'learning' | 'logistics' | 'impact';
+type TutorialStage = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type ActiveView = 'discover' | 'groups' | 'book' | 'collect' | 'trade' | 'board' | 'help';
 type MeterKey = 'energy' | 'trust' | 'budget';
 type Meters = Record<MeterKey, number>;
 type EndingKind = 'ready' | 'care' | 'redesign';
-type ActivePanel = 'collect' | 'traders' | 'recipes' | 'log';
-type ActiveDrawer = 'board' | 'discovery' | null;
-type RecipeCategory = 'Activity Design' | 'Group Climate' | 'Logistics' | 'Learning' | 'Impact';
 
 type Resource = {
   id: ResourceId;
   name: string;
   short: string;
+  group: GroupId;
   Icon: LucideIcon;
-  type: 'tangible' | 'intangible' | 'crafted';
+  meaning: string;
   color: string;
 };
 type Recipe = {
   id: string;
-  name: string;
-  category: RecipeCategory;
-  inputs: ResourceId[];
+  category: 'Activity Design' | 'Group Climate' | 'Learning' | 'Logistics' | 'Impact';
+  inputs: [ResourceId, ResourceId];
   output: ResourceId;
+  learning: string;
   clue: string;
-  feedback: string;
+  aliasesForModule?: string[];
+};
+type Theory = {
+  id: string;
+  text: string;
 };
 type Module = {
   id: string;
   name: string;
-  needs: ResourceId[];
-  feedback: string;
+  options: ResourceId[][];
+  reflection: string;
 };
 type CollectSpot = {
   id: string;
   name: string;
-  resources: ResourceId[];
+  gives: ResourceId[];
   cost: Partial<Meters>;
-  maxUses?: number;
-  feedback: string;
+  unlockStage: TutorialStage;
 };
 type Trader = {
   id: string;
   name: string;
   role: string;
-  offers: ResourceId[];
-  needs: ResourceId[];
-  trustDelta: number;
-  feedback: string;
-};
-type LogEntry = {
-  text: string;
-  tone: 'good' | 'warn' | 'info';
-};
-type PartialDiscovery = {
-  recipeId: string;
-  matched: number;
-  clue: string;
-};
-type DiscoveryRevealState = {
-  recipe: Recipe;
-  isNew: boolean;
+  give: ResourceId;
+  receive: ResourceId[];
+  unlockStage: TutorialStage;
 };
 
 const game = gameCatalog.find((item) => item.id === 'future-exchange')!;
 
 const resources: Record<ResourceId, Resource> = {
-  paper: { id: 'paper', name: 'Paper', short: 'Paper', Icon: FileText, type: 'tangible', color: 'border-slate-200 bg-slate-200/20 text-slate-100' },
-  pencils: { id: 'pencils', name: 'Pencils', short: 'Pencil', Icon: Pencil, type: 'tangible', color: 'border-yellow-200 bg-yellow-200/20 text-yellow-100' },
-  projector: { id: 'projector', name: 'Projector', short: 'Projector', Icon: Projector, type: 'tangible', color: 'border-cyan-200 bg-cyan-200/20 text-cyan-100' },
-  speaker: { id: 'speaker', name: 'Speaker', short: 'Speaker', Icon: Volume2, type: 'tangible', color: 'border-pink-200 bg-pink-200/20 text-pink-100' },
-  roomKeys: { id: 'roomKeys', name: 'Room Keys', short: 'Keys', Icon: KeyRound, type: 'tangible', color: 'border-orange-200 bg-orange-200/20 text-orange-100' },
-  budgetTokens: { id: 'budgetTokens', name: 'Budget Tokens', short: 'Budget', Icon: Coins, type: 'tangible', color: 'border-green-200 bg-green-200/20 text-green-100' },
-  travelTickets: { id: 'travelTickets', name: 'Travel Tickets', short: 'Tickets', Icon: Ticket, type: 'tangible', color: 'border-blue-200 bg-blue-200/20 text-blue-100' },
-  food: { id: 'food', name: 'Food', short: 'Food', Icon: Utensils, type: 'tangible', color: 'border-red-200 bg-red-200/20 text-red-100' },
-  cards: { id: 'cards', name: 'Cards', short: 'Cards', Icon: ClipboardList, type: 'tangible', color: 'border-violet-200 bg-violet-200/20 text-violet-100' },
-  dice: { id: 'dice', name: 'Dice', short: 'Dice', Icon: Dices, type: 'tangible', color: 'border-white bg-white/15 text-white' },
-  friendship: { id: 'friendship', name: 'Friendship', short: 'Friendship', Icon: Heart, type: 'intangible', color: 'border-pink-300 bg-pink-300/20 text-pink-100' },
-  trust: { id: 'trust', name: 'Trust', short: 'Trust', Icon: ShieldCheck, type: 'intangible', color: 'border-green-300 bg-green-300/20 text-green-100' },
-  energy: { id: 'energy', name: 'Energy', short: 'Energy', Icon: Zap, type: 'intangible', color: 'border-yellow-300 bg-yellow-300/20 text-yellow-100' },
-  inclusion: { id: 'inclusion', name: 'Inclusion', short: 'Inclusion', Icon: Users, type: 'intangible', color: 'border-cyan-300 bg-cyan-300/20 text-cyan-100' },
-  localConnection: { id: 'localConnection', name: 'Local Connection', short: 'Local Link', Icon: Map, type: 'intangible', color: 'border-lime-300 bg-lime-300/20 text-lime-100' },
-  youthVoice: { id: 'youthVoice', name: 'Youth Voice', short: 'Youth Voice', Icon: MessageCircle, type: 'intangible', color: 'border-fuchsia-300 bg-fuchsia-300/20 text-fuchsia-100' },
-  reflection: { id: 'reflection', name: 'Reflection', short: 'Reflect', Icon: BookOpen, type: 'intangible', color: 'border-indigo-300 bg-indigo-300/20 text-indigo-100' },
-  focus: { id: 'focus', name: 'Focus', short: 'Focus', Icon: Target, type: 'intangible', color: 'border-sky-300 bg-sky-300/20 text-sky-100' },
-  creativity: { id: 'creativity', name: 'Creativity', short: 'Creative', Icon: Sparkles, type: 'intangible', color: 'border-amber-300 bg-amber-300/20 text-amber-100' },
-  structure: { id: 'structure', name: 'Structure', short: 'Structure', Icon: Network, type: 'crafted', color: 'border-blue-300 bg-blue-300/20 text-blue-100' },
-  rules: { id: 'rules', name: 'Rules', short: 'Rules', Icon: ListChecks, type: 'crafted', color: 'border-slate-300 bg-slate-300/20 text-slate-100' },
-  sharedAgreement: { id: 'sharedAgreement', name: 'Shared Agreement', short: 'Agreement', Icon: ShieldCheck, type: 'crafted', color: 'border-emerald-300 bg-emerald-300/20 text-emerald-100' },
-  welcomeMoment: { id: 'welcomeMoment', name: 'Welcome Moment', short: 'Welcome', Icon: Heart, type: 'crafted', color: 'border-rose-300 bg-rose-300/20 text-rose-100' },
-  partnerTeamReady: { id: 'partnerTeamReady', name: 'Partner Team', short: 'Team Ready', Icon: Users, type: 'crafted', color: 'border-teal-300 bg-teal-300/20 text-teal-100' },
-  youthpassCards: { id: 'youthpassCards', name: 'YouthPass Cards', short: 'YouthPass', Icon: BookOpen, type: 'crafted', color: 'border-indigo-300 bg-indigo-300/25 text-indigo-100' },
-  communityPresentation: { id: 'communityPresentation', name: 'Community Presentation', short: 'Community', Icon: Presentation, type: 'crafted', color: 'border-lime-300 bg-lime-300/25 text-lime-100' },
-  carePackage: { id: 'carePackage', name: 'Care Package', short: 'Care Pack', Icon: Utensils, type: 'crafted', color: 'border-red-300 bg-red-300/20 text-red-100' },
-  activityCards: { id: 'activityCards', name: 'Activity Cards', short: 'Activities', Icon: ClipboardList, type: 'crafted', color: 'border-yellow-300 bg-yellow-300/25 text-yellow-100' },
-  learningGoal: { id: 'learningGoal', name: 'Learning Goal', short: 'Goal', Icon: Goal, type: 'crafted', color: 'border-green-300 bg-green-300/25 text-green-100' },
-  presentationSetup: { id: 'presentationSetup', name: 'Presentation Setup', short: 'Setup', Icon: MonitorUp, type: 'crafted', color: 'border-cyan-300 bg-cyan-300/25 text-cyan-100' },
-  safeGroupClimate: { id: 'safeGroupClimate', name: 'Safe Group Climate', short: 'Safe Group', Icon: Smile, type: 'crafted', color: 'border-pink-300 bg-pink-300/25 text-pink-100' },
-  logisticsReady: { id: 'logisticsReady', name: 'Logistics Ready', short: 'Logistics', Icon: Truck, type: 'crafted', color: 'border-orange-300 bg-orange-300/25 text-orange-100' },
-  communityImpact: { id: 'communityImpact', name: 'Community Impact', short: 'Impact', Icon: Presentation, type: 'crafted', color: 'border-lime-300 bg-lime-300/25 text-lime-100' },
+  paper: { id: 'paper', name: 'Paper', short: 'Paper', group: 'materials', Icon: FileText, meaning: 'A simple surface for ideas.', color: 'border-slate-200 bg-slate-200/20 text-slate-100' },
+  pencils: { id: 'pencils', name: 'Pencils', short: 'Pencils', group: 'materials', Icon: Pencil, meaning: 'Tools for sketching first versions.', color: 'border-yellow-200 bg-yellow-200/20 text-yellow-100' },
+  creativity: { id: 'creativity', name: 'Creativity', short: 'Creative', group: 'people', Icon: Sparkles, meaning: 'The spark that gives materials purpose.', color: 'border-amber-300 bg-amber-300/20 text-amber-100' },
+  cards: { id: 'cards', name: 'Cards', short: 'Cards', group: 'materials', Icon: ClipboardList, meaning: 'Reusable pieces for prompts and actions.', color: 'border-violet-200 bg-violet-200/20 text-violet-100' },
+  focus: { id: 'focus', name: 'Focus', short: 'Focus', group: 'people', Icon: Target, meaning: 'Attention that turns ideas into rules.', color: 'border-sky-300 bg-sky-300/20 text-sky-100' },
+  materialsKit: { id: 'materialsKit', name: 'Materials Kit', short: 'Kit', group: 'materials', Icon: Boxes, meaning: 'Basic tools organized for creation.', color: 'border-cyan-200 bg-cyan-200/20 text-cyan-100' },
+  ideaSketch: { id: 'ideaSketch', name: 'Idea Sketch', short: 'Sketch', group: 'materials', Icon: FileText, meaning: 'A rough idea that can be shared and changed.', color: 'border-fuchsia-200 bg-fuchsia-200/20 text-fuchsia-100' },
+  clearNotes: { id: 'clearNotes', name: 'Clear Notes', short: 'Notes', group: 'materials', Icon: Pencil, meaning: 'Focused notes that help the team remember decisions.', color: 'border-sky-200 bg-sky-200/20 text-sky-100' },
+  promptCards: { id: 'promptCards', name: 'Prompt Cards', short: 'Prompts', group: 'materials', Icon: Dices, meaning: 'Small triggers that make ideas playable.', color: 'border-violet-300 bg-violet-300/25 text-violet-100' },
+  activityCards: { id: 'activityCards', name: 'Activity Cards', short: 'Activities', group: 'materials', Icon: ClipboardList, meaning: 'A playable set of activity prompts.', color: 'border-yellow-300 bg-yellow-300/25 text-yellow-100' },
+  rules: { id: 'rules', name: 'Rules', short: 'Rules', group: 'materials', Icon: ListChecks, meaning: 'A way to test an idea through play.', color: 'border-slate-300 bg-slate-300/20 text-slate-100' },
+  structure: { id: 'structure', name: 'Structure', short: 'Structure', group: 'materials', Icon: Goal, meaning: 'A frame that helps the group move.', color: 'border-blue-300 bg-blue-300/20 text-blue-100' },
+  fairRules: { id: 'fairRules', name: 'Fair Rules', short: 'Fair Rules', group: 'materials', Icon: ShieldCheck, meaning: 'Rules that players can understand and accept.', color: 'border-emerald-300 bg-emerald-300/20 text-emerald-100' },
+  activityPlan: { id: 'activityPlan', name: 'Activity Plan', short: 'Plan', group: 'materials', Icon: ClipboardList, meaning: 'A sequence that can be tested with young people.', color: 'border-yellow-300 bg-yellow-300/30 text-yellow-100' },
+  playtestPlan: { id: 'playtestPlan', name: 'Playtest Plan', short: 'Playtest', group: 'materials', Icon: Hammer, meaning: 'A plan for testing before the real exchange.', color: 'border-orange-300 bg-orange-300/20 text-orange-100' },
+  youthLedGame: { id: 'youthLedGame', name: 'Youth-Led Game', short: 'Youth Game', group: 'impact', Icon: Users, meaning: 'A game shaped by the voices of young people.', color: 'border-lime-300 bg-lime-300/20 text-lime-100' },
+  trust: { id: 'trust', name: 'Trust', short: 'Trust', group: 'people', Icon: ShieldCheck, meaning: 'People feel safe enough to contribute.', color: 'border-green-300 bg-green-300/20 text-green-100' },
+  youthVoice: { id: 'youthVoice', name: 'Youth Voice', short: 'Voice', group: 'people', Icon: MessageCircle, meaning: 'Young people shape the project.', color: 'border-fuchsia-300 bg-fuchsia-300/20 text-fuchsia-100' },
+  sharedVoice: { id: 'sharedVoice', name: 'Shared Voice', short: 'Shared', group: 'people', Icon: Users, meaning: 'Different voices become one direction.', color: 'border-teal-300 bg-teal-300/20 text-teal-100' },
+  friendship: { id: 'friendship', name: 'Friendship', short: 'Friendship', group: 'people', Icon: Heart, meaning: 'Connection that makes cooperation easier.', color: 'border-pink-300 bg-pink-300/20 text-pink-100' },
+  inclusion: { id: 'inclusion', name: 'Inclusion', short: 'Inclusion', group: 'people', Icon: Users, meaning: 'Access and care are designed in.', color: 'border-cyan-300 bg-cyan-300/20 text-cyan-100' },
+  energy: { id: 'energy', name: 'Energy', short: 'Energy', group: 'people', Icon: Zap, meaning: 'The group has strength to continue.', color: 'border-yellow-300 bg-yellow-300/20 text-yellow-100' },
+  safeGroupClimate: { id: 'safeGroupClimate', name: 'Safe Group Climate', short: 'Safe Group', group: 'people', Icon: Smile, meaning: 'People can participate with less fear.', color: 'border-pink-300 bg-pink-300/25 text-pink-100' },
+  welcomeMoment: { id: 'welcomeMoment', name: 'Welcome Moment', short: 'Welcome', group: 'people', Icon: Heart, meaning: 'A warm start for the exchange.', color: 'border-rose-300 bg-rose-300/20 text-rose-100' },
+  sharedAgreement: { id: 'sharedAgreement', name: 'Shared Agreement', short: 'Agreement', group: 'people', Icon: ShieldCheck, meaning: 'Rules owned by the group.', color: 'border-emerald-300 bg-emerald-300/20 text-emerald-100' },
+  teamBond: { id: 'teamBond', name: 'Team Bond', short: 'Team Bond', group: 'people', Icon: Heart, meaning: 'The group feels connected enough to take risks.', color: 'border-pink-300 bg-pink-300/25 text-pink-100' },
+  reflection: { id: 'reflection', name: 'Reflection', short: 'Reflect', group: 'learning', Icon: BookOpen, meaning: 'A pause to name what changed.', color: 'border-indigo-300 bg-indigo-300/20 text-indigo-100' },
+  learningGoal: { id: 'learningGoal', name: 'Learning Goal', short: 'Goal', group: 'learning', Icon: Goal, meaning: 'The reason behind the activity.', color: 'border-green-300 bg-green-300/25 text-green-100' },
+  debriefCircle: { id: 'debriefCircle', name: 'Debrief Circle', short: 'Debrief', group: 'learning', Icon: MessageCircle, meaning: 'A safe moment to connect play with learning.', color: 'border-indigo-300 bg-indigo-300/25 text-indigo-100' },
+  youthpassCards: { id: 'youthpassCards', name: 'YouthPass Cards', short: 'YouthPass', group: 'learning', Icon: BookOpen, meaning: 'Reflection becomes playable.', color: 'border-indigo-300 bg-indigo-300/25 text-indigo-100' },
+  budgetTokens: { id: 'budgetTokens', name: 'Budget Tokens', short: 'Budget', group: 'logistics', Icon: Coins, meaning: 'Money as a limited project resource.', color: 'border-green-200 bg-green-200/20 text-green-100' },
+  travelTickets: { id: 'travelTickets', name: 'Travel Tickets', short: 'Tickets', group: 'logistics', Icon: Ticket, meaning: 'Movement from places to the exchange.', color: 'border-blue-200 bg-blue-200/20 text-blue-100' },
+  travelPlan: { id: 'travelPlan', name: 'Travel Plan', short: 'Travel', group: 'logistics', Icon: Ticket, meaning: 'Travel becomes organized and shared.', color: 'border-blue-300 bg-blue-300/25 text-blue-100' },
+  roomKeys: { id: 'roomKeys', name: 'Room Keys', short: 'Keys', group: 'logistics', Icon: KeyRound, meaning: 'Access to spaces and timing.', color: 'border-orange-200 bg-orange-200/20 text-orange-100' },
+  projector: { id: 'projector', name: 'Projector', short: 'Projector', group: 'logistics', Icon: Projector, meaning: 'A tool for sharing outputs.', color: 'border-cyan-200 bg-cyan-200/20 text-cyan-100' },
+  speaker: { id: 'speaker', name: 'Speaker', short: 'Speaker', group: 'logistics', Icon: Volume2, meaning: 'Sound for group moments.', color: 'border-pink-200 bg-pink-200/20 text-pink-100' },
+  presentationSetup: { id: 'presentationSetup', name: 'Presentation Setup', short: 'Setup', group: 'logistics', Icon: MonitorUp, meaning: 'Communication tools are ready.', color: 'border-cyan-300 bg-cyan-300/25 text-cyan-100' },
+  showcaseSpace: { id: 'showcaseSpace', name: 'Showcase Space', short: 'Showcase', group: 'logistics', Icon: Presentation, meaning: 'The room is ready for sharing prototypes.', color: 'border-cyan-300 bg-cyan-300/25 text-cyan-100' },
+  food: { id: 'food', name: 'Food', short: 'Food', group: 'logistics', Icon: Utensils, meaning: 'Basic care for the body.', color: 'border-red-200 bg-red-200/20 text-red-100' },
+  carePackage: { id: 'carePackage', name: 'Care Package', short: 'Care', group: 'logistics', Icon: Utensils, meaning: 'Budget becomes care.', color: 'border-red-300 bg-red-300/20 text-red-100' },
+  logisticsReady: { id: 'logisticsReady', name: 'Logistics Ready', short: 'Logistics', group: 'logistics', Icon: Truck, meaning: 'The practical system can work.', color: 'border-orange-300 bg-orange-300/25 text-orange-100' },
+  localConnection: { id: 'localConnection', name: 'Local Connection', short: 'Local', group: 'impact', Icon: Map, meaning: 'The project touches the community.', color: 'border-lime-300 bg-lime-300/20 text-lime-100' },
+  communityImpact: { id: 'communityImpact', name: 'Community Impact', short: 'Impact', group: 'impact', Icon: Presentation, meaning: 'The activity reaches beyond the room.', color: 'border-lime-300 bg-lime-300/25 text-lime-100' },
+  communityPresentation: { id: 'communityPresentation', name: 'Community Presentation', short: 'Community', group: 'impact', Icon: Presentation, meaning: 'Young people share with the community.', color: 'border-lime-300 bg-lime-300/25 text-lime-100' },
 };
 
-const allResourceIds = Object.keys(resources) as ResourceId[];
+const groupLabels: Record<GroupId, string> = {
+  materials: 'Materials',
+  people: 'People',
+  learning: 'Learning',
+  logistics: 'Logistics',
+  impact: 'Impact',
+};
+
+const groupOrder: GroupId[] = ['materials', 'people', 'learning', 'logistics', 'impact'];
+const startingResources: ResourceId[] = ['paper', 'pencils', 'creativity', 'cards', 'focus'];
 
 const recipes: Recipe[] = [
-  { id: 'activity-cards', name: 'Activity Cards', category: 'Activity Design', inputs: ['paper', 'pencils', 'creativity'], output: 'activityCards', clue: 'Materials become a playable activity when creativity joins them.', feedback: 'New discovery: Activity Cards. The activity plan can grow.' },
-  { id: 'rules', name: 'Rules', category: 'Activity Design', inputs: ['cards', 'dice', 'focus'], output: 'rules', clue: 'Game materials need focus before they become testable rules.', feedback: 'New discovery: Rules. The game can now be tested, not only imagined.' },
-  { id: 'structure', name: 'Structure', category: 'Activity Design', inputs: ['rules', 'focus', 'paper'], output: 'structure', clue: 'Rules become useful structure when they are written and focused.', feedback: 'New discovery: Structure. The team can organize decisions.' },
-  { id: 'learning-goal', name: 'Learning Goal', category: 'Learning', inputs: ['trust', 'youthVoice', 'reflection'], output: 'learningGoal', clue: 'Learning appears when young people are trusted and reflection is present.', feedback: 'New discovery: Learning Goal. The exchange has a reason to exist.' },
-  { id: 'youthpass-cards', name: 'YouthPass Cards', category: 'Learning', inputs: ['reflection', 'cards', 'learningGoal'], output: 'youthpassCards', clue: 'Reflection becomes easier when it has cards and a clear learning goal.', feedback: 'New discovery: YouthPass Cards. Reflection becomes playable.' },
-  { id: 'safe-climate', name: 'Safe Group Climate', category: 'Group Climate', inputs: ['friendship', 'inclusion', 'energy'], output: 'safeGroupClimate', clue: 'A group feels safer when connection, access, and energy work together.', feedback: 'New discovery: Safe Group Climate. People can participate with less fear.' },
-  { id: 'welcome-moment', name: 'Welcome Moment', category: 'Group Climate', inputs: ['food', 'friendship', 'inclusion'], output: 'welcomeMoment', clue: 'A welcome is care, connection, and access at the same time.', feedback: 'New discovery: Welcome Moment. The group has a soft landing.' },
-  { id: 'partner-team-ready', name: 'Partner Team', category: 'Group Climate', inputs: ['welcomeMoment', 'trust', 'youthVoice'], output: 'partnerTeamReady', clue: 'A partner team forms when welcome turns into trust and shared voice.', feedback: 'New discovery: Partner Team. The project has shared ownership.' },
-  { id: 'shared-agreement', name: 'Shared Agreement', category: 'Group Climate', inputs: ['rules', 'trust', 'youthVoice'], output: 'sharedAgreement', clue: 'Rules become shared only when trust and youth voice shape them.', feedback: 'New discovery: Shared Agreement. The team owns the project together.' },
-  { id: 'presentation-setup', name: 'Presentation Setup', category: 'Logistics', inputs: ['projector', 'speaker', 'focus'], output: 'presentationSetup', clue: 'Technology needs focus before it becomes communication.', feedback: 'New discovery: Presentation Setup. The group can share clearly.' },
-  { id: 'logistics-ready', name: 'Logistics Ready', category: 'Logistics', inputs: ['budgetTokens', 'travelTickets', 'roomKeys'], output: 'logisticsReady', clue: 'A project needs money, movement, and a place.', feedback: 'New discovery: Logistics Ready. The exchange can exist in the real world.' },
-  { id: 'care-package', name: 'Care Package', category: 'Logistics', inputs: ['budgetTokens', 'food', 'inclusion'], output: 'carePackage', clue: 'Budget becomes care when it supports access and basic needs.', feedback: 'New discovery: Care Package. The project has practical support.' },
-  { id: 'community-impact', name: 'Community Impact', category: 'Impact', inputs: ['localConnection', 'activityCards', 'youthVoice'], output: 'communityImpact', clue: 'Impact grows when local reality meets youth voice and activity design.', feedback: 'New discovery: Community Impact. The project reaches outside the room.' },
-  { id: 'community-presentation', name: 'Community Presentation', category: 'Impact', inputs: ['localConnection', 'projector', 'youthVoice'], output: 'communityPresentation', clue: 'A local link, youth voice, and a projector can open the project to the community.', feedback: 'New discovery: Community Presentation. The group can speak with the local community.' },
+  { id: 'materials-kit', category: 'Activity Design', inputs: ['paper', 'pencils'], output: 'materialsKit', learning: 'Materials become useful when they are organized.', clue: 'Paper connects with something used to draw.' },
+  { id: 'idea-sketch', category: 'Activity Design', inputs: ['paper', 'creativity'], output: 'ideaSketch', learning: 'A rough sketch makes an idea visible to the team.', clue: 'Paper can hold a creative first idea.' },
+  { id: 'clear-notes', category: 'Activity Design', inputs: ['pencils', 'focus'], output: 'clearNotes', learning: 'Focused notes help the group remember decisions.', clue: 'A writing tool becomes stronger with attention.' },
+  { id: 'prompt-cards', category: 'Activity Design', inputs: ['cards', 'creativity'], output: 'promptCards', learning: 'Cards become playful when they carry surprising prompts.', clue: 'Cards need a creative spark.' },
+  { id: 'rules', category: 'Activity Design', inputs: ['cards', 'focus'], output: 'rules', learning: 'Rules make an idea testable.', clue: 'Cards need focus before they become rules.' },
+  { id: 'activity-cards', category: 'Activity Design', inputs: ['materialsKit', 'creativity'], output: 'activityCards', learning: 'Activity Cards show that tools become useful when creativity gives them purpose.', clue: 'A kit becomes playable with creativity.' },
+  { id: 'activity-cards-from-prompts', category: 'Activity Design', inputs: ['promptCards', 'focus'], output: 'activityCards', learning: 'Focused prompts can become activity cards.', clue: 'Prompts need focus to become usable.' },
+  { id: 'prompt-cards-from-sketch', category: 'Activity Design', inputs: ['ideaSketch', 'cards'], output: 'promptCards', learning: 'A sketched idea can become small playable prompts.', clue: 'A sketch can move onto cards.' },
+  { id: 'structure-from-sketch', category: 'Activity Design', inputs: ['ideaSketch', 'focus'], output: 'structure', learning: 'Focus turns a sketch into a structure.', clue: 'A rough idea needs focus.' },
+  { id: 'structure-from-rules', category: 'Activity Design', inputs: ['rules', 'materialsKit'], output: 'structure', learning: 'A structure helps people understand what to do next.', clue: 'Rules can organize materials.' },
+  { id: 'rules-from-notes', category: 'Activity Design', inputs: ['clearNotes', 'cards'], output: 'rules', learning: 'Clear notes can become rules that players can test.', clue: 'Notes and cards can become instructions.' },
+  { id: 'fair-rules-from-structure', category: 'Activity Design', inputs: ['structure', 'rules'], output: 'fairRules', learning: 'Fair rules need both structure and clear limits.', clue: 'Structure can make rules fairer.' },
+  { id: 'fair-rules-from-trust', category: 'Group Climate', inputs: ['rules', 'trust'], output: 'fairRules', learning: 'Rules feel fairer when trust is present.', clue: 'Rules connect with trust.' },
+  { id: 'activity-plan', category: 'Activity Design', inputs: ['activityCards', 'rules'], output: 'activityPlan', learning: 'A real activity plan needs prompts and rules together.', clue: 'Activities become a plan when rules guide them.', aliasesForModule: ['activity-plan'] },
+  { id: 'activity-plan-from-prompts', category: 'Activity Design', inputs: ['promptCards', 'rules'], output: 'activityPlan', learning: 'Prompt cards plus rules can create a plan for the session.', clue: 'Prompts become stronger with rules.', aliasesForModule: ['activity-plan'] },
+  { id: 'playtest-plan', category: 'Activity Design', inputs: ['activityPlan', 'focus'], output: 'playtestPlan', learning: 'A focused activity plan is ready for testing.', clue: 'A plan needs focus before playtesting.' },
+  { id: 'playtest-plan-from-reflection', category: 'Learning', inputs: ['rules', 'reflection'], output: 'playtestPlan', learning: 'Reflection helps rules become something to test and improve.', clue: 'Rules improve with reflection.' },
+  { id: 'shared-voice', category: 'Group Climate', inputs: ['trust', 'youthVoice'], output: 'sharedVoice', learning: 'Trust is a resource, not decoration.', clue: 'Trust connects with young people speaking.' },
+  { id: 'team-bond', category: 'Group Climate', inputs: ['trust', 'friendship'], output: 'teamBond', learning: 'Trust and friendship create a stronger team bond.', clue: 'Trust can grow into connection.' },
+  { id: 'team-bond-from-welcome', category: 'Group Climate', inputs: ['welcomeMoment', 'trust'], output: 'teamBond', learning: 'A good welcome can become real team trust.', clue: 'Welcome connects with trust.' },
+  { id: 'safe-climate', category: 'Group Climate', inputs: ['friendship', 'inclusion'], output: 'safeGroupClimate', learning: 'A safe climate is designed before problems appear.', clue: 'Friendship needs inclusion to become safe.' },
+  { id: 'safe-climate-from-team', category: 'Group Climate', inputs: ['teamBond', 'inclusion'], output: 'safeGroupClimate', learning: 'A bonded team becomes safer when inclusion is designed in.', clue: 'Team connection needs inclusion.' },
+  { id: 'welcome-moment', category: 'Group Climate', inputs: ['carePackage', 'friendship'], output: 'welcomeMoment', learning: 'A welcome moment helps people enter the group.', clue: 'Care and friendship create welcome.' },
+  { id: 'welcome-from-food', category: 'Group Climate', inputs: ['food', 'friendship'], output: 'welcomeMoment', learning: 'Small care moments can start with food and connection.', clue: 'Food can support connection.' },
+  { id: 'shared-agreement', category: 'Group Climate', inputs: ['rules', 'sharedVoice'], output: 'sharedAgreement', learning: 'Rules become stronger when the group owns them.', clue: 'Rules need shared voice.' },
+  { id: 'shared-agreement-from-fair', category: 'Group Climate', inputs: ['fairRules', 'youthVoice'], output: 'sharedAgreement', learning: 'Fair rules become agreements when youth voice shapes them.', clue: 'Fair rules connect with youth voice.' },
+  { id: 'learning-goal', category: 'Learning', inputs: ['sharedVoice', 'reflection'], output: 'learningGoal', learning: 'Learning goals grow from voice and reflection.', clue: 'Shared voice becomes learning through reflection.', aliasesForModule: ['shared-topic'] },
+  { id: 'learning-goal-from-sketch', category: 'Learning', inputs: ['ideaSketch', 'reflection'], output: 'learningGoal', learning: 'A rough idea becomes a learning goal when the group reflects on it.', clue: 'A sketch can become a goal through reflection.', aliasesForModule: ['shared-topic'] },
+  { id: 'debrief-circle', category: 'Learning', inputs: ['youthVoice', 'reflection'], output: 'debriefCircle', learning: 'Debrief works when young people can name what they noticed.', clue: 'Voice and reflection create debrief.' },
+  { id: 'debrief-from-notes', category: 'Learning', inputs: ['clearNotes', 'reflection'], output: 'debriefCircle', learning: 'Clear notes help the debrief stay connected to real play.', clue: 'Notes can support reflection.' },
+  { id: 'youthpass-cards', category: 'Learning', inputs: ['learningGoal', 'cards'], output: 'youthpassCards', learning: 'Reflection becomes easier when players can hold it in their hands.', clue: 'A learning goal can move onto cards.' },
+  { id: 'youthpass-from-debrief', category: 'Learning', inputs: ['debriefCircle', 'learningGoal'], output: 'youthpassCards', learning: 'YouthPass reflection grows from debrief and a clear goal.', clue: 'Debrief needs a learning goal.' },
+  { id: 'youth-led-game', category: 'Impact', inputs: ['activityCards', 'youthVoice'], output: 'youthLedGame', learning: 'A game becomes youth-led when young voices shape the activity.', clue: 'Activity cards connect with youth voice.', aliasesForModule: ['shared-topic'] },
+  { id: 'youth-led-game-from-goal', category: 'Impact', inputs: ['activityPlan', 'learningGoal'], output: 'youthLedGame', learning: 'A planned activity becomes stronger when its learning goal is visible.', clue: 'A plan needs a learning reason.' },
+  { id: 'travel-plan', category: 'Logistics', inputs: ['budgetTokens', 'travelTickets'], output: 'travelPlan', learning: 'Budget and tickets become a travel plan.', clue: 'Budget connects with movement.' },
+  { id: 'logistics-ready', category: 'Logistics', inputs: ['travelPlan', 'roomKeys'], output: 'logisticsReady', learning: 'Logistics is a system, not one object.', clue: 'Travel also needs access to rooms.' },
+  { id: 'presentation-setup', category: 'Logistics', inputs: ['projector', 'speaker'], output: 'presentationSetup', learning: 'Tools support communication when they work together.', clue: 'Two communication tools can become a setup.' },
+  { id: 'showcase-space', category: 'Logistics', inputs: ['presentationSetup', 'roomKeys'], output: 'showcaseSpace', learning: 'A showcase needs both communication tools and an accessible space.', clue: 'A setup needs a room.' },
+  { id: 'showcase-space-from-kit', category: 'Logistics', inputs: ['roomKeys', 'materialsKit'], output: 'showcaseSpace', learning: 'A room plus materials can become a real showcase space.', clue: 'Keys can open space for materials.' },
+  { id: 'care-package', category: 'Logistics', inputs: ['food', 'inclusion'], output: 'carePackage', learning: 'Care is practical, not only emotional.', clue: 'Food can become care when inclusion is present.' },
+  { id: 'care-package-from-budget', category: 'Logistics', inputs: ['budgetTokens', 'food'], output: 'carePackage', learning: 'Budget becomes care when it protects basic needs.', clue: 'Budget can support food and care.' },
+  { id: 'community-impact', category: 'Impact', inputs: ['localConnection', 'activityCards'], output: 'communityImpact', learning: 'Impact connects local reality with activity design.', clue: 'Local reality needs an activity to become impact.', aliasesForModule: ['follow-up'] },
+  { id: 'community-impact-from-youth-game', category: 'Impact', inputs: ['localConnection', 'youthLedGame'], output: 'communityImpact', learning: 'Youth-led games can create community impact when they connect locally.', clue: 'Youth-led games can leave the room.', aliasesForModule: ['follow-up'] },
+  { id: 'community-presentation', category: 'Impact', inputs: ['communityImpact', 'presentationSetup'], output: 'communityPresentation', learning: 'Impact grows when young people can share it.', clue: 'Impact needs a way to be shown.', aliasesForModule: ['follow-up'] },
+  { id: 'community-presentation-from-showcase', category: 'Impact', inputs: ['communityImpact', 'showcaseSpace'], output: 'communityPresentation', learning: 'A showcase space helps impact become visible.', clue: 'Impact can use a showcase.' },
+  { id: 'community-presentation-from-playtest', category: 'Impact', inputs: ['playtestPlan', 'communityImpact'], output: 'communityPresentation', learning: 'Testing with the community makes the final presentation stronger.', clue: 'Impact improves when it is tested.' },
 ];
 
 const modules: Module[] = [
-  { id: 'shared-topic', name: 'Shared Topic', needs: ['learningGoal', 'youthVoice'], feedback: 'Shared Topic installed. The exchange starts from young people, not only from a title.' },
-  { id: 'partner-team', name: 'Partner Team', needs: ['partnerTeamReady', 'sharedAgreement'], feedback: 'Partner Team installed. Cooperation is now part of the system.' },
-  { id: 'activity-plan', name: 'Activity Plan', needs: ['activityCards', 'creativity', 'focus'], feedback: 'Activity Plan installed. The week has playable learning moments.' },
-  { id: 'logistics', name: 'Logistics', needs: ['logisticsReady', 'presentationSetup', 'carePackage'], feedback: 'Logistics installed. The project can function in the real world.' },
-  { id: 'inclusion-support', name: 'Inclusion Support', needs: ['safeGroupClimate', 'carePackage'], feedback: 'Inclusion Support installed. Access and care are not optional extras.' },
-  { id: 'youthpass-reflection', name: 'YouthPass Reflection', needs: ['youthpassCards', 'learningGoal'], feedback: 'YouthPass Reflection installed. Learning can be named and used.' },
-  { id: 'follow-up-action', name: 'Follow-Up Action', needs: ['communityImpact', 'communityPresentation'], feedback: 'Follow-Up Action installed. The exchange can continue after the last day.' },
+  { id: 'activity-plan', name: 'Activity Plan', options: [['activityPlan'], ['activityCards'], ['activityCards', 'rules']], reflection: 'Activity Plan: playful learning starts from clear activity pieces.' },
+  { id: 'shared-topic', name: 'Shared Topic', options: [['learningGoal'], ['youthLedGame']], reflection: 'Shared Topic: the exchange is stronger when the learning reason is clear.' },
+  { id: 'partner-team', name: 'Partner Team', options: [['teamBond', 'sharedAgreement'], ['sharedAgreement', 'safeGroupClimate']], reflection: 'Partner Team: cooperation needs trust and shared agreements.' },
+  { id: 'logistics', name: 'Logistics', options: [['logisticsReady', 'showcaseSpace'], ['logisticsReady', 'carePackage']], reflection: 'Logistics: practical support protects learning time.' },
+  { id: 'inclusion', name: 'Inclusion', options: [['safeGroupClimate', 'carePackage'], ['safeGroupClimate', 'welcomeMoment']], reflection: 'Inclusion: access and welcome must be designed.' },
+  { id: 'youthpass', name: 'YouthPass', options: [['debriefCircle'], ['youthpassCards']], reflection: 'YouthPass: learning becomes useful when participants can name it.' },
+  { id: 'follow-up', name: 'Follow-Up', options: [['communityImpact'], ['communityPresentation']], reflection: 'Follow-Up: impact continues when learning leaves the activity room.' },
 ];
 
 const collectSpots: CollectSpot[] = [
-  { id: 'supply-table', name: 'Supply Table', resources: ['paper', 'pencils', 'cards', 'dice'], cost: { energy: -3 }, maxUses: 4, feedback: 'You collected table materials for fast prototyping.' },
-  { id: 'tech-corner', name: 'Tech Corner', resources: ['projector', 'speaker', 'focus'], cost: { budget: -5, energy: -2 }, maxUses: 3, feedback: 'You collected tech tools. They help only if the message is clear.' },
-  { id: 'travel-desk', name: 'Travel Desk', resources: ['travelTickets', 'budgetTokens', 'food'], cost: { budget: -5 }, maxUses: 4, feedback: 'You collected travel and support resources.' },
-  { id: 'courtyard', name: 'Courtyard Talk', resources: ['friendship', 'trust', 'energy'], cost: { energy: -2 }, feedback: 'You collected social energy. Relationships are project resources too.' },
-  { id: 'local-map', name: 'Filadelfia Map', resources: ['localConnection', 'roomKeys', 'youthVoice'], cost: { energy: -3, trust: 2 }, maxUses: 3, feedback: 'You collected local links and youth voice.' },
-  { id: 'reflection-circle', name: 'Reflection Circle', resources: ['reflection', 'inclusion', 'creativity'], cost: { energy: -3 }, feedback: 'You collected reflection and inclusion. The invisible resources matter.' },
+  { id: 'group-circle', name: 'Group Circle', gives: ['trust', 'youthVoice', 'friendship'], cost: { energy: -2 }, unlockStage: 5 },
+  { id: 'reflection-wall', name: 'Reflection Wall', gives: ['reflection', 'inclusion'], cost: { energy: -2 }, unlockStage: 5 },
+  { id: 'travel-desk', name: 'Travel Desk', gives: ['budgetTokens', 'travelTickets', 'food'], cost: { budget: -4 }, unlockStage: 5 },
+  { id: 'venue-office', name: 'Venue Office', gives: ['roomKeys', 'projector', 'speaker'], cost: { budget: -3, energy: -1 }, unlockStage: 5 },
+  { id: 'filadelfia-map', name: 'Filadelfia Map', gives: ['localConnection'], cost: { energy: -2 }, unlockStage: 7 },
 ];
 
 const traders: Trader[] = [
-  { id: 'andrea', name: 'Andrea', role: 'Creative connector', offers: ['creativity', 'friendship'], needs: ['focus', 'structure'], trustDelta: 3, feedback: 'Andrea traded creative energy. The team feels more alive.' },
-  { id: 'slave', name: 'Slave', role: 'Rules builder', offers: ['structure', 'rules'], needs: ['trust', 'youthVoice'], trustDelta: 2, feedback: 'Slave traded structure. The system becomes easier to test.' },
-  { id: 'ivalina', name: 'Ivalina', role: 'Inclusion keeper', offers: ['inclusion', 'reflection'], needs: ['energy', 'paper'], trustDelta: 4, feedback: 'Ivalina traded care and reflection. The project becomes safer.' },
-  { id: 'rocco', name: 'Rocco', role: 'Logistics support', offers: ['roomKeys', 'projector', 'speaker'], needs: ['budgetTokens', 'learningGoal'], trustDelta: 1, feedback: 'Rocco traded logistics. The parallel world still needs keys and cables.' },
+  { id: 'andrea', name: 'Andrea', role: 'Creative connector', give: 'focus', receive: ['creativity', 'friendship'], unlockStage: 6 },
+  { id: 'ivalina', name: 'Ivalina', role: 'Inclusion keeper', give: 'paper', receive: ['inclusion', 'reflection'], unlockStage: 7 },
+  { id: 'rocco', name: 'Rocco', role: 'Logistics support', give: 'budgetTokens', receive: ['roomKeys', 'projector', 'speaker'], unlockStage: 7 },
 ];
-
-const initialInventory = createInventory({
-  paper: 3,
-  pencils: 1,
-  cards: 1,
-  dice: 1,
-  budgetTokens: 2,
-  food: 1,
-  energy: 1,
-  trust: 2,
-  creativity: 1,
-  focus: 2,
-  youthVoice: 1,
-});
 
 const initialMeters: Meters = { energy: 84, trust: 66, budget: 78 };
-const startingLaunch = 54;
-const tutorialSteps = ['Pick 2 or 3 resources.', 'Press Craft.', 'Use discoveries to build the KA152 board.'];
-const starterClues = [
-  'Paper + Pencils + something creative can become the first activity.',
-  'Trust + Youth Voice + Reflection can become the project reason.',
-  'Cards + Dice + Focus can become rules.',
-];
+
 const manualSections: ManualSection[] = [
-  { title: 'Goal', items: ['Build all 7 KA152 modules before Exchange Launch reaches zero.', 'Keep Energy, Trust, and Budget healthy while you build.'] },
-  { title: 'Controls', items: ['Tap resources in your inventory to place them on the Crafting Table.', 'Tap a filled slot to remove it.', 'Use Collect and Trade when you need new ingredients.'] },
-  { title: 'How to play', items: ['Combine 2 or 3 resources.', 'Correct combinations discover new project resources.', 'Install discoveries into the KA152 Board modules.'] },
-  { title: 'How to win', items: ['Complete Shared Topic, Partner Team, Activity Plan, Logistics, Inclusion Support, YouthPass Reflection, and Follow-Up Action.', 'A perfect win needs all modules and healthy project meters.'] },
-  { title: 'Design lesson', items: ['A youth exchange is not only paperwork.', 'It is made from materials, trust, care, logistics, learning, and relationships.'] },
-  { title: 'Physical board game', items: ['Use tokens for resources.', 'Use cards for discoveries, trades, and modules.', 'Ask: which resource was hardest to create?'] },
+  { title: 'How discovering works', items: ['Tap one element.', 'Tap a second element.', 'Press Combine to see if they create something new.'] },
+  { title: 'First discoveries', items: ['Paper + Pencils -> Materials Kit.', 'Materials Kit + Creativity -> Activity Cards.', 'Cards + Focus -> Rules.'] },
+  { title: 'Goal', items: ['Discover project resources.', 'Use them to install the 7 KA152 modules.', 'Keep Energy, Trust, and Budget healthy.'] },
+  { title: 'Design lesson', items: ['A youth exchange is a system.', 'Materials, people, learning, logistics, and impact all connect.'] },
+  { title: 'Show all recipes', items: recipes.map((recipe) => `${label(recipe.inputs[0])} + ${label(recipe.inputs[1])} -> ${label(recipe.output)}`) },
 ];
 
 export default function FutureExchangeGame() {
   const { completeGame, saveGameNote, updatePrototypeField, audioEnabled } = useStore();
-  const [inventory, setInventory] = useState<Inventory>(initialInventory);
-  const [meters, setMeters] = useState<Meters>(initialMeters);
-  const [launch, setLaunch] = useState(startingLaunch);
+  const [selectedPair, setSelectedPair] = useState<[ResourceId | null, ResourceId | null]>([null, null]);
+  const [discoveredResourceIds, setDiscoveredResourceIds] = useState<ResourceId[]>(startingResources);
+  const [discoveredRecipeIds, setDiscoveredRecipeIds] = useState<string[]>([]);
+  const [theories, setTheories] = useState<Theory[]>([]);
+  const [tutorialStage, setTutorialStage] = useState<TutorialStage>(1);
+  const [activeView, setActiveView] = useState<ActiveView>('discover');
   const [builtModules, setBuiltModules] = useState<string[]>([]);
-  const [selectedCraftResources, setSelectedCraftResources] = useState<ResourceId[]>([]);
-  const [discoveredRecipes, setDiscoveredRecipes] = useState<string[]>([]);
-  const [partialDiscoveries, setPartialDiscoveries] = useState<Record<string, PartialDiscovery>>({});
-  const [failedCraftCount, setFailedCraftCount] = useState(0);
-  const [collectedSpotCounts, setCollectedSpotCounts] = useState<Record<string, number>>({});
-  const [activePanel, setActivePanel] = useState<ActivePanel>('collect');
-  const [activeDrawer, setActiveDrawer] = useState<ActiveDrawer>(null);
-  const [selectedTradePayment, setSelectedTradePayment] = useState<Record<string, ResourceId | null>>({});
-  const [installedModuleReflections, setInstalledModuleReflections] = useState<string[]>([]);
-  const [discoveryReveal, setDiscoveryReveal] = useState<DiscoveryRevealState | null>(null);
+  const [meters, setMeters] = useState<Meters>(initialMeters);
   const [ending, setEnding] = useState<EndingKind | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
-  const [log, setLog] = useState<LogEntry[]>([
-    { text: 'Parallel Filadelfia opens. Combine resources to discover what a KA152 exchange needs.', tone: 'info' },
-  ]);
+  const [discovery, setDiscovery] = useState<Recipe | null>(null);
+  const [failedCraftCount, setFailedCraftCount] = useState(0);
+  const [feedback, setFeedback] = useState('Start with Paper + Pencils. This creates a Materials Kit.');
 
-  const completedCount = builtModules.length;
-  const strongestMeter = useMemo(() => (Object.keys(meters) as MeterKey[]).sort((a, b) => meters[b] - meters[a])[0], [meters]);
-  const weakestMeter = useMemo(() => (Object.keys(meters) as MeterKey[]).sort((a, b) => meters[a] - meters[b])[0], [meters]);
-  const missingResource = useMemo(() => findMostNeededResource(inventory, builtModules), [inventory, builtModules]);
-  const nextMove = useMemo(() => getNextMove(inventory, builtModules, selectedCraftResources, discoveredRecipes, partialDiscoveries), [inventory, builtModules, selectedCraftResources, discoveredRecipes, partialDiscoveries]);
-  const latestLog = log[0];
-
-  const addLog = (text: string, tone: LogEntry['tone'] = 'info') => {
-    setLog((current) => [{ text, tone }, ...current].slice(0, 12));
-  };
-
-  const spendTurn = (cost: Partial<Meters> = {}, finalBuilt = builtModules) => {
-    const nextLaunch = launch - 1;
-    const nextMeters = clampMeters(meters, { energy: -1, ...cost });
-    setLaunch(nextLaunch);
-    setMeters(nextMeters);
-    if (nextLaunch <= 0 && finalBuilt.length < modules.length && !ending) {
-      finishGame(true, finalBuilt, nextMeters);
-    }
-    return { nextLaunch, nextMeters };
-  };
-
-  const toggleCraftResource = (id: ResourceId) => {
-    if (ending || inventory[id] <= 0) return;
-    if (selectedCraftResources.includes(id)) {
-      setSelectedCraftResources((current) => current.filter((item) => item !== id));
-      playSound('select', audioEnabled);
-      return;
-    }
-    if (selectedCraftResources.length >= 3) {
-      playSound('warning', audioEnabled);
-      addLog('The Crafting Table has only 3 slots. Remove one resource first.', 'warn');
-      return;
-    }
-    setSelectedCraftResources((current) => [...current, id]);
-    playSound('select', audioEnabled);
-  };
-
-  const clearCraftSlot = (id: ResourceId) => {
-    setSelectedCraftResources((current) => current.filter((item) => item !== id));
-    playSound('select', audioEnabled);
-  };
-
-  const collect = (spot: CollectSpot) => {
-    if (ending) return;
-    const usesLeft = spotUsesLeft(spot, collectedSpotCounts, builtModules.length);
-    if (usesLeft <= 0) {
-      playSound('warning', audioEnabled);
-      addLog(`${spot.name} is empty for now. Install a module to refresh some resources.`, 'warn');
-      return;
-    }
-    setInventory((current) => addResources(current, spot.resources));
-    setCollectedSpotCounts((current) => ({ ...current, [spot.id]: (current[spot.id] ?? 0) + 1 }));
-    spendTurn(spot.cost);
-    playSound('success', audioEnabled);
-    addLog(spot.feedback, 'good');
-  };
-
-  const craftSelected = () => {
-    if (ending || selectedCraftResources.length < 2) return;
-    const recipe = findRecipeByInputs(selectedCraftResources);
-    if (!recipe) {
-      const nextFailedCount = failedCraftCount + 1;
-      setFailedCraftCount(nextFailedCount);
-      const closeRecipe = findClosestRecipe(selectedCraftResources);
-      if (closeRecipe && closeRecipe.matched >= 2) {
-        setPartialDiscoveries((current) => ({
-          ...current,
-          [closeRecipe.recipe.id]: {
-            recipeId: closeRecipe.recipe.id,
-            matched: closeRecipe.matched,
-            clue: closeRecipe.recipe.clue,
-          },
-        }));
-      }
-      if (nextFailedCount > 3) {
-        spendTurn({ energy: -2 });
-      }
-      playSound('warning', audioEnabled);
-      addLog(failedCraftHint(selectedCraftResources, closeRecipe?.recipe, nextFailedCount), 'warn');
-      return;
-    }
-    if (!hasResources(inventory, recipe.inputs)) {
-      playSound('warning', audioEnabled);
-      addLog(`You need ${recipe.inputs.map(label).join(', ')} for this discovery.`, 'warn');
-      return;
-    }
-
-    const isNew = !discoveredRecipes.includes(recipe.id);
-    setInventory((current) => addResources(removeResources(current, recipe.inputs), [recipe.output]));
-    setDiscoveredRecipes((current) => (current.includes(recipe.id) ? current : [...current, recipe.id]));
-    setPartialDiscoveries((current) => {
-      const next = { ...current };
-      delete next[recipe.id];
-      return next;
+  const discoveredSet = useMemo(() => new Set(discoveredResourceIds), [discoveredResourceIds]);
+  const unlockedViews = useMemo(() => getUnlockedViews(tutorialStage), [tutorialStage]);
+  const currentObjective = getStageObjective(tutorialStage);
+  const nextRecipe = getStageRecipe(tutorialStage);
+  const selectedRecipe = selectedPair[0] && selectedPair[1] ? findRecipe(selectedPair[0], selectedPair[1]) : null;
+  const singleSelected = selectedPair[0] && !selectedPair[1] ? selectedPair[0] : selectedPair[1] && !selectedPair[0] ? selectedPair[1] : null;
+  const possiblePartners = useMemo(() => singleSelected ? getPossiblePartners(singleSelected, discoveredResourceIds) : [], [singleSelected, discoveredResourceIds]);
+  const triedPairs = useMemo(() => new Set(theories.map((theory) => theory.id)), [theories]);
+  const suggestions = useMemo(
+    () => getSuggestedExperiments(discoveredResourceIds, discoveredRecipeIds, selectedPair, builtModules),
+    [discoveredResourceIds, discoveredRecipeIds, selectedPair, builtModules],
+  );
+  const selectResource = (id: ResourceId) => {
+    if (!discoveredSet.has(id) || ending) return;
+    setSelectedPair(([left, right]) => {
+      if (left === id) return [null, right];
+      if (right === id) return [left, null];
+      if (!left) return [id, right];
+      if (!right) return [left, id];
+      return [id, null];
     });
-    setSelectedCraftResources([]);
-    setActivePanel('recipes');
-    setActiveDrawer('discovery');
-    setDiscoveryReveal({ recipe, isNew });
-    spendTurn({ energy: -2 });
-    playSound('craft', audioEnabled);
-    addLog(isNew ? recipe.feedback : `You crafted another ${label(recipe.output)}.`, 'good');
+    playSound('select', audioEnabled);
   };
 
-  const trade = (trader: Trader, payment: ResourceId | null) => {
-    if (ending) return;
-    if (meters.trust < 24 && trader.id !== 'ivalina') {
+  const combine = () => {
+    const [left, right] = selectedPair;
+    if (!left || !right || ending) return;
+    const recipe = findRecipe(left, right);
+    if (!recipe) {
+      const nextFailed = failedCraftCount + 1;
+      const theory = makeTheory(left, right);
+      setTheories((current) => current.some((item) => item.id === theory.id) ? current : [theory, ...current].slice(0, 6));
+      setFailedCraftCount(nextFailed);
+      const penalty = tutorialStage >= 5 && nextFailed > 3;
+      if (penalty) setMeters((current) => clampMeters(current, { energy: -1 }));
+      setFeedback(tutorialStage <= 2 ? 'No connection yet. For now, follow the visible recipe hint.' : `${theory.text}${penalty ? ' This cost 1 Energy.' : ' No penalty.'}`);
       playSound('warning', audioEnabled);
-      addLog(`${trader.name} needs more team trust before trading. Build care or talk with Ivalina first.`, 'warn');
       return;
     }
-    if (!payment || !trader.needs.includes(payment) || inventory[payment] <= 0) {
-      playSound('warning', audioEnabled);
-      addLog(`Choose what to give ${trader.name}: ${trader.needs.map(label).join(' or ')}.`, 'warn');
-      return;
-    }
-    setInventory((current) => addResources(removeResources(current, [payment]), trader.offers));
-    setSelectedTradePayment((current) => ({ ...current, [trader.id]: null }));
-    spendTurn({ trust: trader.trustDelta });
-    playSound('trade', audioEnabled);
-    addLog(`${trader.name} traded ${trader.offers.map(label).join(' + ')} for ${label(payment)}. ${trader.feedback}`, 'good');
+
+    const alreadyKnown = discoveredSet.has(recipe.output);
+    setDiscoveredRecipeIds((current) => current.includes(recipe.id) ? current : [...current, recipe.id]);
+    setDiscoveredResourceIds((current) => alreadyKnown ? current : [...current, recipe.output]);
+    setSelectedPair([null, null]);
+    setDiscovery(recipe);
+    setFailedCraftCount(0);
+    setFeedback(alreadyKnown ? `${label(recipe.output)} is already discovered.` : recipe.learning);
+    playSound(alreadyKnown ? 'success' : 'craft', audioEnabled);
+
+    if (tutorialStage === 1 && recipe.id === 'materials-kit') setTutorialStage(2);
+    if (tutorialStage === 2 && recipe.id === 'activity-cards') setTutorialStage(3);
+    if (tutorialStage === 4 && recipe.id === 'rules') setTutorialStage(5);
   };
 
   const installModule = (module: Module) => {
     if (ending || builtModules.includes(module.id)) return;
-    if (!hasResources(inventory, module.needs)) {
+    if (!isModuleReady(module, discoveredSet)) {
+      setFeedback(`Missing for closest path: ${getClosestMissingOption(module, discoveredSet).map(label).join(', ')}.`);
       playSound('warning', audioEnabled);
-      addLog(`${module.name} is not ready. Missing: ${missingFor(inventory, module.needs).map(label).join(', ')}.`, 'warn');
       return;
     }
     const nextBuilt = [...builtModules, module.id];
-    const reflection = moduleReflection(module.id);
     setBuiltModules(nextBuilt);
-    setInstalledModuleReflections((current) => [...current, reflection]);
-    setInventory((current) => removeResources(current, module.needs));
-    spendTurn({ trust: 2, budget: -1 }, nextBuilt);
+    setFeedback(module.reflection);
+    setMeters((current) => clampMeters(current, { trust: 2, energy: -1 }));
     saveGameNote(game.id, `Future Exchange: ${nextBuilt.length}/7 modules built`);
     playSound('install', audioEnabled);
-    addLog(`${module.feedback} ${reflection}`, 'good');
-    if (nextBuilt.length === modules.length) {
-      setTimeout(() => finishGame(false, nextBuilt), 0);
+
+    if (tutorialStage === 3 && module.id === 'activity-plan') {
+      setTutorialStage(4);
+      setActiveView('discover');
+    }
+    if (nextBuilt.length === modules.length) finishGame(nextBuilt);
+  };
+
+  const collect = (spot: CollectSpot) => {
+    if (tutorialStage < spot.unlockStage || ending) return;
+    setDiscoveredResourceIds((current) => unique([...current, ...spot.gives]));
+    setMeters((current) => clampMeters(current, { energy: -1, ...spot.cost }));
+    setFeedback(`${spot.name} added ${spot.gives.map(label).join(', ')}.`);
+    playSound('success', audioEnabled);
+    if (tutorialStage === 5) setTutorialStage(6);
+  };
+
+  const trade = (trader: Trader) => {
+    if (tutorialStage < trader.unlockStage || ending) return;
+    if (!discoveredSet.has(trader.give)) {
+      setFeedback(`${trader.name} needs ${label(trader.give)} first.`);
+      playSound('warning', audioEnabled);
+      return;
+    }
+    setDiscoveredResourceIds((current) => unique([...current, ...trader.receive]));
+    setMeters((current) => clampMeters(current, { trust: 3, energy: -1 }));
+    setFeedback(`${trader.name} traded ${trader.receive.map(label).join(' + ')} for ${label(trader.give)}.`);
+    playSound('trade', audioEnabled);
+    if (tutorialStage === 6) {
+      setTutorialStage(7);
+      setActiveView('board');
     }
   };
 
-  const finishGame = (timedOut: boolean, finalBuilt = builtModules, finalMeters = meters) => {
-    const lowMeter = (Object.keys(finalMeters) as MeterKey[]).some((key) => finalMeters[key] < 28);
-    const result: EndingKind = timedOut && finalBuilt.length < 5
-      ? 'redesign'
-      : finalBuilt.length === modules.length && !lowMeter && finalMeters.energy >= 35 && finalMeters.trust >= 35 && finalMeters.budget >= 25
-        ? 'ready'
-        : 'care';
+  const finishGame = (finalBuilt = builtModules) => {
+    const lowMeter = (Object.keys(meters) as MeterKey[]).some((key) => meters[key] < 28);
+    const result: EndingKind = finalBuilt.length === modules.length && !lowMeter ? 'ready' : finalBuilt.length >= 5 ? 'care' : 'redesign';
     setEnding(result);
-    playSound(result === 'redesign' ? 'lose' : result === 'ready' ? 'win' : 'success', audioEnabled);
-    const note = result === 'ready'
-      ? 'Future Exchange completed: KA152 Board Game Ready'
-      : result === 'care'
-        ? 'Future Exchange completed: Exchange Works, But Needs Care'
-        : 'Future Exchange completed: Redesign Needed';
-    completeGame(game.id, result === 'redesign' ? 250 : result === 'care' ? 600 : 950, game.takeaway, note);
+    completeGame(game.id, result === 'ready' ? 950 : result === 'care' ? 650 : 300, game.takeaway, `Future Exchange completed: ${endingContent[result].title}`);
+    playSound(result === 'ready' ? 'win' : result === 'redesign' ? 'lose' : 'success', audioEnabled);
   };
 
   const restart = () => {
-    setInventory(initialInventory);
-    setMeters(initialMeters);
-    setLaunch(startingLaunch);
+    setSelectedPair([null, null]);
+    setDiscoveredResourceIds(startingResources);
+    setDiscoveredRecipeIds([]);
+    setTheories([]);
+    setTutorialStage(1);
+    setActiveView('discover');
     setBuiltModules([]);
-    setSelectedCraftResources([]);
-    setDiscoveredRecipes([]);
-    setPartialDiscoveries({});
-    setFailedCraftCount(0);
-    setCollectedSpotCounts({});
-    setActivePanel('collect');
-    setActiveDrawer(null);
-    setSelectedTradePayment({});
-    setInstalledModuleReflections([]);
-    setDiscoveryReveal(null);
+    setMeters(initialMeters);
     setEnding(null);
-    setLog([{ text: 'Parallel Filadelfia opens. Combine resources to discover what a KA152 exchange needs.', tone: 'info' }]);
+    setDiscovery(null);
+    setFailedCraftCount(0);
+    setFeedback('Start with Paper + Pencils. This creates a Materials Kit.');
     saveGameNote(game.id, 'Future Exchange restarted');
   };
 
-  const sendTakeaway = (kind: 'mechanic' | 'debrief' | 'materials' | 'resources') => {
-    if (kind === 'mechanic') {
-      updatePrototypeField('coreMechanic', 'Players combine, discover, trade, and install resources to build a KA152 Youth Exchange.');
-    }
-    if (kind === 'debrief') {
-      updatePrototypeField('debriefQuestion', 'Which resource was hardest to create: material tools, trust, inclusion, or reflection?');
-    }
-    if (kind === 'materials') {
-      updatePrototypeField('materials', 'Resource tokens, recipe cards, KA152 module board, trade cards, action counter, and reflection cards.');
-    }
-    if (kind === 'resources') {
-      updatePrototypeField('rules', 'Players collect material and human resources, combine 2-3 tokens to discover project resources, trade with participants, and install modules before launch.');
-    }
-    addLog('Prototype Lab updated with a Future Exchange idea.', 'good');
+  const sendTakeaway = () => {
+    updatePrototypeField('gameplayMechanics', 'Players combine two project elements to discover new resources, then use discoveries to build a KA152 Youth Exchange board.');
+    updatePrototypeField('debriefQuestion', 'Which project element created the biggest change: materials, people, learning, logistics, or impact?');
+    updatePrototypeField('platforms', 'Element cards, group boards, recipe book, KA152 module board, and resource icons.');
+    setFeedback('Future Exchange idea sent to Prototype Lab.');
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto w-full max-w-full min-w-0 overflow-hidden pb-10">
-      <section className="arcade-border glass-panel mb-4 rounded-xl p-4 md:p-5">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen mx-auto w-full max-w-full min-w-0 overflow-hidden pb-10">
+      <section className="glass-panel mb-4 rounded-xl border border-cyan-300/25 p-4 md:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-widest text-yellow-300">{game.subtitle}</p>
             <h1 className="mobile-readable-arcade mt-3 text-2xl text-white md:text-3xl">{game.title}</h1>
             <p className="mt-4 max-w-3xl text-sm leading-relaxed text-gray-300">
-              Combine resources like a discovery game. Build a KA152 youth exchange from tools, trust, care, logistics, learning, and shared responsibility.
+              Combine two elements. Discover new project resources. Build a KA152 Youth Exchange board.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <ManualButton onClick={() => setManualOpen(true)} />
-            <button onClick={() => finishGame(true)} disabled={Boolean(ending)} className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-yellow-300 disabled:opacity-40">
-              End Run
-            </button>
             <button onClick={restart} className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-yellow-300">
               <RotateCcw className="mr-2 inline h-4 w-4" /> Restart
             </button>
@@ -467,92 +409,62 @@ export default function FutureExchangeGame() {
       </section>
 
       {ending ? (
-        <EndingPanel
-          ending={ending}
-          builtCount={completedCount}
-          meters={meters}
-          strongestMeter={strongestMeter}
-          weakestMeter={weakestMeter}
-          missingResource={missingResource}
-          discoveredCount={discoveredRecipes.length}
-          reflections={installedModuleReflections}
-          onRestart={restart}
-          onSendTakeaway={sendTakeaway}
-        />
+        <EndingPanel ending={ending} meters={meters} builtCount={builtModules.length} discoveredCount={discoveredResourceIds.length} onRestart={restart} onSendTakeaway={sendTakeaway} />
       ) : (
-        <section className="w-full min-w-0 space-y-4">
-          <CompactHud launch={launch} meters={meters} completedCount={completedCount} />
-          <LoopStrip />
+        <section className="space-y-4">
+          <CompactHud meters={meters} stage={tutorialStage} builtCount={builtModules.length} discoveredCount={discoveredResourceIds.length} />
+          <StageObjective objective={currentObjective} recipe={nextRecipe} />
 
-          <div className="grid w-full min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(320px,.95fr)]">
-            <main className="min-w-0 space-y-4 overflow-hidden">
-              <NextMovePanel text={nextMove} />
-              <CraftingTable
-                selected={selectedCraftResources}
-                latestLog={latestLog}
-                discoveredCount={discoveredRecipes.length}
-                onCraft={craftSelected}
-                onClearSlot={clearCraftSlot}
-                onClearAll={() => setSelectedCraftResources([])}
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <main className="min-w-0 space-y-4">
+              <CombinationWorkbench
+                selectedPair={selectedPair}
+                selectedRecipe={selectedRecipe}
+                possiblePartners={possiblePartners}
+                suggestions={suggestions}
+                feedback={feedback}
+                onClear={(side) => setSelectedPair((current) => side === 'left' ? [null, current[1]] : [current[0], null])}
+                onCombine={combine}
+                onTryExperiment={(recipe) => setSelectedPair(recipe.inputs)}
               />
-              <ModuleProgressStrip
-                builtModules={builtModules}
-                inventory={inventory}
-                onOpenBoard={() => setActiveDrawer('board')}
-              />
-              <InventoryDock inventory={inventory} selected={selectedCraftResources} onSelect={toggleCraftResource} />
-              <PanelDrawer
-                activePanel={activePanel}
-                onChangePanel={setActivePanel}
-                discoveredRecipes={discoveredRecipes}
-                partialDiscoveries={partialDiscoveries}
-                log={log}
-                traders={traders}
-                inventory={inventory}
-                meters={meters}
-                selectedTradePayment={selectedTradePayment}
-                collectedSpotCounts={collectedSpotCounts}
-                builtCount={builtModules.length}
-                onSelectTradePayment={(traderId, payment) => setSelectedTradePayment((current) => ({ ...current, [traderId]: payment }))}
-                onTrade={trade}
-                onCollect={collect}
-              />
+              <ElementGroupPanel discoveredResourceIds={discoveredResourceIds} selectedPair={selectedPair} possiblePartners={possiblePartners} triedPairs={triedPairs} onSelect={selectResource} compact={tutorialStage < 4} />
+              <BottomActionBar activeView={activeView} unlockedViews={unlockedViews} onChangeView={setActiveView} onHelp={() => setManualOpen(true)} />
             </main>
 
-            <aside className="min-w-0 space-y-4 overflow-hidden">
-              <ProjectBoard builtModules={builtModules} inventory={inventory} onInstall={installModule} />
-              <ReflectionPanel reflections={installedModuleReflections} />
-            </aside>
+            {tutorialStage >= 3 && (
+              <aside className="min-w-0 space-y-4">
+                {activeView === 'board' && <BoardProgressStrip modules={modules} discoveredSet={discoveredSet} builtModules={builtModules} onInstall={installModule} />}
+                {activeView === 'book' && <DiscoveryBook discoveredRecipeIds={discoveredRecipeIds} theories={theories} />}
+                {activeView === 'collect' && <CollectPanel spots={collectSpots.filter((spot) => tutorialStage >= spot.unlockStage)} onCollect={collect} />}
+                {activeView === 'trade' && <TradePanel traders={traders.filter((trader) => tutorialStage >= trader.unlockStage)} discoveredSet={discoveredSet} onTrade={trade} />}
+                {activeView === 'groups' && <ElementGroupPanel discoveredResourceIds={discoveredResourceIds} selectedPair={selectedPair} possiblePartners={possiblePartners} triedPairs={triedPairs} onSelect={selectResource} />}
+                {activeView === 'discover' && <BoardProgressStrip modules={modules.slice(0, tutorialStage < 7 ? 1 : modules.length)} discoveredSet={discoveredSet} builtModules={builtModules} onInstall={installModule} />}
+              </aside>
+            )}
           </div>
         </section>
       )}
 
+      <DiscoveryCard recipe={discovery} onClose={() => setDiscovery(null)} />
       <GameManualPanel open={manualOpen} title={game.title} sections={manualSections} onClose={() => setManualOpen(false)} />
-      <BoardDrawer
-        open={activeDrawer === 'board'}
-        builtModules={builtModules}
-        inventory={inventory}
-        onClose={() => setActiveDrawer(null)}
-        onInstall={installModule}
-      />
-      <DiscoveryReveal open={activeDrawer === 'discovery'} state={discoveryReveal} onClose={() => setActiveDrawer(null)} />
     </motion.div>
   );
 }
 
-function CompactHud({ launch, meters, completedCount }: { launch: number; meters: Meters; completedCount: number }) {
+function CompactHud({ meters, stage, builtCount, discoveredCount }: { meters: Meters; stage: TutorialStage; builtCount: number; discoveredCount: number }) {
   return (
-    <div className="sticky top-2 z-20 grid grid-cols-2 gap-2 rounded-xl border border-yellow-300/30 bg-black/85 p-2 shadow-[0_0_18px_rgba(0,0,0,.45)] backdrop-blur md:grid-cols-5">
-      <Stat label="Launch" value={launch} tone={launch <= 8 ? 'text-red-300' : 'text-yellow-200'} />
-      <Stat label="Modules" value={`${completedCount}/7`} tone="text-green-200" />
-      <Stat label="Energy" value={meters.energy} tone="text-cyan-200" />
-      <Stat label="Trust" value={meters.trust} tone="text-pink-200" />
-      <Stat label="Budget" value={meters.budget} tone="text-green-200" />
+    <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/70 p-2 md:grid-cols-6">
+      <HudChip label="Stage" value={`${stage}/7`} tone="text-yellow-200" />
+      <HudChip label="Discovered" value={discoveredCount} tone="text-cyan-200" />
+      <HudChip label="Modules" value={`${builtCount}/7`} tone="text-green-200" />
+      <HudChip label="Energy" value={meters.energy} tone="text-yellow-200" />
+      <HudChip label="Trust" value={meters.trust} tone="text-pink-200" />
+      <HudChip label="Budget" value={meters.budget} tone="text-green-200" />
     </div>
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string | number; tone: string }) {
+function HudChip({ label, value, tone }: { label: string; value: string | number; tone: string }) {
   return (
     <div className="rounded-lg border border-white/10 bg-white/[.04] p-2 text-center">
       <p className={`text-sm font-black ${tone}`}>{value}</p>
@@ -561,218 +473,250 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
   );
 }
 
-function LoopStrip() {
-  const steps = ['Collect', 'Combine', 'Discover', 'Install', 'Reflect'];
+function StageObjective({ objective, recipe }: { objective: string; recipe: Recipe | null }) {
   return (
-    <div className="grid grid-cols-5 gap-1 rounded-xl border border-white/10 bg-black/55 p-2">
-      {steps.map((step, index) => (
-        <div key={step} className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-1 py-2 text-center">
-          <p className="text-[8px] font-black uppercase text-cyan-100 sm:text-[10px]">{step}</p>
-          {index < steps.length - 1 && <p className="hidden text-[8px] text-cyan-400 sm:block">then</p>}
+    <div className="rounded-xl border border-yellow-300/35 bg-yellow-300/10 p-4">
+      <p className="text-[10px] font-black uppercase tracking-widest text-yellow-200">Current goal</p>
+      <h2 className="mt-1 text-xl font-black text-white">{objective}</h2>
+      {recipe && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <MiniResource id={recipe.inputs[0]} />
+          <span className="text-yellow-100">+</span>
+          <MiniResource id={recipe.inputs[1]} />
+          <span className="text-yellow-100">{'->'}</span>
+          <MiniResource id={recipe.output} />
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
-function NextMovePanel({ text }: { text: string }) {
-  return (
-    <div className="rounded-xl border border-yellow-300/30 bg-yellow-300/10 p-3">
-      <p className="text-[10px] font-black uppercase tracking-widest text-yellow-200">Next best move</p>
-      <p className="mt-1 text-sm font-bold leading-relaxed text-yellow-50">{text}</p>
-    </div>
-  );
-}
-
-function CraftingTable({
-  selected,
-  latestLog,
-  discoveredCount,
-  onCraft,
-  onClearSlot,
-  onClearAll,
+function CombinationWorkbench({
+  selectedPair,
+  selectedRecipe,
+  possiblePartners,
+  suggestions,
+  feedback,
+  onClear,
+  onCombine,
+  onTryExperiment,
 }: {
-  selected: ResourceId[];
-  latestLog: LogEntry;
-  discoveredCount: number;
-  onCraft: () => void;
-  onClearSlot: (id: ResourceId) => void;
-  onClearAll: () => void;
+  selectedPair: [ResourceId | null, ResourceId | null];
+  selectedRecipe: Recipe | null;
+  possiblePartners: ResourceId[];
+  suggestions: Recipe[];
+  feedback: string;
+  onClear: (side: 'left' | 'right') => void;
+  onCombine: () => void;
+  onTryExperiment: (recipe: Recipe) => void;
 }) {
+  const selectedSingle = selectedPair[0] && !selectedPair[1] ? selectedPair[0] : selectedPair[1] && !selectedPair[0] ? selectedPair[1] : null;
   return (
-    <div className="arcade-border-pink glass-panel-pink min-w-0 overflow-hidden rounded-xl p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-pink-300">
-            <Hammer className="h-4 w-4" /> Crafting Table
+    <div className="rounded-2xl border border-pink-300/30 bg-black/60 p-4">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <SelectedSlot id={selectedPair[0]} label="First element" onClear={() => onClear('left')} />
+        <button onClick={onCombine} disabled={!selectedPair[0] || !selectedPair[1]} className="rounded-xl border border-pink-300 bg-pink-300/20 px-4 py-4 text-xs font-black uppercase tracking-widest text-pink-50 hover:bg-pink-300 hover:text-black disabled:border-white/10 disabled:bg-white/[.04] disabled:text-gray-500">
+          Combine
+        </button>
+        <SelectedSlot id={selectedPair[1]} label="Second element" onClear={() => onClear('right')} />
+      </div>
+      <div className="mt-4 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-3">
+        <p className="text-[10px] font-black uppercase tracking-widest text-cyan-200">{selectedRecipe ? `Ready: ${label(selectedRecipe.output)}` : 'Feedback'}</p>
+        <p className="mt-1 text-sm font-bold leading-relaxed text-cyan-50">{selectedRecipe ? selectedRecipe.learning : feedback}</p>
+      </div>
+      {selectedSingle && (
+        <div className="mt-3 rounded-xl border border-green-300/20 bg-green-300/10 p-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-green-200">Possible connections</p>
+          <p className="mt-1 text-xs font-bold leading-relaxed text-green-50">
+            {possiblePartners.length
+              ? `${label(selectedSingle)} connects with ${possiblePartners.slice(0, 4).map(label).join(', ')}${possiblePartners.length > 4 ? ', and more' : ''}.`
+              : `${label(selectedSingle)} has no known visible partner yet. Collect or discover more elements.`}
           </p>
-          <h2 className="mobile-readable-arcade mt-2 text-xl text-white">Combine resources</h2>
         </div>
-        <div className="rounded-lg border border-yellow-300/30 bg-yellow-300/10 px-3 py-2 text-xs font-bold uppercase text-yellow-100">
-          {discoveredCount}/{recipes.length} discoveries
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        {[0, 1, 2].map((slotIndex) => {
-          const id = selected[slotIndex];
-          return (
-            <button
-              key={slotIndex}
-              type="button"
-              onClick={() => id && onClearSlot(id)}
-              className={`min-h-28 rounded-xl border p-3 text-center transition-colors ${id ? `${resources[id].color} ring-2 ring-white/50` : 'border-white/10 bg-black/55 text-gray-500'}`}
-            >
-              {id ? (
-                <ResourceFace id={id} size="large" />
-              ) : (
-                <div className="flex h-full min-h-20 flex-col items-center justify-center gap-2">
-                  <PackagePlus className="h-6 w-6 opacity-50" />
-                  <span className="text-[10px] font-black uppercase">Slot {slotIndex + 1}</span>
+      )}
+      {suggestions.length > 0 && (
+        <div className="mt-3 rounded-xl border border-yellow-300/20 bg-yellow-300/10 p-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-yellow-200">Next experiments</p>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {suggestions.map((recipe) => (
+              <button key={recipe.id} onClick={() => onTryExperiment(recipe)} className="rounded-lg border border-yellow-300/20 bg-black/35 p-2 text-left hover:border-yellow-300">
+                <p className="text-[9px] font-black uppercase text-yellow-100">{recipe.category}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  <MiniResource id={recipe.inputs[0]} />
+                  <span className="text-yellow-100">+</span>
+                  <MiniResource id={recipe.inputs[1]} />
                 </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto] sm:items-center">
-        <DiscoveryToast entry={latestLog} />
-        <button onClick={onClearAll} disabled={selected.length === 0} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/10 bg-black/50 px-4 text-xs font-bold uppercase text-gray-200 hover:border-white/30 disabled:opacity-40">
-          <X className="h-4 w-4" /> Clear
-        </button>
-        <button
-          onClick={onCraft}
-          disabled={selected.length < 2}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-pink-300 bg-pink-300/20 px-5 text-xs font-black uppercase tracking-widest text-pink-50 shadow-[0_0_16px_rgba(255,0,200,.25)] hover:bg-pink-300 hover:text-black disabled:border-white/10 disabled:bg-white/5 disabled:text-gray-500 disabled:shadow-none"
-        >
-          <Sparkles className="h-4 w-4" /> Craft
-        </button>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {tutorialSteps.map((step, index) => (
-          <div key={step} className="rounded-lg border border-white/10 bg-black/35 p-2 text-xs font-bold leading-relaxed text-gray-300">
-            <span className="mr-2 text-pink-200">{index + 1}.</span>{step}
+              </button>
+            ))}
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function DiscoveryToast({ entry }: { entry: LogEntry }) {
-  const tone = entry.tone === 'good'
-    ? 'border-green-300/40 bg-green-300/10 text-green-100'
-    : entry.tone === 'warn'
-      ? 'border-yellow-300/40 bg-yellow-300/10 text-yellow-100'
-      : 'border-cyan-300/30 bg-cyan-300/10 text-cyan-100';
-  return (
-    <div className={`min-h-12 rounded-lg border p-3 text-xs font-bold leading-relaxed ${tone}`}>
-      {entry.text}
-    </div>
-  );
-}
-
-function InventoryDock({ inventory, selected, onSelect }: { inventory: Inventory; selected: ResourceId[]; onSelect: (id: ResourceId) => void }) {
-  const owned = allResourceIds.filter((id) => inventory[id] > 0);
-  const materials = owned.filter((id) => resources[id].type === 'tangible');
-  const human = owned.filter((id) => resources[id].type === 'intangible');
-  const crafted = owned.filter((id) => resources[id].type === 'crafted');
-  return (
-    <div className="arcade-border-green glass-panel-green min-w-0 overflow-hidden rounded-xl p-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-green-300">
-          <Boxes className="h-4 w-4" /> Inventory
-        </p>
-        <p className="text-xs font-bold text-gray-400">Tap tokens to place them on the table.</p>
-      </div>
-      <ResourceGroup title="Materials" ids={materials} inventory={inventory} selected={selected} onSelect={onSelect} />
-      <ResourceGroup title="Human resources" ids={human} inventory={inventory} selected={selected} onSelect={onSelect} />
-      <ResourceGroup title="Crafted project resources" ids={crafted} inventory={inventory} selected={selected} onSelect={onSelect} />
-      {owned.length === 0 && <p className="mt-3 text-sm text-gray-400">No resources yet. Collect from the map.</p>}
-    </div>
-  );
-}
-
-function ResourceGroup({ title, ids, inventory, selected, onSelect }: { title: string; ids: ResourceId[]; inventory: Inventory; selected: ResourceId[]; onSelect: (id: ResourceId) => void }) {
-  if (!ids.length) return null;
-  return (
-    <div className="mt-4">
-      <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">{title}</p>
-      <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-        {ids.map((id) => (
-          <ResourceToken
-            key={id}
-            id={id}
-            count={inventory[id]}
-            selected={selected.includes(id)}
-            onClick={() => onSelect(id)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ModuleProgressStrip({ builtModules, inventory, onOpenBoard }: { builtModules: string[]; inventory: Inventory; onOpenBoard: () => void }) {
-  return (
-    <div className="rounded-xl border border-cyan-300/20 bg-black/60 p-3">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">KA152 Progress</p>
-        <button onClick={onOpenBoard} className="rounded-lg border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-[10px] font-black uppercase text-cyan-100 hover:bg-cyan-300 hover:text-black">
-          Open Board
-        </button>
-      </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-        {modules.map((module) => {
-          const built = builtModules.includes(module.id);
-          const ready = hasResources(inventory, module.needs);
-          return (
-            <div key={module.id} className={`rounded-lg border p-2 ${built ? 'border-green-300 bg-green-300/15' : ready ? 'border-cyan-300 bg-cyan-300/10' : 'border-white/10 bg-white/[.03]'}`}>
-              <p className="text-[9px] font-black leading-tight text-white">{module.name}</p>
-              <p className={`mt-1 text-[8px] font-bold uppercase ${built ? 'text-green-200' : ready ? 'text-cyan-200' : 'text-gray-500'}`}>
-                {built ? 'Installed' : ready ? 'Ready' : 'Missing'}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function ProjectBoard({ builtModules, inventory, onInstall }: { builtModules: string[]; inventory: Inventory; onInstall: (module: Module) => void }) {
-  return (
-    <div className="arcade-border glass-panel min-w-0 overflow-hidden rounded-xl p-4">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">KA152 Board</p>
-          <h2 className="mobile-readable-arcade mt-2 text-lg text-white">Install modules</h2>
         </div>
-        <p className="text-xs text-gray-400">Tap a module when all needs glow green.</p>
-      </div>
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-        {modules.map((module) => {
-          const built = builtModules.includes(module.id);
-          const ready = hasResources(inventory, module.needs);
+      )}
+    </div>
+  );
+}
+
+function SelectedSlot({ id, label: slotLabel, onClear }: { id: ResourceId | null; label: string; onClear: () => void }) {
+  return (
+    <button onClick={id ? onClear : undefined} className={`min-h-32 rounded-xl border p-3 text-center ${id ? resources[id].color : 'border-white/10 bg-white/[.03] text-gray-500'}`}>
+      {id ? <ResourceFace id={id} large /> : <span className="text-xs font-black uppercase">{slotLabel}<br />Tap a card below</span>}
+    </button>
+  );
+}
+
+function ElementGroupPanel({
+  discoveredResourceIds,
+  selectedPair,
+  possiblePartners,
+  triedPairs,
+  onSelect,
+  compact = false,
+}: {
+  discoveredResourceIds: ResourceId[];
+  selectedPair: [ResourceId | null, ResourceId | null];
+  possiblePartners: ResourceId[];
+  triedPairs: Set<string>;
+  onSelect: (id: ResourceId) => void;
+  compact?: boolean;
+}) {
+  const discovered = new Set(discoveredResourceIds);
+  const visibleGroups = compact ? ['materials', 'people'] as GroupId[] : groupOrder;
+  const selectedSingle = selectedPair[0] && !selectedPair[1] ? selectedPair[0] : selectedPair[1] && !selectedPair[0] ? selectedPair[1] : null;
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/55 p-3">
+      <p className="mb-3 text-xs font-bold uppercase tracking-widest text-green-300">Elements</p>
+      <div className="space-y-3">
+        {visibleGroups.map((group) => {
+          const ids = discoveredResourceIds.filter((id) => resources[id].group === group);
+          if (!ids.length) return null;
           return (
-            <button
-              key={module.id}
-              onClick={() => onInstall(module)}
-              disabled={built}
-              className={`min-h-32 rounded-xl border p-4 text-left transition-colors ${built ? 'border-green-300 bg-green-300/15' : ready ? 'border-cyan-300 bg-cyan-300/10 hover:bg-cyan-300/20' : 'border-white/10 bg-black/50 hover:border-white/30'}`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-black text-white">{module.name}</p>
-                {built ? <CheckCircle2 className="h-5 w-5 text-green-300" /> : <ClipboardList className={`h-5 w-5 ${ready ? 'text-cyan-300' : 'text-gray-500'}`} />}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {module.needs.map((id) => (
-                  <NeedChip key={id} id={id} ok={inventory[id] > 0 || built} />
+            <div key={group}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">{groupLabels[group]}</p>
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                {ids.map((id) => (
+                  <ResourceCard
+                    key={id}
+                    id={id}
+                    selected={selectedPair.includes(id)}
+                    possiblePartner={possiblePartners.includes(id)}
+                    tried={Boolean(selectedSingle && triedPairs.has(pairKey(selectedSingle, id)))}
+                    muted={Boolean(selectedSingle && !selectedPair.includes(id) && !possiblePartners.includes(id) && !triedPairs.has(pairKey(selectedSingle, id)))}
+                    disabled={!discovered.has(id)}
+                    onClick={() => onSelect(id)}
+                  />
                 ))}
               </div>
-              <p className="mt-3 text-[10px] font-bold uppercase text-gray-500">{built ? 'Installed' : ready ? 'Ready to install' : 'Missing resources'}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ResourceCard({
+  id,
+  selected,
+  possiblePartner,
+  tried,
+  muted,
+  disabled,
+  onClick,
+}: {
+  key?: ResourceId;
+  id: ResourceId;
+  selected: boolean;
+  possiblePartner: boolean;
+  tried: boolean;
+  muted: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`relative min-h-28 rounded-xl border p-3 transition ${resources[id].color} ${selected ? 'ring-2 ring-white' : ''} ${possiblePartner ? 'shadow-[0_0_18px_rgba(34,197,94,.45)] ring-2 ring-green-300' : ''} ${tried ? 'opacity-70 grayscale-[.35]' : ''} ${muted ? 'opacity-45' : ''} disabled:opacity-35`}
+    >
+      {possiblePartner && <span className="absolute right-1 top-1 rounded bg-green-300 px-1.5 py-0.5 text-[7px] font-black uppercase text-black">links</span>}
+      {tried && !possiblePartner && <span className="absolute right-1 top-1 rounded bg-yellow-300 px-1.5 py-0.5 text-[7px] font-black uppercase text-black">tried</span>}
+      <ResourceFace id={id} />
+      <p className="mt-2 text-[9px] font-bold uppercase opacity-80">{groupLabels[resources[id].group]}</p>
+    </button>
+  );
+}
+
+function BottomActionBar({ activeView, unlockedViews, onChangeView, onHelp }: { activeView: ActiveView; unlockedViews: ActiveView[]; onChangeView: (view: ActiveView) => void; onHelp: () => void }) {
+  const items: Array<{ id: ActiveView; label: string }> = [
+    { id: 'discover', label: 'Discover' },
+    { id: 'groups', label: 'Groups' },
+    { id: 'book', label: 'Book' },
+    { id: 'collect', label: 'Collect' },
+    { id: 'trade', label: 'Trade' },
+    { id: 'board', label: 'Board' },
+  ];
+  return (
+    <div className="sticky bottom-2 z-20 grid grid-cols-4 gap-2 rounded-xl border border-white/10 bg-black/85 p-2 backdrop-blur sm:grid-cols-7">
+      {items.map((item) => (
+        <button key={item.id} onClick={() => onChangeView(item.id)} disabled={!unlockedViews.includes(item.id)} className={`rounded-lg border px-2 py-3 text-[9px] font-black uppercase ${activeView === item.id ? 'border-yellow-300 bg-yellow-300/20 text-yellow-50' : 'border-white/10 bg-white/[.03] text-gray-300'} disabled:opacity-30`}>
+          {item.label}
+        </button>
+      ))}
+      <button onClick={onHelp} className="rounded-lg border border-green-300/30 bg-green-300/10 px-2 py-3 text-[9px] font-black uppercase text-green-100">
+        Help
+      </button>
+    </div>
+  );
+}
+
+function DiscoveryBook({ discoveredRecipeIds, theories }: { discoveredRecipeIds: string[]; theories: Theory[] }) {
+  const discovered = recipes.filter((recipe) => discoveredRecipeIds.includes(recipe.id));
+  return (
+    <div className="rounded-xl border border-pink-300/25 bg-pink-300/10 p-4">
+      <p className="text-xs font-bold uppercase tracking-widest text-pink-200">Discovery Book</p>
+      <div className="mt-3 space-y-3">
+        {discovered.map((recipe) => (
+          <div key={recipe.id} className="rounded-lg border border-white/10 bg-black/35 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <MiniResource id={recipe.inputs[0]} />
+              <span className="text-pink-100">+</span>
+              <MiniResource id={recipe.inputs[1]} />
+              <span className="text-pink-100">{'->'}</span>
+              <MiniResource id={recipe.output} />
+            </div>
+            <p className="mt-2 text-xs font-bold text-gray-300">{recipe.learning}</p>
+          </div>
+        ))}
+        {theories.map((theory) => (
+          <p key={theory.id} className="rounded-lg border border-yellow-300/20 bg-yellow-300/10 p-3 text-xs font-bold text-yellow-50">{theory.text}</p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BoardProgressStrip({ modules, discoveredSet, builtModules, onInstall }: { modules: Module[]; discoveredSet: Set<ResourceId>; builtModules: string[]; onInstall: (module: Module) => void }) {
+  return (
+    <div className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 p-4">
+      <p className="text-xs font-bold uppercase tracking-widest text-cyan-200">KA152 Board</p>
+      <div className="mt-3 space-y-2">
+        {modules.map((module) => {
+          const ready = isModuleReady(module, discoveredSet);
+          const built = builtModules.includes(module.id);
+          return (
+            <button key={module.id} onClick={() => onInstall(module)} disabled={built} className={`w-full rounded-lg border p-3 text-left ${built ? 'border-green-300 bg-green-300/15' : ready ? 'border-cyan-300 bg-cyan-300/15' : 'border-white/10 bg-black/40'}`}>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-black text-white">{module.name}</p>
+                {built && <CheckCircle2 className="h-5 w-5 text-green-300" />}
+              </div>
+              <div className="mt-2 space-y-1.5">
+                {module.options.map((option, index) => (
+                  <div key={`${module.id}-${index}`} className="flex flex-wrap items-center gap-1.5">
+                    {index > 0 && <span className="rounded bg-white/10 px-1.5 py-1 text-[8px] font-black uppercase text-gray-400">or</span>}
+                    {option.map((id) => <NeedChip key={id} id={id} ok={discoveredSet.has(id)} />)}
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] font-black uppercase text-gray-500">{built ? 'Installed' : ready ? 'Tap to install' : 'Discover missing elements'}</p>
             </button>
           );
         })}
@@ -781,183 +725,30 @@ function ProjectBoard({ builtModules, inventory, onInstall }: { builtModules: st
   );
 }
 
-function CollectionMap({ collectedSpotCounts, builtCount, onCollect }: { collectedSpotCounts: Record<string, number>; builtCount: number; onCollect: (spot: CollectSpot) => void }) {
+function CollectPanel({ spots, onCollect }: { spots: CollectSpot[]; onCollect: (spot: CollectSpot) => void }) {
   return (
-    <div className="min-w-0 overflow-hidden">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-bold uppercase tracking-widest text-yellow-300">Parallel Filadelfia Map</p>
-        <p className="text-xs font-bold text-gray-400">Collecting costs one action.</p>
-      </div>
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {collectSpots.map((spot) => {
-          const usesLeft = spotUsesLeft(spot, collectedSpotCounts, builtCount);
-          return (
-          <button key={spot.id} onClick={() => onCollect(spot)} disabled={usesLeft <= 0} className="rounded-xl border border-white/10 bg-black/50 p-3 text-left transition-colors hover:border-yellow-300 hover:bg-yellow-300/10 disabled:opacity-45">
-            <div className="flex items-start gap-3">
-              <PackagePlus className="mt-1 h-5 w-5 shrink-0 text-yellow-300" />
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-black text-white">{spot.name}</p>
-                  {spot.maxUses && <span className="rounded bg-yellow-300/15 px-2 py-0.5 text-[8px] font-black uppercase text-yellow-100">{usesLeft} left</span>}
-                </div>
-                <p className="mt-1 text-[10px] font-bold uppercase text-gray-500">{costLabel(spot.cost)}</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {spot.resources.map((id) => <MiniResource key={id} id={id} />)}
-                </div>
-              </div>
-            </div>
-          </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function PanelDrawer({
-  activePanel,
-  onChangePanel,
-  discoveredRecipes,
-  partialDiscoveries,
-  log,
-  traders,
-  inventory,
-  meters,
-  selectedTradePayment,
-  collectedSpotCounts,
-  builtCount,
-  onSelectTradePayment,
-  onTrade,
-  onCollect,
-}: {
-  activePanel: ActivePanel;
-  onChangePanel: (panel: ActivePanel) => void;
-  discoveredRecipes: string[];
-  partialDiscoveries: Record<string, PartialDiscovery>;
-  log: LogEntry[];
-  traders: Trader[];
-  inventory: Inventory;
-  meters: Meters;
-  selectedTradePayment: Record<string, ResourceId | null>;
-  collectedSpotCounts: Record<string, number>;
-  builtCount: number;
-  onSelectTradePayment: (traderId: string, payment: ResourceId) => void;
-  onTrade: (trader: Trader, payment: ResourceId | null) => void;
-  onCollect: (spot: CollectSpot) => void;
-}) {
-  const panels: Array<{ id: ActivePanel; label: string }> = [
-    { id: 'collect', label: 'Collect' },
-    { id: 'traders', label: 'Trade' },
-    { id: 'recipes', label: 'Recipes' },
-    { id: 'log', label: 'Log' },
-  ];
-  return (
-    <div className="rounded-xl border border-white/10 bg-black/60 p-3">
-      <div className="grid grid-cols-4 gap-2">
-        {panels.map((panel) => (
-          <button
-            key={panel.id}
-            onClick={() => onChangePanel(panel.id)}
-            className={`rounded-lg border px-2 py-2 text-[10px] font-black uppercase tracking-widest ${activePanel === panel.id ? 'border-yellow-300 bg-yellow-300/15 text-yellow-100' : 'border-white/10 bg-white/[.03] text-gray-400'}`}
-          >
-            {panel.label}
-          </button>
-        ))}
-      </div>
-      <div className="mt-3 max-h-[430px] overflow-y-auto pr-1">
-        {activePanel === 'collect' && <CollectionMap collectedSpotCounts={collectedSpotCounts} builtCount={builtCount} onCollect={onCollect} />}
-        {activePanel === 'traders' && (
-          <TraderPanel
-            traders={traders}
-            inventory={inventory}
-            meters={meters}
-            selectedTradePayment={selectedTradePayment}
-            onSelectTradePayment={onSelectTradePayment}
-            onTrade={onTrade}
-          />
-        )}
-        {activePanel === 'recipes' && <RecipeBook discoveredRecipes={discoveredRecipes} partialDiscoveries={partialDiscoveries} />}
-        {activePanel === 'log' && <ActionLog log={log} />}
-      </div>
-    </div>
-  );
-}
-
-function RecipeBook({ discoveredRecipes, partialDiscoveries }: { discoveredRecipes: string[]; partialDiscoveries: Record<string, PartialDiscovery> }) {
-  const discovered = recipes.filter((recipe) => discoveredRecipes.includes(recipe.id));
-  const theories = Object.values(partialDiscoveries).filter((theory) => !discoveredRecipes.includes(theory.recipeId));
-  const hiddenCount = recipes.length - discovered.length;
-  return (
-    <div>
-      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-pink-300">
-        <BookOpen className="h-4 w-4" /> Discovered Recipes
-      </p>
+    <div className="rounded-xl border border-yellow-300/25 bg-yellow-300/10 p-4">
+      <p className="text-xs font-bold uppercase tracking-widest text-yellow-200">Collect Elements</p>
       <div className="mt-3 space-y-2">
-        {theories.map((theory) => <RecipeTheoryCard key={theory.recipeId} theory={theory} />)}
-        {discovered.map((recipe) => (
-          <div key={recipe.id} className="rounded-lg border border-pink-300/30 bg-pink-300/10 p-3">
-            <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-pink-200">{recipe.category}</p>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {recipe.inputs.map((id) => <MiniResource key={id} id={id} />)}
-              <span className="text-pink-200">→</span>
-              <MiniResource id={recipe.output} />
-            </div>
-            <p className="mt-2 text-xs font-black text-white">{recipe.name}</p>
-          </div>
+        {spots.map((spot) => (
+          <button key={spot.id} onClick={() => onCollect(spot)} className="w-full rounded-lg border border-white/10 bg-black/45 p-3 text-left hover:border-yellow-300">
+            <p className="text-sm font-black text-white">{spot.name}</p>
+            <p className="mt-1 text-[10px] font-bold uppercase text-gray-500">{costLabel(spot.cost)}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">{spot.gives.map((id) => <MiniResource key={id} id={id} />)}</div>
+          </button>
         ))}
-        {hiddenCount > 0 && (
-          <div className="rounded-lg border border-white/10 bg-black/40 p-3">
-            <p className="text-xs font-bold text-gray-300">{hiddenCount} discoveries are still hidden.</p>
-          </div>
-        )}
-      </div>
-      <div className="mt-4 rounded-lg border border-yellow-300/20 bg-yellow-300/10 p-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-yellow-200">Starter clues</p>
-        <ul className="mt-2 space-y-2 text-xs font-bold leading-relaxed text-yellow-50">
-          {starterClues.map((clue) => <li key={clue}>{clue}</li>)}
-        </ul>
       </div>
     </div>
   );
 }
 
-function RecipeTheoryCard({ theory }: { key?: string; theory: PartialDiscovery }) {
-  const recipe = recipes.find((item) => item.id === theory.recipeId);
-  if (!recipe) return null;
+function TradePanel({ traders, discoveredSet, onTrade }: { traders: Trader[]; discoveredSet: Set<ResourceId>; onTrade: (trader: Trader) => void }) {
   return (
-    <div className="rounded-lg border border-yellow-300/30 bg-yellow-300/10 p-3">
-      <p className="text-[9px] font-black uppercase tracking-widest text-yellow-200">Theory: {theory.matched}/{recipe.inputs.length} matched</p>
-      <p className="mt-2 text-xs font-bold leading-relaxed text-yellow-50">{theory.clue}</p>
-    </div>
-  );
-}
-
-function TraderPanel({
-  traders,
-  inventory,
-  meters,
-  selectedTradePayment,
-  onSelectTradePayment,
-  onTrade,
-}: {
-  traders: Trader[];
-  inventory: Inventory;
-  meters: Meters;
-  selectedTradePayment: Record<string, ResourceId | null>;
-  onSelectTradePayment: (traderId: string, payment: ResourceId) => void;
-  onTrade: (trader: Trader, payment: ResourceId | null) => void;
-}) {
-  return (
-    <div>
-      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-cyan-300">
-        <Users className="h-4 w-4" /> Participant Exchange
-      </p>
-      <div className="mt-3 space-y-3">
-        {traders.map((trader) => {
-          const unavailable = meters.trust < 24 && trader.id !== 'ivalina';
-          const selectedPayment = selectedTradePayment[trader.id] ?? null;
-          return (
-          <div key={trader.id} className={`w-full rounded-xl border p-3 text-left transition-colors ${unavailable ? 'border-red-300/20 bg-red-300/5 opacity-75' : 'border-white/10 bg-black/50'}`}>
+    <div className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 p-4">
+      <p className="text-xs font-bold uppercase tracking-widest text-cyan-200">Participant Trades</p>
+      <div className="mt-3 space-y-2">
+        {traders.map((trader) => (
+          <button key={trader.id} onClick={() => onTrade(trader)} disabled={!discoveredSet.has(trader.give)} className="w-full rounded-lg border border-white/10 bg-black/45 p-3 text-left hover:border-cyan-300 disabled:opacity-40">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-black text-white">{trader.name}</p>
@@ -965,116 +756,33 @@ function TraderPanel({
               </div>
               <ArrowRightLeft className="h-5 w-5 text-cyan-300" />
             </div>
-            <div className="mt-3">
-              <p className="text-[10px] font-bold uppercase text-green-300">Offers</p>
-              <div className="mt-1 flex flex-wrap gap-1.5">{trader.offers.map((id) => <MiniResource key={id} id={id} />)}</div>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <MiniResource id={trader.give} />
+              <span className="text-cyan-100">{'->'}</span>
+              {trader.receive.map((id) => <MiniResource key={id} id={id} />)}
             </div>
-            <div className="mt-3">
-              <p className="text-[10px] font-bold uppercase text-yellow-300">Needs one</p>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {trader.needs.map((id) => (
-                  <button
-                    key={id}
-                    onClick={() => onSelectTradePayment(trader.id, id)}
-                    disabled={inventory[id] <= 0 || unavailable}
-                    className={`rounded border px-2 py-1 text-[9px] font-black uppercase ${selectedPayment === id ? 'border-white bg-white text-black' : inventory[id] > 0 ? resources[id].color : 'border-white/10 bg-black/40 text-gray-600'} disabled:opacity-40`}
-                  >
-                    {resources[id].short} x{inventory[id]}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <TradePreview trader={trader} payment={selectedPayment} unavailable={unavailable} />
-            <button
-              onClick={() => onTrade(trader, selectedPayment)}
-              disabled={unavailable || !selectedPayment}
-              className="mt-3 w-full rounded-lg border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-[10px] font-black uppercase text-cyan-100 hover:bg-cyan-300 hover:text-black disabled:border-white/10 disabled:bg-white/[.03] disabled:text-gray-500"
-            >
-              Trade
-            </button>
-          </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function TradePreview({ trader, payment, unavailable }: { trader: Trader; payment: ResourceId | null; unavailable: boolean }) {
-  if (unavailable) {
-    return <p className="mt-3 rounded-lg border border-red-300/20 bg-red-300/10 p-2 text-xs font-bold text-red-100">Low trust. Repair the group climate before trading here.</p>;
-  }
-  return (
-    <p className="mt-3 rounded-lg border border-white/10 bg-black/45 p-2 text-xs font-bold leading-relaxed text-gray-200">
-      {payment ? <>You give <span className="text-yellow-200">{label(payment)}</span> {'->'} {trader.name} gives <span className="text-green-200">{trader.offers.map(label).join(' + ')}</span>.</> : 'Choose what you will give first.'}
-    </p>
-  );
-}
-
-function ActionLog({ log }: { log: LogEntry[] }) {
-  return (
-    <div>
-      <p className="text-xs font-bold uppercase tracking-widest text-green-300">Action Log</p>
-      <div className="mt-3 space-y-2">
-        {log.map((entry, index) => (
-          <div key={`${entry.text}-${index}`} className={`rounded-lg border p-3 text-xs leading-relaxed ${entry.tone === 'good' ? 'border-green-300/30 bg-green-300/10 text-green-100' : entry.tone === 'warn' ? 'border-yellow-300/30 bg-yellow-300/10 text-yellow-100' : 'border-white/10 bg-black/45 text-gray-300'}`}>
-            {entry.text}
-          </div>
+          </button>
         ))}
       </div>
     </div>
   );
 }
 
-function ReflectionPanel({ reflections }: { reflections: string[] }) {
-  return (
-    <div className="rounded-xl border border-green-300/20 bg-green-300/10 p-4">
-      <p className="text-xs font-bold uppercase tracking-widest text-green-300">Installed Module Reflections</p>
-      <div className="mt-3 space-y-2">
-        {reflections.length ? reflections.map((reflection) => (
-          <p key={reflection} className="rounded-lg border border-green-300/20 bg-black/35 p-3 text-xs font-bold leading-relaxed text-green-50">{reflection}</p>
-        )) : (
-          <p className="text-sm font-bold text-gray-400">Install a module to unlock a short design reflection.</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function BoardDrawer({ open, builtModules, inventory, onClose, onInstall }: { open: boolean; builtModules: string[]; inventory: Inventory; onClose: () => void; onInstall: (module: Module) => void }) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/75 p-3 backdrop-blur-sm sm:items-center sm:justify-center">
-      <div className="max-h-[88vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-cyan-300/40 bg-slate-950 p-4 shadow-[0_0_30px_rgba(34,211,238,.25)]">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">KA152 Board</p>
-            <h2 className="mobile-readable-arcade mt-1 text-xl text-white">Install project modules</h2>
-          </div>
-          <button onClick={onClose} className="rounded-lg border border-white/10 bg-white/[.05] p-2 text-white hover:border-cyan-300">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <ProjectBoard builtModules={builtModules} inventory={inventory} onInstall={onInstall} />
-      </div>
-    </div>
-  );
-}
-
-function DiscoveryReveal({ open, state, onClose }: { open: boolean; state: DiscoveryRevealState | null; onClose: () => void }) {
-  if (!open || !state) return null;
-  const output = resources[state.recipe.output];
+function DiscoveryCard({ recipe, onClose }: { recipe: Recipe | null; onClose: () => void }) {
+  if (!recipe) return null;
+  const output = resources[recipe.output];
   const Icon = output.Icon;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm rounded-2xl border border-pink-300 bg-slate-950 p-5 text-center shadow-[0_0_40px_rgba(255,0,200,.25)]">
-        <p className="text-xs font-black uppercase tracking-widest text-pink-200">{state.isNew ? 'New Discovery' : 'Crafted Again'}</p>
+        <p className="text-xs font-black uppercase tracking-widest text-pink-200">New Discovery</p>
         <div className={`mx-auto mt-4 flex h-28 w-28 flex-col items-center justify-center rounded-2xl border ${output.color}`}>
           <Icon className="h-10 w-10" />
           <p className="mt-2 text-sm font-black">{output.short}</p>
         </div>
-        <h3 className="mt-4 text-xl font-black text-white">{state.recipe.name}</h3>
-        <p className="mt-2 text-sm font-bold leading-relaxed text-gray-300">{state.recipe.feedback}</p>
+        <h3 className="mt-4 text-xl font-black text-white">{output.name}</h3>
+        <p className="mt-2 text-sm font-bold leading-relaxed text-gray-300">{output.meaning}</p>
+        <p className="mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-50">{recipe.learning}</p>
         <button onClick={onClose} className="mt-5 rounded-lg border border-pink-300 bg-pink-300/20 px-5 py-3 text-xs font-black uppercase tracking-widest text-pink-50 hover:bg-pink-300 hover:text-black">
           Continue
         </button>
@@ -1083,121 +791,38 @@ function DiscoveryReveal({ open, state, onClose }: { open: boolean; state: Disco
   );
 }
 
-function EndingPanel({
-  ending,
-  builtCount,
-  meters,
-  strongestMeter,
-  weakestMeter,
-  missingResource,
-  discoveredCount,
-  reflections,
-  onRestart,
-  onSendTakeaway,
-}: {
-  ending: EndingKind;
-  builtCount: number;
-  meters: Meters;
-  strongestMeter: MeterKey;
-  weakestMeter: MeterKey;
-  missingResource: ResourceId | null;
-  discoveredCount?: number;
-  reflections?: string[];
-  onRestart: () => void;
-  onSendTakeaway: (kind: 'mechanic' | 'debrief' | 'materials' | 'resources') => void;
-}) {
-  const content = endingContent[ending];
+function EndingPanel({ ending, meters, builtCount, discoveredCount, onRestart, onSendTakeaway }: { ending: EndingKind; meters: Meters; builtCount: number; discoveredCount: number; onRestart: () => void; onSendTakeaway: () => void }) {
   return (
-    <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_330px]">
-      <div className={`${ending === 'ready' ? 'arcade-border-green glass-panel-green' : ending === 'care' ? 'arcade-border glass-panel' : 'arcade-border-pink glass-panel-pink'} rounded-xl p-5`}>
-        <Sparkles className="h-10 w-10 text-yellow-300" />
-        <p className="mt-4 text-xs font-bold uppercase tracking-widest text-yellow-300">Final Outcome</p>
-        <h2 className="mobile-readable-arcade mt-3 text-2xl text-white">{content.title}</h2>
-        <p className="readable-copy mt-4 text-sm leading-relaxed text-gray-100">{content.text}</p>
-        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-          <OutcomeCard title="Built modules" text={`${builtCount}/7 KA152 modules completed.`} />
-          <OutcomeCard title="Discoveries" text={`${discoveredCount ?? 0}/${recipes.length} recipes discovered.`} />
-          <OutcomeCard title="Weakest system" text={`${meterName(weakestMeter)} needs care.`} />
-        </div>
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <OutcomeCard title="Strongest system" text={`${meterName(strongestMeter)} stayed strongest.`} />
-          <OutcomeCard title="Most used resource type" text="Human resources and material tools had to work together." />
-        </div>
-        <div className="mt-5 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-4">
-          <p className="text-xs font-black uppercase tracking-widest text-cyan-300">Design Takeaway</p>
-          <p className="readable-copy mt-2 text-sm leading-relaxed text-cyan-50">{game.takeaway}</p>
-          {missingResource && <p className="mt-3 text-xs font-bold uppercase text-yellow-100">Most needed resource: {label(missingResource)}</p>}
-        </div>
-        {reflections?.length ? (
-          <div className="mt-5 rounded-xl border border-green-300/20 bg-green-300/10 p-4">
-            <p className="text-xs font-black uppercase tracking-widest text-green-300">Installed module lessons</p>
-            <div className="mt-3 space-y-2">
-              {reflections.slice(-4).map((reflection) => <p key={reflection} className="text-sm font-bold leading-relaxed text-green-50">{reflection}</p>)}
-            </div>
-          </div>
-        ) : null}
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <button onClick={() => onSendTakeaway('mechanic')} className="arcade-border-green inline-flex items-center justify-center gap-2 bg-green-900/40 px-5 py-3 text-xs font-bold uppercase tracking-widest text-green-100 hover:bg-green-300 hover:text-black">
-            <ClipboardList className="h-4 w-4" /> Send Mechanic
-          </button>
-          <button onClick={() => onSendTakeaway('debrief')} className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-5 py-3 text-xs font-bold uppercase tracking-widest text-cyan-100 hover:bg-cyan-300 hover:text-black">
-            Send Debrief
-          </button>
-          <button onClick={() => onSendTakeaway('materials')} className="inline-flex items-center justify-center gap-2 rounded-xl border border-yellow-300/30 bg-yellow-300/10 px-5 py-3 text-xs font-bold uppercase tracking-widest text-yellow-100 hover:bg-yellow-300 hover:text-black">
-            Send Materials
-          </button>
-          <button onClick={() => onSendTakeaway('resources')} className="inline-flex items-center justify-center gap-2 rounded-xl border border-pink-300/30 bg-pink-300/10 px-5 py-3 text-xs font-bold uppercase tracking-widest text-pink-100 hover:bg-pink-300 hover:text-black">
-            Send Resource Rules
-          </button>
-          <button onClick={onRestart} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-black/50 px-5 py-3 text-xs font-bold uppercase tracking-widest text-gray-200 hover:border-yellow-300">
-            <RotateCcw className="h-4 w-4" /> Replay
-          </button>
-        </div>
+    <section className="rounded-xl border border-green-300/25 bg-green-300/10 p-5">
+      <Sparkles className="h-10 w-10 text-yellow-300" />
+      <p className="mt-4 text-xs font-bold uppercase tracking-widest text-yellow-300">Final Outcome</p>
+      <h2 className="mobile-readable-arcade mt-3 text-2xl text-white">{endingContent[ending].title}</h2>
+      <p className="readable-copy mt-4 text-sm leading-relaxed text-gray-100">{endingContent[ending].text}</p>
+      <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <OutcomeCard title="Modules" text={`${builtCount}/7 installed`} />
+        <OutcomeCard title="Elements" text={`${discoveredCount} discovered`} />
+        <OutcomeCard title="Trust" text={`${meters.trust}/100`} />
+        <OutcomeCard title="Energy" text={`${meters.energy}/100`} />
       </div>
-
-      <aside className="space-y-4">
-        <div className="arcade-border-green glass-panel-green rounded-xl p-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-green-300">Final Meters</p>
-          <div className="mt-4 space-y-3">
-            {(Object.keys(meters) as MeterKey[]).map((key) => <Meter key={key} label={meterName(key)} value={meters[key]} />)}
-          </div>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-black/60 p-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-yellow-300">Make this as a board game</p>
-          <div className="readable-copy mt-3 space-y-2 text-sm leading-relaxed text-gray-300">
-            <p><span className="font-bold text-white">Board:</span> 7 KA152 modules.</p>
-            <p><span className="font-bold text-white">Tokens:</span> material and human resources.</p>
-            <p><span className="font-bold text-white">Cards:</span> discoveries, trades, collection spots, project modules.</p>
-            <p><span className="font-bold text-white">Players:</span> combine, discover, exchange, and install before launch.</p>
-            <p><span className="font-bold text-white">Debrief:</span> Which resource was hardest to create: material tools, trust, inclusion, or reflection?</p>
-          </div>
-        </div>
-      </aside>
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button onClick={onSendTakeaway} className="arcade-border-green inline-flex items-center justify-center gap-2 bg-green-900/40 px-5 py-3 text-xs font-bold uppercase tracking-widest text-green-100 hover:bg-green-300 hover:text-black">
+          <ClipboardList className="h-4 w-4" /> Send to Prototype Lab
+        </button>
+        <button onClick={onRestart} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-black/50 px-5 py-3 text-xs font-bold uppercase tracking-widest text-gray-200 hover:border-yellow-300">
+          <RotateCcw className="h-4 w-4" /> Replay
+        </button>
+      </div>
     </section>
   );
 }
 
-function ResourceToken({ id, count, selected, onClick }: { key?: ResourceId; id: ResourceId; count: number; selected: boolean; onClick: () => void }) {
-  const resource = resources[id];
-  return (
-    <button onClick={onClick} className={`relative min-h-24 rounded-lg border p-2 text-left transition-colors ${resource.color} ${selected ? 'ring-2 ring-white shadow-[0_0_16px_rgba(255,255,255,.25)]' : ''}`}>
-      {selected && <span className="absolute right-1 top-1 rounded bg-white px-1 text-[7px] font-black uppercase text-black">On table</span>}
-      <ResourceFace id={id} />
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <span className="rounded bg-black/30 px-1 text-[7px] font-bold uppercase">{typeLabel(resource.type)}</span>
-        <span className="text-[10px] font-black opacity-90">x{count}</span>
-      </div>
-    </button>
-  );
-}
-
-function ResourceFace({ id, size = 'normal' }: { id: ResourceId; size?: 'normal' | 'large' }) {
+function ResourceFace({ id, large = false }: { id: ResourceId; large?: boolean }) {
   const resource = resources[id];
   const Icon = resource.Icon;
   return (
     <div className="flex flex-col items-center justify-center text-center">
-      <Icon className={size === 'large' ? 'h-8 w-8' : 'h-5 w-5'} />
-      <p className={`${size === 'large' ? 'mt-2 text-xs' : 'mt-1 text-[10px]'} break-words font-black leading-tight`}>{resource.short}</p>
+      <Icon className={large ? 'h-9 w-9' : 'h-6 w-6'} />
+      <p className={`${large ? 'mt-2 text-sm' : 'mt-1 text-xs'} break-words font-black leading-tight`}>{resource.short}</p>
     </div>
   );
 }
@@ -1214,27 +839,10 @@ function MiniResource({ id }: { key?: ResourceId; id: ResourceId }) {
 }
 
 function NeedChip({ id, ok }: { key?: ResourceId; id: ResourceId; ok: boolean }) {
-  const Icon = resources[id].Icon;
   return (
-    <span title={resources[id].name} className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[9px] font-black uppercase ${ok ? 'border-green-300 bg-green-300/15 text-green-100' : 'border-red-300/30 bg-red-300/10 text-red-100'}`}>
-      <Icon className="h-3.5 w-3.5" />
+    <span className={`rounded border px-2 py-1 text-[9px] font-black uppercase ${ok ? 'border-green-300 bg-green-300/15 text-green-100' : 'border-red-300/30 bg-red-300/10 text-red-100'}`}>
       {resources[id].short}
     </span>
-  );
-}
-
-function Meter({ label, value }: { key?: string; label: string; value: number }) {
-  const color = value >= 65 ? 'bg-green-300' : value >= 35 ? 'bg-yellow-300' : 'bg-red-400';
-  return (
-    <div>
-      <div className="flex items-center justify-between text-[10px] font-bold uppercase text-gray-400">
-        <span>{label}</span>
-        <span className="text-white">{value}</span>
-      </div>
-      <div className="mt-2 h-3 overflow-hidden rounded-full bg-gray-900">
-        <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
-      </div>
-    </div>
   );
 }
 
@@ -1250,140 +858,126 @@ function OutcomeCard({ title, text }: { title: string; text: string }) {
 const endingContent: Record<EndingKind, { title: string; text: string }> = {
   ready: {
     title: 'KA152 Board Game Ready',
-    text: 'You built the exchange as a living system. Tools, trust, inclusion, logistics, learning, and follow-up all connect.',
+    text: 'You built the exchange as a living system. Materials, people, learning, logistics, and impact all connect.',
   },
   care: {
     title: 'Exchange Works, But Needs Care',
-    text: 'The project can happen, but one system is fragile. This is a strong debrief moment: what resource did the team protect too late?',
+    text: 'The project can happen, but one system is fragile. This is a strong debrief moment.',
   },
   redesign: {
     title: 'Redesign Needed',
-    text: 'The launch arrived before the project system was stable. Stop, redesign, and rebuild the missing resources before young people enter the game.',
+    text: 'The project system is not stable yet. Redesign the missing elements before launch.',
   },
 };
 
-function createInventory(seed: Partial<Inventory> = {}) {
-  return allResourceIds.reduce((inventory, id) => ({ ...inventory, [id]: seed[id] ?? 0 }), {} as Inventory);
+function findRecipe(left: ResourceId, right: ResourceId) {
+  const key = pairKey(left, right);
+  return recipes.find((recipe) => pairKey(recipe.inputs[0], recipe.inputs[1]) === key) ?? null;
 }
 
-function addResources(inventory: Inventory, ids: ResourceId[]) {
-  const next = { ...inventory };
-  ids.forEach((id) => { next[id] += 1; });
-  return next;
+function getPossiblePartners(id: ResourceId, discoveredResourceIds: ResourceId[]) {
+  const discovered = new Set(discoveredResourceIds);
+  return unique(
+    recipes
+      .filter((recipe) => recipe.inputs.includes(id))
+      .map((recipe) => recipe.inputs[0] === id ? recipe.inputs[1] : recipe.inputs[0])
+      .filter((partner) => discovered.has(partner)),
+  );
 }
 
-function removeResources(inventory: Inventory, ids: ResourceId[]) {
-  const next = { ...inventory };
-  ids.forEach((id) => { next[id] = Math.max(0, next[id] - 1); });
-  return next;
-}
-
-function hasResources(inventory: Inventory, ids: ResourceId[]) {
-  const needed = ids.reduce((counts, id) => ({ ...counts, [id]: (counts[id] ?? 0) + 1 }), {} as Partial<Record<ResourceId, number>>);
-  return (Object.entries(needed) as Array<[ResourceId, number]>).every(([id, count]) => inventory[id] >= count);
-}
-
-function missingFor(inventory: Inventory, ids: ResourceId[]) {
-  const needed = ids.reduce((counts, id) => ({ ...counts, [id]: (counts[id] ?? 0) + 1 }), {} as Partial<Record<ResourceId, number>>);
-  return (Object.entries(needed) as Array<[ResourceId, number]>).filter(([id, count]) => inventory[id] < count).map(([id]) => id);
-}
-
-function findRecipeByInputs(selected: ResourceId[]) {
-  const key = sortedKey(selected);
-  return recipes.find((recipe) => sortedKey(recipe.inputs) === key);
-}
-
-function findClosestRecipe(selected: ResourceId[]) {
-  if (!selected.length) return null;
-  const matches = recipes
-    .map((recipe) => ({
-      recipe,
-      matched: selected.filter((id) => recipe.inputs.includes(id)).length,
-    }))
-    .filter((item) => item.matched > 0)
-    .sort((a, b) => b.matched - a.matched);
-  return matches[0] ?? null;
-}
-
-function sortedKey(ids: ResourceId[]) {
-  return [...ids].sort().join('|');
-}
-
-function failedCraftHint(selected: ResourceId[], closeRecipe?: Recipe, failedCraftCount = 0) {
-  const key = sortedKey(selected);
-  if (key === sortedKey(['paper', 'projector'])) {
-    return 'Tools are useful, but this needs a clear purpose.';
-  }
-  if (key === sortedKey(['budgetTokens', 'creativity'])) {
-    return 'Money helps, but it does not create participation alone.';
-  }
-  if (selected.every((id) => resources[id].type === 'tangible')) {
-    return 'These are mostly tools. Add a human resource like Creativity, Youth Voice, Trust, or Focus.';
-  }
-  if (selected.includes('energy') && !selected.includes('learningGoal') && !selected.includes('youthVoice')) {
-    return 'This has energy, but no clear goal yet.';
-  }
-  if (selected.some((id) => ['budgetTokens', 'travelTickets', 'roomKeys'].includes(id)) && !selected.includes('roomKeys')) {
-    return 'This looks like logistics. Try adding keys, tickets, or budget.';
-  }
-  if (closeRecipe && selected.every((id) => closeRecipe.inputs.includes(id))) {
-    const missing = closeRecipe.inputs.filter((id) => !selected.includes(id));
-    return `Theory saved: ${selected.length}/${closeRecipe.inputs.length} resources matched. Try adding ${missing.map(label).join(' or ')}.`;
-  }
-  const freeTry = failedCraftCount <= 3 ? ' No time lost yet.' : ' This now costs time and energy.';
-  return `Nothing stable appeared. Try combining tools with people, or rules with youth voice.${freeTry}`;
-}
-
-function getNextMove(
-  inventory: Inventory,
+function getSuggestedExperiments(
+  discoveredResourceIds: ResourceId[],
+  discoveredRecipeIds: string[],
+  selectedPair: [ResourceId | null, ResourceId | null],
   builtModules: string[],
-  selected: ResourceId[],
-  discoveredRecipes: string[],
-  partialDiscoveries: Record<string, PartialDiscovery>,
 ) {
-  const readyModule = modules.find((module) => !builtModules.includes(module.id) && hasResources(inventory, module.needs));
-  if (readyModule) return `${readyModule.name} is ready. Install it on the KA152 Board.`;
+  const discovered = new Set(discoveredResourceIds);
+  const selected = selectedPair.find(Boolean);
+  const readyUndiscovered = recipes.filter((recipe) => (
+    !discoveredRecipeIds.includes(recipe.id)
+    && recipe.inputs.every((id) => discovered.has(id))
+  ));
+  const missingModuleOutputs = modules
+    .filter((module) => !builtModules.includes(module.id))
+    .flatMap((module) => module.options.flat())
+    .filter((id) => !discovered.has(id));
 
-  const ownedCount = allResourceIds.filter((id) => inventory[id] > 0).length;
-  if (ownedCount < 6) return 'Collect from the map first. You need more materials and human resources.';
+  return [...readyUndiscovered]
+    .sort((a, b) => {
+      const selectedScoreA = selected && a.inputs.includes(selected) ? -4 : 0;
+      const selectedScoreB = selected && b.inputs.includes(selected) ? -4 : 0;
+      const moduleScoreA = missingModuleOutputs.includes(a.output) ? -2 : 0;
+      const moduleScoreB = missingModuleOutputs.includes(b.output) ? -2 : 0;
+      return (selectedScoreA + moduleScoreA) - (selectedScoreB + moduleScoreB);
+    })
+    .slice(0, 3);
+}
 
-  const selectedCloseRecipe = findClosestRecipe(selected);
-  if (selected.length >= 2 && selectedCloseRecipe && selectedCloseRecipe.matched >= 2 && !discoveredRecipes.includes(selectedCloseRecipe.recipe.id)) {
-    const missing = selectedCloseRecipe.recipe.inputs.filter((id) => !selected.includes(id));
-    return `You are close to a ${selectedCloseRecipe.recipe.category} discovery. Try adding ${missing.map(label).join(' or ')}.`;
+function pairKey(left: ResourceId, right: ResourceId) {
+  return [left, right].sort().join('|');
+}
+
+function makeTheory(left: ResourceId, right: ResourceId): Theory {
+  const closeRecipe = getNearMissRecipe(left, right);
+  const groups = [resources[left].group, resources[right].group];
+  const id = pairKey(left, right);
+  if (closeRecipe) return { id, text: closeRecipe.clue };
+  if (left === right) return { id, text: 'Try two different elements. Discovery usually starts with tension between two ideas.' };
+  if (groups.includes('materials') && groups.includes('people')) {
+    return { id, text: 'This is close: project tools often need a human resource plus a clearer purpose.' };
   }
-
-  const theory = Object.values(partialDiscoveries)[0];
-  if (theory) return `Use your theory: ${theory.clue}`;
-
-  const missing = findMostNeededResource(inventory, builtModules);
-  if (missing) return `You will soon need ${label(missing)}. Check recipes, collect spots, or traders.`;
-
-  return 'Try a mix of one material, one human resource, and one purpose.';
+  if (groups.includes('learning')) {
+    return { id, text: 'This feels like learning. Try Reflection, Youth Voice, Cards, or a clear Goal.' };
+  }
+  if (groups.includes('logistics')) {
+    return { id, text: 'This feels like logistics. Try another practical resource, like tickets, keys, budget, or tools.' };
+  }
+  return { id, text: 'No connection yet. Try a different pair from two different groups.' };
 }
 
-function moduleReflection(moduleId: string) {
-  const reflections: Record<string, string> = {
-    'shared-topic': 'Shared Topic: a project is stronger when young people help define the reason.',
-    'partner-team': 'Partner Team: cooperation needs agreements, not only friendly people.',
-    'activity-plan': 'Activity Plan: activities work better when rules, creativity, and focus connect.',
-    logistics: 'Logistics: practical resources support learning, but they are not the learning itself.',
-    'inclusion-support': 'Inclusion Support: access and care must be designed before problems appear.',
-    'youthpass-reflection': 'YouthPass Reflection: learning becomes useful when players can name it.',
-    'follow-up-action': 'Follow-Up Action: impact grows when the project leaves the activity room.',
-  };
-  return reflections[moduleId] ?? 'This module shows how one part of the project changes the whole system.';
+function getNearMissRecipe(left: ResourceId, right: ResourceId) {
+  const selected = new Set([left, right]);
+  return recipes.find((recipe) => (
+    recipe.inputs.some((id) => selected.has(id))
+    && recipe.inputs.some((id) => !selected.has(id))
+    && (resources[recipe.inputs[0]].group === resources[left].group || resources[recipe.inputs[1]].group === resources[right].group)
+  )) ?? null;
 }
 
-function spotUsesLeft(spot: CollectSpot, collectedSpotCounts: Record<string, number>, builtCount: number) {
-  if (!spot.maxUses) return 99;
-  const refreshedUses = spot.maxUses + Math.floor(builtCount / 2);
-  return Math.max(0, refreshedUses - (collectedSpotCounts[spot.id] ?? 0));
+function isModuleReady(module: Module, discoveredSet: Set<ResourceId>) {
+  return module.options.some((option) => option.every((id) => discoveredSet.has(id)));
 }
 
-function costLabel(cost: Partial<Meters>) {
-  const parts = (Object.entries(cost) as Array<[MeterKey, number]>).map(([key, value]) => `${value > 0 ? '+' : ''}${value} ${meterName(key)}`);
-  return parts.length ? `Cost: ${parts.join(', ')}` : 'No meter cost';
+function getClosestMissingOption(module: Module, discoveredSet: Set<ResourceId>) {
+  return [...module.options]
+    .sort((a, b) => a.filter((id) => !discoveredSet.has(id)).length - b.filter((id) => !discoveredSet.has(id)).length)[0]
+    .filter((id) => !discoveredSet.has(id));
+}
+
+function getUnlockedViews(stage: TutorialStage): ActiveView[] {
+  if (stage <= 2) return ['discover', 'help'];
+  if (stage === 3) return ['discover', 'board', 'help'];
+  if (stage === 4) return ['discover', 'groups', 'book', 'board', 'help'];
+  if (stage === 5) return ['discover', 'groups', 'book', 'collect', 'board', 'help'];
+  if (stage === 6) return ['discover', 'groups', 'book', 'collect', 'trade', 'board', 'help'];
+  return ['discover', 'groups', 'book', 'collect', 'trade', 'board', 'help'];
+}
+
+function getStageObjective(stage: TutorialStage) {
+  if (stage === 1) return 'Discover Materials Kit';
+  if (stage === 2) return 'Discover Activity Cards';
+  if (stage === 3) return 'Install Activity Plan';
+  if (stage === 4) return 'Discover Rules';
+  if (stage === 5) return 'Collect people and logistics elements';
+  if (stage === 6) return 'Try one participant trade';
+  return 'Build the full KA152 board';
+}
+
+function getStageRecipe(stage: TutorialStage) {
+  if (stage === 1) return recipes.find((recipe) => recipe.id === 'materials-kit') ?? null;
+  if (stage === 2) return recipes.find((recipe) => recipe.id === 'activity-cards') ?? null;
+  if (stage === 4) return recipes.find((recipe) => recipe.id === 'rules') ?? null;
+  return null;
 }
 
 function clampMeters(current: Meters, effects: Partial<Meters>) {
@@ -1393,23 +987,17 @@ function clampMeters(current: Meters, effects: Partial<Meters>) {
   }), {} as Meters);
 }
 
-function findMostNeededResource(inventory: Inventory, builtModules: string[]) {
-  const missing = modules
-    .filter((module) => !builtModules.includes(module.id))
-    .flatMap((module) => missingFor(inventory, module.needs));
-  if (!missing.length) return null;
-  const counts = missing.reduce((map, id) => ({ ...map, [id]: (map[id] ?? 0) + 1 }), {} as Partial<Record<ResourceId, number>>);
-  return (Object.keys(counts) as ResourceId[]).sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0))[0];
+function unique(ids: ResourceId[]) {
+  return [...new Set(ids)];
 }
 
 function label(id: ResourceId) {
   return resources[id].name;
 }
 
-function typeLabel(type: Resource['type']) {
-  if (type === 'tangible') return 'Material';
-  if (type === 'intangible') return 'Human';
-  return 'Crafted';
+function costLabel(cost: Partial<Meters>) {
+  const parts = (Object.entries(cost) as Array<[MeterKey, number]>).map(([key, value]) => `${value > 0 ? '+' : ''}${value} ${meterName(key)}`);
+  return parts.length ? `Cost: ${parts.join(', ')}` : 'No meter cost';
 }
 
 function meterName(key: MeterKey) {

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import { BrowserRouter, HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Volume2, VolumeX } from 'lucide-react';
+import { BookOpen, Gamepad2, Volume2, VolumeX } from 'lucide-react';
 import { NavBar } from './components/NavBar';
 import { courseInfo } from './data/course';
 import { installAudioUnlock, playSound } from './lib/audio';
@@ -11,6 +11,7 @@ const Theory = lazy(() => import('./pages/Theory'));
 const ArcadeList = lazy(() => import('./pages/ArcadeList'));
 const Progress = lazy(() => import('./pages/Progress'));
 const About = lazy(() => import('./pages/About'));
+const Reports = lazy(() => import('./pages/Reports'));
 const Quiz = lazy(() => import('./pages/Quiz'));
 const PrototypeLab = lazy(() => import('./pages/PrototypeLab'));
 const GeminiCoach = lazy(() => import('./pages/GeminiCoach'));
@@ -35,11 +36,17 @@ export default function App() {
 function AppShell() {
   const location = useLocation();
   const firstRoute = useRef(true);
-  const { audioEnabled, setAudioEnabled } = useStore();
+  const { audioEnabled, appTheme, setAudioEnabled, setAppTheme } = useStore();
+  const isNotebook = appTheme === 'notebook';
 
   useEffect(() => {
     installAudioUnlock();
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = appTheme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isNotebook ? '#f4eddf' : '#060813');
+  }, [appTheme, isNotebook]);
 
   useEffect(() => {
     if (firstRoute.current) {
@@ -50,7 +57,7 @@ function AppShell() {
   }, [audioEnabled, location.pathname]);
 
   return (
-      <div className="min-h-screen bg-arcade-bg scanlines crt-flicker flex flex-col items-center font-sans tracking-wide">
+      <div className={`min-h-screen bg-arcade-bg ${isNotebook ? 'theme-notebook' : 'theme-arcade scanlines crt-flicker'} flex flex-col items-center font-sans tracking-wide`}>
         {/* Main Content Area */}
         <main className="flex-1 w-full max-w-6xl mx-auto relative pb-36 px-3 sm:px-4 pt-4 sm:pt-6 flex flex-col gap-4 overflow-x-hidden">
           
@@ -67,13 +74,24 @@ function AppShell() {
               <p className="text-sm text-gray-300">Hosted by <span className="text-arcade-green font-bold">{courseInfo.host}</span></p>
               <p className="text-[10px] text-gray-500 uppercase">{courseInfo.dates} - {courseInfo.venue}</p>
               <p className="text-[10px] text-cyan-400/80 uppercase mt-1">{courseInfo.code}</p>
-              <button
-                onClick={() => setAudioEnabled(!audioEnabled)}
-                className="mt-2 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[10px] font-bold uppercase text-gray-200 hover:border-cyan-300"
-              >
-                {audioEnabled ? <Volume2 className="h-4 w-4 text-cyan-300" /> : <VolumeX className="h-4 w-4 text-gray-500" />}
-                App Sound {audioEnabled ? 'On' : 'Off'}
-              </button>
+              <div className="mt-2 flex flex-wrap justify-center gap-2 md:justify-end">
+	                <button
+	                  onClick={() => setAppTheme(isNotebook ? 'arcade' : 'notebook')}
+	                  className="app-toolbar-button theme-switch-button"
+	                  aria-pressed={isNotebook}
+	                  title="Switch visual theme"
+	                >
+	                  {isNotebook ? <BookOpen className="h-4 w-4" /> : <Gamepad2 className="h-4 w-4" />}
+	                  {isNotebook ? 'Moleskine' : 'Arcade'}
+	                </button>
+	                <button
+	                  onClick={() => setAudioEnabled(!audioEnabled)}
+	                  className="app-toolbar-button"
+	                >
+	                  {audioEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 opacity-70" />}
+	                  App Sound {audioEnabled ? 'On' : 'Off'}
+	                </button>
+              </div>
             </div>
           </header>
 
@@ -82,6 +100,7 @@ function AppShell() {
               <Route path="/" element={<Home />} />
               <Route path="/theory" element={<Theory />} />
               <Route path="/prototype" element={<PrototypeLab />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="/coach" element={<GeminiCoach />} />
               <Route path="/arcade" element={<ArcadeList />} />
               <Route path="/arcade/castle-rush" element={<CastleRushGame />} />

@@ -13,24 +13,42 @@ npm install
 npm run dev
 ```
 
-To connect the AI Coach to Gemini locally, create `.env.local` with the URL of a secure backend proxy:
+The public frontend must never contain `GEMINI_API_KEY`.
+
+## Firebase Hosting + Functions
+
+Firebase is the primary deployment target.
+
+- Hosting serves the React app from `dist/`.
+- Functions exposes:
+  - `POST /api/coach`
+  - `POST /api/prototype-image`
+- The Gemini key is stored only as a Firebase Functions secret.
+
+First setup:
 
 ```bash
-VITE_AI_COACH_ENDPOINT="https://your-worker.your-account.workers.dev/api/coach"
+firebase login
+firebase functions:secrets:set GEMINI_API_KEY
+npm run firebase:deploy
 ```
 
-If this variable is missing, the app still works with offline coaching templates.
-
-## Online Deployment
-
-This repo includes a GitHub Pages workflow at `.github/workflows/deploy-pages.yml`.
-
-After pushing to `main`, enable GitHub Pages in the repository settings with **GitHub Actions** as the source. The online URL will be:
+This repo is configured for Firebase project:
 
 ```text
-https://artediemcalabria.github.io/Games-are-No-Joke-Arcade/
+games-are-no-joke
 ```
 
-For Gemini online, do not put `GEMINI_API_KEY` in GitHub Pages. Deploy a backend proxy, store `GEMINI_API_KEY` there, then add `VITE_AI_COACH_ENDPOINT` to the frontend build environment.
+Future updates:
 
-An example Cloudflare Worker proxy is available in `workers/ai-coach-worker.js`.
+```bash
+npm run firebase:deploy
+```
+
+If a Gemini key was pasted into chat, Cloud Shell, GitHub Secrets, or any frontend file, rotate it in Google AI Studio before deploying.
+
+## GitHub Pages
+
+The old GitHub Pages workflow can stay as a static backup, but AI is expected to run through Firebase Functions.
+
+Do not use the old Cloud Run/Cloudflare backend attempts. They were removed to keep one deployment path.
