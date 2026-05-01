@@ -556,7 +556,7 @@
   }
 
   .theme-notebook .theory-sidebar .notebook-list-button {
-    background: transparent !important;
+    background: rgba(255, 250, 240, 0.58) !important;
   }
 
   .theme-notebook .theory-sidebar .notebook-list-button:hover {
@@ -846,12 +846,7 @@
   }
 
   .theme-notebook .notebook-sidebar-frame::before {
-    content: "";
-    position: absolute;
-    inset: 0.55rem;
-    border: 1px solid rgba(88, 72, 47, 0.12);
-    border-radius: 0.48rem;
-    pointer-events: none;
+    content: none;
   }
 
   .theme-notebook .notebook-sidebar-frame > * {
