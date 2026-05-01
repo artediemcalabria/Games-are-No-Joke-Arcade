@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
+import type { ReactNode } from 'react';
 import { Beer, Clock, Coffee, Droplets, Gamepad2, GitBranch, Globe2, Sparkles, Trophy, Users, Wine } from 'lucide-react';
 import { gameCatalog } from '../data/course';
 import { useStore } from '../store/useStore';
@@ -88,26 +89,23 @@ function GamePreview({ id }: { id: string }) {
   if (id === 'filadelfia-story') {
     return (
       <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(57,255,20,.16),transparent_45%),linear-gradient(180deg,#07140c,#12051b)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-60" />
-        <GitBranch className="absolute left-7 top-7 w-12 h-12 text-green-300 rounded-xl border border-green-300/40 bg-green-300/10 p-2 shadow-[0_0_18px_rgba(57,255,20,.45)]" />
-        <div className="absolute left-8 right-8 top-24 grid grid-cols-3 gap-3">
-          {['Trust', 'Clarity', 'Learning'].map((meter, index) => (
-            <div key={meter} className="rounded-lg border border-white/10 bg-black/60 p-2">
-              <p className="text-[8px] font-bold uppercase text-gray-400">{meter}</p>
-              <div className="mt-2 h-2 rounded bg-gray-900 overflow-hidden">
-                <div className="h-full bg-green-300" style={{ width: `${55 + index * 12}%` }} />
-              </div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(57,255,20,.16),transparent_42%),linear-gradient(180deg,#07140c,#15051c)]" />
+        <div className="absolute inset-x-6 top-7 flex items-center justify-between">
+          <StoryAvatar name="Andrea" country="FR" color="bg-blue-300" />
+          <GitBranch className="h-9 w-9 text-green-300" />
+          <StoryAvatar name="Ivalina" country="BG" color="bg-green-300" />
+        </div>
+        <div className="absolute left-7 right-7 top-24 rounded-xl border border-green-300/35 bg-black/55 p-4">
+          <p className="text-[10px] font-black uppercase text-green-200">Day 1 to final showcase</p>
+          <p className="mt-2 text-sm font-black leading-snug text-white">One participant. One team. Many choices.</p>
+        </div>
+        <div className="absolute bottom-7 left-7 right-7 grid grid-cols-3 gap-2">
+          {['Listen', 'Build', 'Debrief'].map((step, index) => (
+            <div key={step} className="rounded-lg border border-white/10 bg-black/60 p-3 text-center">
+              <span className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-green-300 text-xs font-black text-black">{index + 1}</span>
+              <p className="mt-2 text-[9px] font-black uppercase text-gray-200">{step}</p>
             </div>
           ))}
-        </div>
-        <div className="absolute bottom-8 left-8 right-8 rounded-xl border border-green-300/40 bg-green-300/10 p-4">
-          <p className="text-[10px] font-black uppercase text-green-200">Ending logic unlocked</p>
-          <div className="mt-3 flex justify-between gap-2">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <span key={index} className="h-3 flex-1 rounded bg-green-300/30 border border-green-300/40" />
-            ))}
-          </div>
         </div>
       </div>
     );
@@ -116,19 +114,30 @@ function GamePreview({ id }: { id: string }) {
   if (id === 'youthpass-drop') {
     return (
       <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,.22),transparent_40%),linear-gradient(180deg,#041626,#17051b)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-60" />
-        <Droplets className="absolute left-[18%] top-[18%] w-12 h-12 text-cyan-200 rounded-xl border border-cyan-300/50 bg-cyan-300/15 p-2 shadow-[0_0_18px_rgba(34,211,238,.55)]" />
-        <Coffee className="absolute right-[20%] top-[30%] w-12 h-12 text-yellow-200 rounded-xl border border-yellow-300/50 bg-yellow-300/15 p-2" />
-        <Beer className="absolute left-[32%] top-[47%] w-12 h-12 text-orange-100 rounded-xl border border-orange-300/60 bg-orange-400/20 p-2 shadow-[0_0_16px_rgba(251,146,60,.45)]" />
-        <Wine className="absolute right-[30%] top-[55%] w-12 h-12 text-red-100 rounded-xl border border-red-300/60 bg-red-500/20 p-2 shadow-[0_0_16px_rgba(248,113,113,.45)]" />
-        <div className="absolute left-1/2 bottom-8 h-14 w-14 -translate-x-1/2 rounded-full border-4 border-white bg-cyan-300 shadow-[0_0_20px_rgba(34,211,238,.8)]" />
-        <div className="absolute left-5 right-5 top-5 flex gap-1">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <span key={index} className={`h-6 flex-1 rounded border ${index < 4 ? 'border-yellow-300 bg-yellow-300' : 'border-white/10 bg-black/60'}`} />
-          ))}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,.22),transparent_42%),linear-gradient(180deg,#041626,#160818)]" />
+        <div className="absolute left-6 right-6 top-6 rounded-xl border border-cyan-300/35 bg-cyan-300/10 p-4">
+          <p className="text-[10px] font-black uppercase text-cyan-100">Training week balance</p>
+          <p className="mt-2 text-sm font-black leading-snug text-white">Reach YouthPass with energy, water, and smart choices.</p>
         </div>
-        <Trophy className="absolute right-6 bottom-7 w-9 h-9 text-yellow-300" />
+        <div className="absolute left-8 right-8 top-32 grid grid-cols-4 gap-3">
+          <ChoiceToken icon={<Droplets className="h-6 w-6" />} label="Water" tone="cyan" />
+          <ChoiceToken icon={<Coffee className="h-6 w-6" />} label="Coffee" tone="yellow" />
+          <ChoiceToken icon={<Beer className="h-6 w-6" />} label="Beer" tone="orange" />
+          <ChoiceToken icon={<Wine className="h-6 w-6" />} label="Wine" tone="red" />
+        </div>
+        <div className="absolute bottom-7 left-7 right-7 rounded-xl border border-yellow-300/35 bg-black/55 p-3">
+          <div className="flex items-center gap-3">
+            <Trophy className="h-8 w-8 text-yellow-300" />
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase text-yellow-200">Certificate pieces</p>
+              <div className="mt-2 flex gap-1">
+                {Array.from({ length: 10 }).map((_, index) => (
+                  <span key={index} className={`h-2 flex-1 rounded ${index < 6 ? 'bg-yellow-300' : 'bg-white/20'}`} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -137,17 +146,22 @@ function GamePreview({ id }: { id: string }) {
     return (
       <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(253,224,71,.20),transparent_42%),linear-gradient(180deg,#1d1304,#06121f)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:32px_32px] opacity-60" />
-        <Globe2 className="absolute left-7 top-7 w-12 h-12 text-yellow-200 rounded-xl border border-yellow-300/50 bg-yellow-300/15 p-2 shadow-[0_0_18px_rgba(253,224,71,.45)]" />
-        <div className="absolute left-8 right-8 top-20 grid grid-cols-7 gap-1">
+        <div className="absolute left-7 right-7 top-7 flex items-center gap-3">
+          <Globe2 className="h-12 w-12 shrink-0 rounded-xl border border-yellow-300/50 bg-yellow-300/15 p-2 text-yellow-200 shadow-[0_0_18px_rgba(253,224,71,.45)]" />
+          <div>
+            <p className="text-[10px] font-black uppercase text-yellow-200">KA152 parallel world</p>
+            <p className="mt-1 text-sm font-black leading-snug text-white">Craft tools, trust, care, and impact.</p>
+          </div>
+        </div>
+        <div className="absolute left-8 right-8 top-24 grid grid-cols-7 gap-1">
           {Array.from({ length: 7 }).map((_, index) => (
             <span key={index} className={`h-8 rounded border ${index < 3 ? 'border-green-300 bg-green-300/60' : 'border-white/10 bg-black/60'}`} />
           ))}
         </div>
-        <div className="absolute left-7 top-36 right-7 rounded-xl border border-cyan-300/30 bg-cyan-300/10 p-3">
-          <p className="text-[9px] font-black uppercase text-cyan-100">Collect + Craft + Trade</p>
+        <div className="absolute left-7 top-40 right-7 rounded-xl border border-cyan-300/30 bg-cyan-300/10 p-3">
+          <p className="text-[9px] font-black uppercase text-cyan-100">Resources become a project</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {['PAP', 'TRU', 'CRE', 'KEY', 'ACT', 'SAFE'].map((token, index) => (
+            {['Paper', 'Trust', 'Voice', 'Keys', 'Cards', 'Climate'].map((token, index) => (
               <span key={token} className={`rounded border px-2 py-1 text-[9px] font-black ${index < 4 ? 'border-yellow-300 bg-yellow-300/20 text-yellow-100' : 'border-green-300 bg-green-300/20 text-green-100'}`}>
                 {token}
               </span>
@@ -168,20 +182,50 @@ function GamePreview({ id }: { id: string }) {
 
   return (
     <div className="rounded-xl border border-white/10 bg-black/60 min-h-[260px] relative overflow-hidden">
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(34,211,238,.14)_1px,transparent_1px),linear-gradient(rgba(34,211,238,.14)_1px,transparent_1px)] bg-[size:32px_32px]" />
-      <div className="absolute inset-4 rounded-lg border-2 border-cyan-400/50" />
-      <div className="absolute left-6 top-10 right-24 h-8 rounded bg-cyan-950 border border-cyan-400/40" />
-      <div className="absolute left-20 top-20 bottom-12 w-8 rounded bg-cyan-950 border border-cyan-400/40" />
-      <div className="absolute right-8 bottom-8 h-20 w-28 rounded-lg border-2 border-green-400 bg-green-400/15 shadow-[0_0_24px_rgba(57,255,20,.35)]" />
-      <div className="absolute left-8 bottom-8 h-7 w-7 rounded-full border-2 border-white bg-yellow-300 shadow-[0_0_16px_rgba(250,204,21,.85)]" />
-      <Clock className="absolute left-[48%] top-[42%] h-9 w-9 rounded-full border-2 border-red-200 bg-red-500 p-1 text-white shadow-[0_0_16px_rgba(248,113,113,.8)]" />
-      <Clock className="absolute left-[70%] top-[23%] h-8 w-8 rounded-full border-2 border-red-200 bg-red-500 p-1 text-white shadow-[0_0_16px_rgba(248,113,113,.8)]" />
-      <div className="absolute right-16 bottom-14 grid grid-cols-5 gap-1">
-        {Array.from({ length: 21 }).map((_, index) => (
-          <span key={index} className="h-2 w-2 rounded-full bg-white/80" />
-        ))}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,.18),transparent_45%),linear-gradient(180deg,#051722,#071019)]" />
+      <div className="absolute left-6 right-6 top-6 rounded-xl border border-cyan-300/35 bg-black/55 p-4">
+        <p className="text-[10px] font-black uppercase text-cyan-200">Castle Rush</p>
+        <p className="mt-2 text-sm font-black leading-snug text-white">Rocco is late. Emanuel and the group are waiting.</p>
       </div>
-      <div className="absolute right-5 top-5 rounded-lg border border-red-400/40 bg-red-400/10 px-2 py-1 text-[9px] font-black uppercase text-red-200">Anger</div>
+      <div className="absolute left-8 top-32 flex items-center gap-3">
+        <div className="h-14 w-14 rounded-full border-4 border-yellow-100 bg-yellow-300 shadow-[0_0_18px_rgba(250,204,21,.65)]" />
+        <div className="h-1 w-24 rounded bg-cyan-300/50" />
+        <Clock className="h-12 w-12 rounded-full border-2 border-red-200 bg-red-500 p-2 text-white shadow-[0_0_18px_rgba(248,113,113,.8)]" />
+        <div className="h-1 w-20 rounded bg-cyan-300/50" />
+        <div className="rounded-xl border border-green-300/50 bg-green-300/15 px-4 py-3">
+          <Users className="mx-auto h-7 w-7 text-green-200" />
+          <p className="mt-1 text-[9px] font-black uppercase text-green-100">Activity room</p>
+        </div>
+      </div>
+      <div className="absolute bottom-7 left-7 right-7 rounded-xl border border-red-300/35 bg-red-400/10 p-3">
+        <p className="text-[9px] font-black uppercase text-red-100">Design story</p>
+        <p className="mt-1 text-xs font-bold leading-relaxed text-gray-200">Can a clear route, fair pressure, and readable clocks make urgency feel fun?</p>
+      </div>
+    </div>
+  );
+}
+
+function StoryAvatar({ name, country, color }: { name: string; country: string; color: string }) {
+  return (
+    <div className="text-center">
+      <div className={`mx-auto h-12 w-12 rounded-full border-4 border-white/80 ${color}`} />
+      <p className="mt-2 text-[9px] font-black uppercase text-white">{name}</p>
+      <p className="text-[8px] font-bold uppercase text-gray-400">{country}</p>
+    </div>
+  );
+}
+
+function ChoiceToken({ icon, label, tone }: { icon: ReactNode; label: string; tone: 'cyan' | 'yellow' | 'orange' | 'red' }) {
+  const toneClass = {
+    cyan: 'border-cyan-300/50 bg-cyan-300/15 text-cyan-100',
+    yellow: 'border-yellow-300/50 bg-yellow-300/15 text-yellow-100',
+    orange: 'border-orange-300/50 bg-orange-400/20 text-orange-100',
+    red: 'border-red-300/50 bg-red-500/20 text-red-100',
+  }[tone];
+  return (
+    <div className={`rounded-xl border p-3 text-center ${toneClass}`}>
+      <div className="mx-auto flex justify-center">{icon}</div>
+      <p className="mt-2 text-[9px] font-black uppercase">{label}</p>
     </div>
   );
 }
