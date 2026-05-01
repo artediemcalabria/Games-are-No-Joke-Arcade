@@ -52,7 +52,7 @@ export default function CastleRushGame() {
   const [level, setLevel] = useState(1);
   const [highestLevel, setHighestLevel] = useState(1);
   const [gameState, setGameState] = useState<GameState>('intro');
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
   const [tick, setTick] = useState(0);
   const [timeLeft, setTimeLeft] = useState(levelTemplates[0].time);
   const [angerPenalty, setAngerPenalty] = useState(0);
@@ -81,7 +81,7 @@ export default function CastleRushGame() {
     const gain = context.createGain();
     oscillator.type = type;
     oscillator.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.04, context.currentTime);
+    gain.gain.setValueAtTime(0.072, context.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
     oscillator.connect(gain);
     gain.connect(context.destination);

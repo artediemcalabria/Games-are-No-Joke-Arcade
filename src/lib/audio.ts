@@ -15,16 +15,16 @@ let unlockInstalled = false;
 let unlocked = false;
 
 const soundMap: Record<AppSound, { frequency: number; duration: number; type: OscillatorType; gain: number }> = {
-  nav: { frequency: 420, duration: 0.045, type: 'sine', gain: 0.018 },
-  select: { frequency: 520, duration: 0.055, type: 'triangle', gain: 0.025 },
-  success: { frequency: 740, duration: 0.09, type: 'sine', gain: 0.035 },
-  warning: { frequency: 190, duration: 0.12, type: 'square', gain: 0.03 },
-  error: { frequency: 96, duration: 0.18, type: 'sawtooth', gain: 0.025 },
-  craft: { frequency: 680, duration: 0.08, type: 'triangle', gain: 0.035 },
-  trade: { frequency: 590, duration: 0.075, type: 'sine', gain: 0.032 },
-  install: { frequency: 860, duration: 0.11, type: 'sine', gain: 0.04 },
-  win: { frequency: 980, duration: 0.18, type: 'sine', gain: 0.045 },
-  lose: { frequency: 84, duration: 0.32, type: 'sawtooth', gain: 0.03 },
+  nav: { frequency: 420, duration: 0.045, type: 'sine', gain: 0.034 },
+  select: { frequency: 520, duration: 0.055, type: 'triangle', gain: 0.045 },
+  success: { frequency: 740, duration: 0.09, type: 'sine', gain: 0.063 },
+  warning: { frequency: 190, duration: 0.12, type: 'square', gain: 0.052 },
+  error: { frequency: 96, duration: 0.18, type: 'sawtooth', gain: 0.044 },
+  craft: { frequency: 680, duration: 0.08, type: 'triangle', gain: 0.063 },
+  trade: { frequency: 590, duration: 0.075, type: 'sine', gain: 0.058 },
+  install: { frequency: 860, duration: 0.11, type: 'sine', gain: 0.072 },
+  win: { frequency: 980, duration: 0.18, type: 'sine', gain: 0.08 },
+  lose: { frequency: 84, duration: 0.32, type: 'sawtooth', gain: 0.052 },
 };
 
 export function installAudioUnlock() {

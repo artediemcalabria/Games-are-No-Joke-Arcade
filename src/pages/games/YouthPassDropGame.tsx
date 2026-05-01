@@ -86,7 +86,7 @@ export default function YouthPassDropGame() {
   const [playerX, setPlayerX] = useState(50);
   const [meters, setMeters] = useState<Meters>({ life: 100, energy: 70, happiness: 55 });
   const [elapsed, setElapsed] = useState(0);
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
   const [lastCatch, setLastCatch] = useState('Catch water to stay strong.');
 
   const phaseRef = useRef(phase);
@@ -118,7 +118,7 @@ export default function YouthPassDropGame() {
     const gain = context.createGain();
     oscillator.type = type;
     oscillator.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.045, context.currentTime);
+    gain.gain.setValueAtTime(0.076, context.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
     oscillator.connect(gain);
     gain.connect(context.destination);

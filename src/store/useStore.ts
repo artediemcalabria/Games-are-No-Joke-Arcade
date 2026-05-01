@@ -71,7 +71,7 @@ export const useStore = create<ProgressState>()(
       totalScore: 0,
       prototype: {},
       audioEnabled: true,
-      appTheme: 'arcade',
+      appTheme: 'notebook',
       
       unlockTheory: (id) => set((state) => ({
         unlockedTheories: state.unlockedTheories.includes(id) 
@@ -163,11 +163,11 @@ export const useStore = create<ProgressState>()(
     }),
     {
       name: 'games-are-no-joke-storage',
-      version: 4,
+      version: 5,
       migrate: (persistedState) => ({
         ...(persistedState as ProgressState),
         audioEnabled: (persistedState as Partial<ProgressState>).audioEnabled ?? true,
-        appTheme: (persistedState as Partial<ProgressState>).appTheme ?? 'arcade',
+        appTheme: 'notebook',
         readReports: (persistedState as Partial<ProgressState>).readReports ?? [],
         gddImports: (persistedState as Partial<ProgressState>).gddImports ?? [],
       }) as ProgressState,
