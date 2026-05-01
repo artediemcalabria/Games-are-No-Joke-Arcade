@@ -98,16 +98,18 @@ export default function Theory() {
               <p className="mt-4 max-w-3xl text-base leading-relaxed text-gray-200">{activeLesson.focus}</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-black/40 p-4">
-              <LessonIcon className="h-8 w-8 text-pink-300" />
-              <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Learning model</p>
+              <div className="flex items-start justify-between gap-3">
+                <LessonIcon className="h-8 w-8 shrink-0 text-pink-300" />
+                <button
+                  onClick={() => void downloadLessonModule(activeLesson)}
+                  className="theory-action-button min-h-9 shrink-0 px-3 py-2 text-[10px]"
+                >
+                  <Download className="h-3.5 w-3.5" /> Download
+                </button>
+              </div>
+              <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Learning model</p>
               <p className="mt-2 text-sm font-black leading-snug text-white">{activeLesson.model}</p>
               {isDone && <p className="mt-3 rounded-lg bg-green-300/15 px-3 py-2 text-[10px] font-black uppercase text-green-200">{activeLesson.rewardBadge}</p>}
-              <button
-                onClick={() => void downloadLessonModule(activeLesson)}
-                className="theory-action-button mt-4 w-full"
-              >
-                <Download className="h-3.5 w-3.5" /> Download Module
-              </button>
             </div>
           </div>
         </section>
