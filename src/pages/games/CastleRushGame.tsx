@@ -1,182 +1,84 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
-import { Bell, Coffee, Focus, Gamepad2, HelpCircle, Pause, Play, RotateCcw, Sparkles, Volume2, VolumeX } from 'lucide-react';
-import { ManualButton, GameManualPanel, type ManualSection } from '../../components/GameManualPanel';
+import { Bell, Coffee, Clock, Flame, Focus, Gamepad2, Pause, Play, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { gameCatalog } from '../../data/course';
 import { useStore } from '../../store/useStore';
 
-type Cell = '#' | '.' | ' ' | 'S' | 'G' | 'R' | 'C' | 'F' | 'B' | 'Y' | 'P';
+type Cell = 'wall' | 'floor' | 'dot' | 'start' | 'exit' | 'room' | 'checkpoint' | 'coffee' | 'focus' | 'bell';
 type Point = { x: number; y: number };
-type Direction = Point;
-type Phase = 'intro' | 'playing' | 'paused' | 'won-level' | 'game-over' | 'completed';
-type ClockKind = 'direct' | 'ambush' | 'patrol' | 'wander';
-type ClockMode = 'scatter' | 'chase' | 'warning' | 'stunned';
-type CollectibleKind = 'dot' | 'coffee' | 'focus' | 'bell' | 'star';
+type ClockEnemy = { id: number; path: Point[]; step: number; direction: 1 | -1; alertUntil: number };
+type GameState = 'intro' | 'playing' | 'paused' | 'won-level' | 'game-over' | 'completed';
+type TokenKind = 'coffee' | 'focus' | 'bell';
 type FlagId = 'eu' | 'italy' | 'macedonia' | 'turkiye' | 'france' | 'romania' | 'serbia' | 'bulgaria';
-
-type ClockEnemy = {
-  id: number;
-  kind: ClockKind;
-  x: number;
-  y: number;
-  dir: Direction;
-  home: Point;
-  scatter: Point;
-  color: string;
-  name: string;
-};
-
-type Collectible = {
-  kind: CollectibleKind;
-  x: number;
-  y: number;
-};
-
+type ActivityRoom = { x: number; y: number; width: number; height: number; goal: Point };
 type LevelTemplate = {
   title: string;
-  briefing: string;
-  rows: string[];
-  clocks: Array<{ kind: ClockKind; at: Point; scatter: Point }>;
-  requiredReadiness: number;
-  latePasses: number;
-  latenessRate: number;
-  playerSpeed: number;
+  time: number;
+  hitPenalty: number;
   clockSpeed: number;
-};
-
-type ParsedLevel = {
-  width: number;
-  height: number;
-  grid: Cell[][];
-  start: Point;
-  goal: Point;
-  collectibles: Collectible[];
-  clocks: ClockEnemy[];
-  dotCount: number;
-};
-
-type GameRun = {
-  level: number;
-  phase: Phase;
-  elapsed: number;
-  readiness: number;
-  score: number;
-  lateness: number;
-  latePasses: number;
-  player: {
-    x: number;
-    y: number;
-    dir: Direction;
-    desired: Direction;
-    invulnerable: number;
-  };
-  clocks: ClockEnemy[];
-  collected: Set<string>;
-  mode: ClockMode;
-  focusUntil: number;
-  coffeeUntil: number;
-  bellUntil: number;
-  roccoHint: string;
-  lastLesson: string;
-  discoveredStar: boolean;
-  participantFlag: FlagId;
+  rows: string[];
+  patrols: Point[][];
 };
 
 const game = gameCatalog.find((item) => item.id === 'castle-rush')!;
 const maxLevel = 10;
-const zero = { x: 0, y: 0 };
-const directions: Direction[] = [
+const directions = [
   { x: 1, y: 0 },
   { x: -1, y: 0 },
   { x: 0, y: 1 },
   { x: 0, y: -1 },
 ];
 
-const clockStyles: Record<ClockKind, { color: string; name: string }> = {
-  direct: { color: '#ff3b5f', name: 'Direct Clock' },
-  ambush: { color: '#ffb020', name: 'Ambush Clock' },
-  patrol: { color: '#44d7ff', name: 'Patrol Clock' },
-  wander: { color: '#b56bff', name: 'Wander Clock' },
+const designNotes = [
+  'Level 1: Readable enemies are fairer than random enemies.',
+  'Level 2: A safe zone lets players pause and plan.',
+  'Level 3: A shortcut is meaningful when it has a visible risk.',
+  'Level 4: Checkpoints make pressure tense without becoming unfair.',
+  'Level 5: A useful pickup gives players a new decision, not only a bonus.',
+  'Level 6: Alert enemies work best when players can predict their limits.',
+  'Level 7: A hard route still needs recovery space.',
+  'Level 8: Difficulty should ask for better timing, not blind luck.',
+  'Level 9: Good pressure gives players choices, not only punishment.',
+  'Level 10: Fair level design makes victory feel earned.',
+];
+
+const tokenLabels: Record<TokenKind, string> = {
+  coffee: 'Coffee Token: steady rhythm active. Clocks slow down briefly.',
+  focus: 'Focus Token: clocks frozen for a moment.',
+  bell: 'Bell Token: safest path revealed.',
 };
 
 const partnerFlags: FlagId[] = ['eu', 'italy', 'macedonia', 'turkiye', 'france', 'romania', 'serbia', 'bulgaria'];
 
-const designNotes = [
-  'Readable enemies are fairer than random enemies.',
-  'Loops give players choices under pressure.',
-  'A shortcut is interesting only when its risk is visible.',
-  'Checkpoints make pressure recoverable.',
-  'Power states change the system, not only the score.',
-  'A good enemy has a personality players can learn.',
-  'A hard route still needs recovery space.',
-  'Difficulty should ask for timing, not blind luck.',
-  'The goal room must be part of the level design.',
-  'A polished game teaches through movement, feedback, and mastery.',
-];
-
-const manualSections: ManualSection[] = [
-  {
-    title: 'Goal',
-    items: [
-      'You are a participant trying to reach the Activity Room on time.',
-      'Collect enough check-in icons, then enter the center of the Activity Room.',
-      'Rocco gives supportive logistics reminders. Emanuel and the group are waiting inside.',
-    ],
-  },
-  {
-    title: 'Controls',
-    items: [
-      'Use arrow keys or WASD on desktop.',
-      'Use the D-pad on mobile.',
-      'You can press a direction before a turn. The game will remember it when the corner opens.',
-    ],
-  },
-  {
-    title: 'Clocks',
-    items: [
-      'Red clocks chase directly.',
-      'Orange clocks try to ambush the route ahead.',
-      'Blue clocks protect corridors.',
-      'Purple clocks wander, but they never camp the Activity Room.',
-    ],
-  },
-  {
-    title: 'Design Lesson',
-    items: [
-      'Pressure is fair when players can read it.',
-      'A good maze has loops, recovery space, and meaningful shortcuts.',
-      'Power-ups should change decisions, not only make numbers bigger.',
-    ],
-  },
-];
-
 export default function CastleRushGame() {
   const { completeGame, saveGameNote, updatePrototypeField } = useStore();
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
-  const runRef = useRef<GameRun | null>(null);
-  const matchCounterRef = useRef(0);
-  const levelRef = useRef(1);
-  const phaseRef = useRef<Phase>('intro');
   const [level, setLevel] = useState(1);
   const [highestLevel, setHighestLevel] = useState(1);
-  const [phase, setPhase] = useState<Phase>('intro');
+  const [gameState, setGameState] = useState<GameState>('intro');
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [manualOpen, setManualOpen] = useState(false);
-  const [hud, setHud] = useState({
-    readiness: 0,
-    lateness: 0,
-    score: 0,
-    latePasses: 3,
-    mode: 'scatter' as ClockMode,
-    roccoHint: 'Rocco says: watch the first clock pattern before moving.',
-    lesson: designNotes[0],
-  });
+  const [tick, setTick] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(levelTemplates[0].time);
+  const [angerPenalty, setAngerPenalty] = useState(0);
+  const [lastEvent, setLastEvent] = useState('Reach the Activity Room. Clocks punish mistakes, but they do not block the only route.');
+  const [collectedTokens, setCollectedTokens] = useState<Set<string>>(new Set());
+  const [activeUntil, setActiveUntil] = useState<Record<TokenKind, number>>({ coffee: 0, focus: 0, bell: 0 });
+  const [playerFlag, setPlayerFlag] = useState<FlagId>('eu');
   const audioRef = useRef<AudioContext | null>(null);
-  const currentDotCount = parseLevel(levelTemplates[level - 1]).dotCount;
+  const ambientRef = useRef<number | null>(null);
+  const matchCounterRef = useRef(0);
 
-  const playTone = useCallback((frequency: number, duration = 0.08, type: OscillatorType = 'sine', gainValue = 0.065) => {
+  const levelData = useMemo(() => parseLevel(levelTemplates[level - 1]), [level]);
+  const [player, setPlayer] = useState<Point>(levelData.start);
+  const [checkpoint, setCheckpoint] = useState<Point>(levelData.start);
+  const [clocks, setClocks] = useState<ClockEnemy[]>(levelData.clocks);
+  const nowTick = tick;
+  const activeCoffee = activeUntil.coffee > nowTick;
+  const activeFocus = activeUntil.focus > nowTick;
+  const activeBell = activeUntil.bell > nowTick;
+  const anger = Math.min(100, Math.round(((levelData.time - timeLeft) / levelData.time) * 72 + angerPenalty));
+  const safePath = useMemo(() => (activeBell ? findPath(levelData.grid, player, levelData.room.goal) : []), [activeBell, levelData.grid, levelData.room.goal, player]);
+
+  const playTone = useCallback((frequency: number, duration = 0.08, type: OscillatorType = 'square') => {
     if (!audioEnabled) return;
     const context = audioRef.current ?? new AudioContext();
     audioRef.current = context;
@@ -184,7 +86,7 @@ export default function CastleRushGame() {
     const gain = context.createGain();
     oscillator.type = type;
     oscillator.frequency.value = frequency;
-    gain.gain.setValueAtTime(gainValue, context.currentTime);
+    gain.gain.setValueAtTime(0.072, context.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
     oscillator.connect(gain);
     gain.connect(context.destination);
@@ -192,100 +94,137 @@ export default function CastleRushGame() {
     oscillator.stop(context.currentTime + duration);
   }, [audioEnabled]);
 
-  const syncPhase = useCallback((nextPhase: Phase) => {
-    phaseRef.current = nextPhase;
-    setPhase(nextPhase);
-    if (runRef.current) runRef.current.phase = nextPhase;
-  }, []);
-
-  const startLevel = useCallback((nextLevel: number) => {
-    const template = levelTemplates[nextLevel - 1];
-    const parsed = parseLevel(template);
-    const run: GameRun = {
-      level: nextLevel,
-      phase: 'playing',
-      elapsed: 0,
-      readiness: 0,
-      score: 0,
-      lateness: 8,
-      latePasses: template.latePasses,
-      player: {
-        x: parsed.start.x + 0.5,
-        y: parsed.start.y + 0.5,
-        dir: zero,
-        desired: zero,
-        invulnerable: 1.5,
-      },
-      clocks: parsed.clocks,
-      collected: new Set(),
-      mode: 'scatter',
-      focusUntil: 0,
-      coffeeUntil: 0,
-      bellUntil: 0,
-      roccoHint: template.briefing,
-      lastLesson: designNotes[nextLevel - 1],
-      discoveredStar: false,
-      participantFlag: partnerFlags[matchCounterRef.current++ % partnerFlags.length],
-    };
-    levelRef.current = nextLevel;
-    runRef.current = run;
+  const resetLevel = useCallback((nextLevel = level) => {
+    const parsed = parseLevel(levelTemplates[nextLevel - 1]);
     setLevel(nextLevel);
-    setHighestLevel((current) => Math.max(current, nextLevel));
-    syncPhase('playing');
+    setPlayer(parsed.start);
+    setCheckpoint(parsed.start);
+    setClocks(parsed.clocks);
+    setTimeLeft(parsed.time);
+    setAngerPenalty(0);
+    setCollectedTokens(new Set());
+    setActiveUntil({ coffee: 0, focus: 0, bell: 0 });
+    setPlayerFlag(partnerFlags[matchCounterRef.current++ % partnerFlags.length]);
+    setTick(0);
+    setLastEvent('Plan your route. Checkpoints and pickups make the pressure fair.');
+    setGameState('playing');
     saveGameNote(game.id, `Castle Rush: reached level ${nextLevel}/10`);
-    playTone(520, 0.1, 'triangle');
-  }, [playTone, saveGameNote, syncPhase]);
-
-  const restart = useCallback(() => startLevel(levelRef.current), [startLevel]);
+  }, [level, saveGameNote]);
 
   const finishLevel = useCallback(() => {
-    const run = runRef.current;
-    if (!run || run.phase !== 'playing') return;
-    playTone(run.level >= maxLevel ? 980 : 760, 0.18, 'sine', 0.08);
-    if (run.level >= maxLevel) {
-      syncPhase('completed');
+    const finalLevel = level >= maxLevel;
+    playTone(finalLevel ? 880 : 660, 0.16, 'sine');
+    if (finalLevel) {
+      setGameState('completed');
       setHighestLevel(maxLevel);
       completeGame(game.id, 1000, game.takeaway, `Castle Rush completed: ${designNotes[maxLevel - 1]}`);
     } else {
-      syncPhase('won-level');
-      setHighestLevel((current) => Math.max(current, run.level + 1));
-      saveGameNote(game.id, `Castle Rush: completed level ${run.level}/10 - ${designNotes[run.level - 1]}`);
+      setGameState('won-level');
+      setHighestLevel((current) => Math.max(current, level + 1));
+      saveGameNote(game.id, `Castle Rush: completed level ${level}/10 - ${designNotes[level - 1]}`);
     }
-  }, [completeGame, playTone, saveGameNote, syncPhase]);
+  }, [completeGame, level, playTone, saveGameNote]);
 
-  const setDesiredDirection = useCallback((direction: Direction) => {
-    const run = runRef.current;
-    if (!run || run.phase !== 'playing') return;
-    run.player.desired = direction;
-  }, []);
+  const handleClockHit = useCallback(() => {
+    playTone(110, 0.16, 'sawtooth');
+    const penalty = levelData.hitPenalty;
+    setPlayer(checkpoint);
+    setClocks(levelData.clocks);
+    setTimeLeft((current) => Math.max(1, current - Math.ceil(penalty / 3)));
+    setAngerPenalty((current) => Math.min(96, current + penalty));
+    setLastEvent(level <= 5
+      ? 'Late pass used. You lost time and returned to the checkpoint.'
+      : 'Big late pass penalty. The level is still recoverable if you stay calm.');
+  }, [checkpoint, level, levelData.clocks, levelData.hitPenalty, playTone]);
+
+  const collectToken = useCallback((kind: TokenKind, point: Point) => {
+    const key = `${point.x},${point.y}`;
+    setCollectedTokens((current) => new Set([...current, key]));
+    setActiveUntil((current) => ({
+      ...current,
+      [kind]: nowTick + (kind === 'coffee' ? 18 : kind === 'focus' ? 10 : 12),
+    }));
+    setLastEvent(tokenLabels[kind]);
+    playTone(kind === 'coffee' ? 720 : kind === 'focus' ? 520 : 640, 0.08, 'sine');
+  }, [nowTick, playTone]);
+
+  const movePlayer = useCallback((dx: number, dy: number) => {
+    if (gameState !== 'playing') return;
+    const steps = 1;
+    setPlayer((current) => {
+      let nextPosition = current;
+      for (let index = 0; index < steps; index++) {
+        const next = { x: nextPosition.x + dx, y: nextPosition.y + dy };
+        const nextCell = levelData.grid[next.y]?.[next.x];
+        if (!nextCell || nextCell === 'wall') break;
+        nextPosition = next;
+        if (nextCell === 'room' || nextCell === 'exit' || same(next, levelData.room.goal)) {
+          window.setTimeout(finishLevel, 0);
+          break;
+        }
+      }
+
+      const cell = levelData.grid[nextPosition.y]?.[nextPosition.x];
+      const tokenKey = `${nextPosition.x},${nextPosition.y}`;
+      if (cell === 'checkpoint') {
+        setCheckpoint(nextPosition);
+        setLastEvent('Checkpoint reached. This is your recovery space.');
+      }
+      if ((cell === 'coffee' || cell === 'focus' || cell === 'bell') && !collectedTokens.has(tokenKey)) {
+        collectToken(cell, nextPosition);
+      }
+      if (clocks.some((clockEnemy) => same(clockEnemy.path[clockEnemy.step], nextPosition))) {
+        window.setTimeout(handleClockHit, 0);
+      }
+      playTone(240 + level * 10, 0.035, 'triangle');
+      return nextPosition;
+    });
+  }, [clocks, collectToken, collectedTokens, finishLevel, gameState, handleClockHit, level, levelData.grid, levelData.room.goal, playTone]);
 
   useEffect(() => {
-    const parsed = parseLevel(levelTemplates[0]);
-    runRef.current = {
-      level: 1,
-      phase: 'intro',
-      elapsed: 0,
-      readiness: 0,
-      score: 0,
-      lateness: 8,
-      latePasses: levelTemplates[0].latePasses,
-      player: { x: parsed.start.x + 0.5, y: parsed.start.y + 0.5, dir: zero, desired: zero, invulnerable: 0 },
-      clocks: parsed.clocks,
-      collected: new Set(),
-      mode: 'scatter',
-      focusUntil: 0,
-      coffeeUntil: 0,
-      bellUntil: 0,
-      roccoHint: levelTemplates[0].briefing,
-      lastLesson: designNotes[0],
-      discoveredStar: false,
-      participantFlag: 'eu',
-    };
-  }, []);
+    const parsed = parseLevel(levelTemplates[level - 1]);
+    setPlayer(parsed.start);
+    setCheckpoint(parsed.start);
+    setClocks(parsed.clocks);
+    setTimeLeft(parsed.time);
+  }, [level]);
+
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+    const interval = window.setInterval(() => {
+      setTimeLeft((current) => {
+        if (current <= 1 || anger >= 100) {
+          playTone(90, 0.4, 'sawtooth');
+          setLastEvent('The barometer filled up. The group started without you.');
+          setGameState('game-over');
+          return 0;
+        }
+        if (current <= 6) playTone(120 + current * 12, 0.05, 'square');
+        return current - 1;
+      });
+      setTick((current) => current + 1);
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [anger, gameState, playTone]);
+
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+    const interval = window.setInterval(() => {
+      if (activeFocus) return;
+      setClocks((currentClocks) => {
+        const nextClocks = currentClocks.map((clockEnemy) => moveClock(clockEnemy, player, level, nowTick, levelData.grid));
+        if (nextClocks.some((clockEnemy) => same(clockEnemy.path[clockEnemy.step], player))) {
+          window.setTimeout(handleClockHit, 0);
+        }
+        return nextClocks;
+      });
+    }, activeCoffee ? levelData.clockSpeed + 180 : levelData.clockSpeed);
+    return () => window.clearInterval(interval);
+  }, [activeCoffee, activeFocus, gameState, handleClockHit, level, levelData.clockSpeed, levelData.grid, nowTick, player]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      const keyMap: Record<string, Direction> = {
+      const keyMap: Record<string, Point> = {
         ArrowUp: { x: 0, y: -1 },
         w: { x: 0, y: -1 },
         W: { x: 0, y: -1 },
@@ -300,1313 +239,848 @@ export default function CastleRushGame() {
         D: { x: 1, y: 0 },
       };
       const direction = keyMap[event.key];
-      if (!direction) return;
-      event.preventDefault();
-      setDesiredDirection(direction);
+      if (direction) {
+        event.preventDefault();
+        movePlayer(direction.x, direction.y);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [setDesiredDirection]);
+  }, [movePlayer]);
 
   useEffect(() => {
-    const loop = (timestamp: number) => {
-      const canvas = canvasRef.current;
-      const run = runRef.current;
-      if (!canvas || !run) {
-        frameRef.current = window.requestAnimationFrame(loop);
-        return;
-      }
-      const delta = Math.min(0.05, (timestamp - (lastTimeRef.current || timestamp)) / 1000);
-      lastTimeRef.current = timestamp;
-      const parsed = parseLevel(levelTemplates[run.level - 1]);
-      if (run.phase === 'playing') updateRun(run, parsed, delta, finishLevel, syncPhase, playTone);
-      drawGame(canvas, run, parsed);
-      if (Math.floor(timestamp / 120) !== Math.floor((timestamp - delta * 1000) / 120)) {
-        setHud({
-          readiness: run.readiness,
-          lateness: run.lateness,
-          score: run.score,
-          latePasses: run.latePasses,
-          mode: run.mode,
-          roccoHint: run.roccoHint,
-          lesson: run.lastLesson,
-        });
-      }
-      frameRef.current = window.requestAnimationFrame(loop);
-    };
-    frameRef.current = window.requestAnimationFrame(loop);
+    if (!audioEnabled || gameState !== 'playing') {
+      if (ambientRef.current) window.clearInterval(ambientRef.current);
+      ambientRef.current = null;
+      return;
+    }
+    ambientRef.current = window.setInterval(() => playTone(82 + level * 3, 0.06, 'sine'), 1700);
     return () => {
-      if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
+      if (ambientRef.current) window.clearInterval(ambientRef.current);
+      ambientRef.current = null;
     };
-  }, [finishLevel, playTone, syncPhase]);
+  }, [audioEnabled, gameState, level, playTone]);
 
-  const nextLevel = () => startLevel(Math.min(levelRef.current + 1, maxLevel));
-  const togglePause = () => {
-    if (phaseRef.current === 'playing') syncPhase('paused');
-    else if (phaseRef.current === 'paused') syncPhase('playing');
-  };
+  const restart = () => resetLevel(level);
+  const nextLevel = () => resetLevel(Math.min(level + 1, maxLevel));
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen mx-auto w-full max-w-6xl pb-10">
-      <section className="mb-4 overflow-hidden rounded-2xl border border-cyan-300/35 bg-slate-950 shadow-[0_0_35px_rgba(34,211,238,.18)]">
-        <div className="relative p-4 md:p-5">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(236,72,153,.18),transparent_28%),radial-gradient(circle_at_82%_10%,rgba(34,211,238,.18),transparent_32%)]" />
-          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-pink-200">{game.subtitle}</p>
-              <h1 className="mt-2 text-2xl font-arcade text-white mobile-readable-arcade md:text-4xl">{game.title}</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-200">
-                A polished clock-chase about arriving on time, reading pressure, collecting check-ins, and reaching Emanuel in the Activity Room.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <ManualButton onClick={() => setManualOpen(true)} />
-              <button onClick={() => setAudioEnabled((value) => !value)} className="rounded-xl border border-white/15 bg-black/50 px-3 py-2 text-xs font-black uppercase text-gray-100 hover:border-cyan-300">
-                {audioEnabled ? <Volume2 className="mr-2 inline h-4 w-4" /> : <VolumeX className="mr-2 inline h-4 w-4" />}
-                Sound
-              </button>
-              <button onClick={togglePause} disabled={phase !== 'playing' && phase !== 'paused'} className="rounded-xl border border-white/15 bg-black/50 px-3 py-2 text-xs font-black uppercase text-gray-100 hover:border-green-300 disabled:opacity-45">
-                {phase === 'paused' ? <Play className="mr-2 inline h-4 w-4" /> : <Pause className="mr-2 inline h-4 w-4" />}
-                {phase === 'paused' ? 'Resume' : 'Pause'}
-              </button>
-              <button onClick={restart} className="rounded-xl border border-white/15 bg-black/50 px-3 py-2 text-xs font-black uppercase text-gray-100 hover:border-pink-300">
-                <RotateCcw className="mr-2 inline h-4 w-4" />
-                Restart
-              </button>
-            </div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen pb-10 max-w-6xl mx-auto">
+      <section className="arcade-border-pink glass-panel-pink rounded-xl p-4 md:p-5 mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">{game.subtitle}</p>
+            <h1 className="text-xl md:text-3xl font-arcade mobile-readable-arcade text-white mt-3">{game.title}</h1>
+            <p className="text-sm text-gray-300 leading-relaxed mt-4 max-w-2xl">
+              A fair clock-chase about route design. Use checkpoints, pickups, and timing to reach the Erasmus+ Activity Room.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setAudioEnabled((value) => !value)}
+              className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-cyan-400"
+            >
+              {audioEnabled ? <Volume2 className="w-4 h-4 inline mr-2" /> : <VolumeX className="w-4 h-4 inline mr-2" />}
+              Sound
+            </button>
+            <button
+              onClick={() => setGameState((state) => state === 'playing' ? 'paused' : state === 'paused' ? 'playing' : state)}
+              disabled={gameState !== 'playing' && gameState !== 'paused'}
+              className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-green-400 disabled:opacity-40"
+            >
+              {gameState === 'paused' ? <Play className="w-4 h-4 inline mr-2" /> : <Pause className="w-4 h-4 inline mr-2" />}
+              {gameState === 'paused' ? 'Resume' : 'Pause'}
+            </button>
+            <button onClick={restart} className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-pink-400">
+              <RotateCcw className="w-4 h-4 inline mr-2" /> Restart
+            </button>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_310px]">
-        <div className="overflow-hidden rounded-2xl border border-cyan-300/35 bg-black shadow-[0_0_40px_rgba(0,242,255,.14)]">
-          <CompactHud level={level} hud={hud} required={levelTemplates[level - 1].requiredReadiness} dotCount={currentDotCount} />
-          <div className="relative aspect-square w-full bg-[#030714]">
-            <canvas ref={canvasRef} className="h-full w-full touch-none" aria-label="Castle Rush game board" />
+      <section className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-4">
+        <div className="arcade-border glass-panel rounded-xl p-3 md:p-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-[10px] text-gray-500 font-bold uppercase">Level {level}/10 - {levelTemplates[level - 1].title}</p>
+              <h2 className="text-sm font-arcade text-cyan-300">Fair Route Challenge</h2>
+            </div>
+            <AngerBar anger={anger} timeLeft={timeLeft} clockCount={clocks.length} latePasses={Math.max(0, Math.floor((100 - angerPenalty) / levelData.hitPenalty))} />
           </div>
-          <DPad onMove={setDesiredDirection} />
+
+          <div className="mx-auto w-full max-w-[min(720px,calc(100vw-2rem))]">
+            <div
+              className="relative grid overflow-hidden rounded-xl border-2 border-cyan-400/60 bg-[#020617] shadow-[0_0_28px_rgba(0,242,255,.18)] touch-none"
+              style={{
+                gridTemplateColumns: `repeat(${levelData.grid.length}, minmax(0, 1fr))`,
+                aspectRatio: '1 / 1',
+              }}
+            >
+              {levelData.grid.map((row, y) =>
+                row.map((cell, x) => {
+                  const point = { x, y };
+                  const tokenKey = `${x},${y}`;
+                  return (
+                    <Tile
+                      key={`${x}-${y}`}
+                      cell={cell}
+                      isPlayer={same(player, point)}
+                      isClock={clocks.some((clockEnemy) => same(clockEnemy.path[clockEnemy.step], point))}
+                      isPathHint={safePath.some((safePoint) => same(safePoint, point))}
+                      collected={collectedTokens.has(tokenKey)}
+                      playerFlag={playerFlag}
+                    />
+                  );
+                }),
+              )}
+              <ActivityRoomLayer room={levelData.room} tileCount={levelData.grid.length} tick={tick} visible={manhattan(player, levelData.room.goal) < 8 || gameState !== 'playing'} />
+            </div>
+          </div>
+
+          <DPad onMove={movePlayer} />
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {Array.from({ length: maxLevel }).map((_, index) => {
+              const levelNumber = index + 1;
+              const unlocked = levelNumber <= highestLevel;
+              return (
+                <button
+                  key={levelNumber}
+                  onClick={() => unlocked && resetLevel(levelNumber)}
+                  disabled={!unlocked}
+                  className={`h-9 min-w-9 rounded border text-[10px] font-black ${level === levelNumber ? 'border-green-300 bg-green-300 text-black' : unlocked ? 'border-white/20 bg-black/50 text-gray-200 hover:border-cyan-300' : 'border-white/10 bg-black/20 text-gray-700'}`}
+                  aria-label={`Start Castle Rush level ${levelNumber}`}
+                >
+                  {levelNumber}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <aside className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-1">
-          <InfoCard title="Rocco Radio" color="cyan">
-            {hud.roccoHint}
-          </InfoCard>
-          <InfoCard title="Clock Mode" color={hud.mode === 'warning' ? 'pink' : hud.mode === 'stunned' ? 'green' : 'yellow'}>
-            {modeCopy(hud.mode)}
-          </InfoCard>
-          <InfoCard title="Design Note" color="green">
-            {hud.lesson}
-          </InfoCard>
-          <div className="rounded-2xl border border-white/10 bg-black/55 p-4 md:col-span-3 xl:col-span-1">
-            <p className="text-xs font-black uppercase tracking-widest text-gray-400">Level Select</p>
-            <div className="mt-3 grid grid-cols-5 gap-2">
-              {Array.from({ length: maxLevel }).map((_, index) => {
-                const number = index + 1;
-                const unlocked = number <= highestLevel;
-                return (
-                  <button
-                    key={number}
-                    onClick={() => unlocked && startLevel(number)}
-                    disabled={!unlocked}
-                    className={`h-10 rounded-xl border text-xs font-black ${number === level ? 'border-cyan-200 bg-cyan-300 text-black' : unlocked ? 'border-white/15 bg-white/5 text-gray-100 hover:border-cyan-300' : 'border-white/5 bg-white/5 text-gray-700'}`}
-                  >
-                    {number}
-                  </button>
-                );
-              })}
+        <aside className="space-y-4">
+          <div className="arcade-border-green glass-panel-green rounded-xl p-4">
+            <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Rocco says</p>
+            <p className="text-sm text-white font-bold leading-relaxed mt-3">
+              The clocks are pressure, not random punishment. Read the route and use your tools.
+            </p>
+          </div>
+
+          <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+            <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Tools Active</p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <ToolStatus active={activeCoffee} icon={<Coffee className="w-4 h-4" />} label="Rhythm" />
+              <ToolStatus active={activeFocus} icon={<Focus className="w-4 h-4" />} label="Freeze" />
+              <ToolStatus active={activeBell} icon={<Bell className="w-4 h-4" />} label="Path" />
             </div>
+            <p className="text-sm text-gray-300 leading-relaxed mt-3">{lastEvent}</p>
+          </div>
+
+          <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+            <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Design Note</p>
+            <p className="text-sm text-gray-300 leading-relaxed mt-3">{designNotes[level - 1]}</p>
           </div>
         </aside>
       </section>
 
-      {phase === 'intro' && (
-        <Overlay title="Rocco Radio">
-          <p className="text-lg font-black leading-relaxed text-white">Participants are late for the activities. Rocco reminds you to reach Emanuel and the group on time.</p>
-          <p className="mt-4 text-sm leading-relaxed text-gray-300">{levelTemplates[0].briefing}</p>
-          <button onClick={() => startLevel(1)} className="mt-6 rounded-xl border-2 border-cyan-300 bg-cyan-300 px-6 py-3 text-xs font-black uppercase tracking-widest text-black shadow-[0_0_24px_rgba(34,211,238,.35)]">
+      {gameState === 'intro' && (
+        <Overlay title="Rocco Warning" tone="pink">
+          <p className="text-lg text-white font-black leading-relaxed">You are late for the activities! Emanuel is waiting with the group.</p>
+          <p className="text-sm text-gray-300 leading-relaxed mt-4">
+            This version is about fair level design: visible routes, predictable clocks, checkpoints, and tools.
+          </p>
+          <button onClick={() => resetLevel(1)} className="mt-6 arcade-border px-6 py-3 bg-cyan-900/40 text-cyan-200 text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 hover:text-black">
             Start Running
           </button>
         </Overlay>
       )}
 
-      {phase === 'paused' && (
-        <Overlay title="Paused">
-          <p className="text-lg font-black text-white">Look at the maze. The clocks have patterns, not random anger.</p>
-          <button onClick={() => syncPhase('playing')} className="mt-6 rounded-xl border-2 border-cyan-300 bg-cyan-300 px-6 py-3 text-xs font-black uppercase tracking-widest text-black">
+      {gameState === 'paused' && (
+        <Overlay title="Paused" tone="pink">
+          <p className="text-lg text-white font-black leading-relaxed">Look at the route. Good level design gives players time to plan.</p>
+          <p className="text-sm text-gray-300 leading-relaxed mt-4">{designNotes[level - 1]}</p>
+          <button onClick={() => setGameState('playing')} className="mt-6 arcade-border px-6 py-3 bg-cyan-900/40 text-cyan-200 text-xs font-bold uppercase tracking-widest hover:bg-cyan-400 hover:text-black">
             Resume
           </button>
         </Overlay>
       )}
 
-      {phase === 'won-level' && (
-        <Overlay title="Activity Reached">
-          <p className="text-lg font-black text-white">You collected enough check-ins and reached Emanuel in the Activity Room.</p>
-          <p className="mt-4 text-sm text-gray-300">{designNotes[levelRef.current - 1]}</p>
-          <button onClick={nextLevel} className="mt-6 rounded-xl border-2 border-green-300 bg-green-300 px-6 py-3 text-xs font-black uppercase tracking-widest text-black">
+      {gameState === 'won-level' && (
+        <Overlay title="You Made It!" tone="green">
+          <p className="text-lg text-white font-black">You reached the Activity Room.</p>
+          <p className="text-sm text-gray-300 mt-4">{designNotes[level - 1]}</p>
+          <button onClick={nextLevel} className="mt-6 arcade-border-green px-6 py-3 bg-green-900/40 text-green-200 text-xs font-bold uppercase tracking-widest hover:bg-green-400 hover:text-black">
             Next Level
           </button>
         </Overlay>
       )}
 
-      {phase === 'game-over' && (
-        <Overlay title="The Group Started">
-          <p className="text-lg font-black text-white">The lateness bar filled up. Try reading the clock routes before sprinting.</p>
-          <button onClick={restart} className="mt-6 rounded-xl border-2 border-pink-300 bg-pink-300 px-6 py-3 text-xs font-black uppercase tracking-widest text-black">
+      {gameState === 'game-over' && (
+        <Overlay title="Game Over" tone="red">
+          <p className="text-lg text-white font-black">The group started without you.</p>
+          <p className="text-sm text-gray-300 mt-4">{lastEvent}</p>
+          <button onClick={restart} className="mt-6 border-2 border-red-400 px-6 py-3 text-red-200 text-xs font-bold uppercase tracking-widest hover:bg-red-400 hover:text-black">
             Try Again
           </button>
         </Overlay>
       )}
 
-      {phase === 'completed' && (
-        <Overlay title="Training Saved">
-          <p className="text-lg font-black text-white">You completed all 10 polished route challenges.</p>
-          <div className="mt-5 grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
+      {gameState === 'completed' && (
+        <Overlay title="Training Saved" tone="green">
+          <p className="text-lg text-white font-black">You completed all 10 fair route challenges.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 text-left">
             {[
-              'Readable enemies feel fair.',
-              'Loops create choice under pressure.',
-              'Power-ups change the system.',
-              'The goal room belongs inside the level.',
+              'Readable enemies are fair.',
+              'Checkpoints make pressure recoverable.',
+              'Pickups create meaningful choices.',
+              'Good level design teaches through movement.',
             ].map((line) => (
-              <div key={line} className="rounded-xl border border-green-300/30 bg-green-300/10 p-3 text-sm font-bold text-green-100">{line}</div>
+              <div key={line} className="rounded-lg border border-green-400/30 bg-green-400/10 p-3 text-sm text-green-100 font-bold">{line}</div>
             ))}
           </div>
           <button
             onClick={() => updatePrototypeField('gameplayMechanics', game.prototypePrompt)}
-            className="mt-6 rounded-xl border-2 border-green-300 bg-green-300 px-6 py-3 text-xs font-black uppercase tracking-widest text-black"
+            className="mt-6 arcade-border-green px-6 py-3 bg-green-900/40 text-green-200 text-xs font-bold uppercase tracking-widest hover:bg-green-400 hover:text-black"
           >
             Send Takeaway to Prototype Lab
           </button>
         </Overlay>
       )}
-
-      <GameManualPanel open={manualOpen} title="Castle Rush" sections={manualSections} onClose={() => setManualOpen(false)} />
     </motion.div>
   );
 }
 
-function updateRun(run: GameRun, parsed: ParsedLevel, delta: number, finishLevel: () => void, syncPhase: (phase: Phase) => void, playTone: (frequency: number, duration?: number, type?: OscillatorType, gain?: number) => void) {
-  const template = levelTemplates[run.level - 1];
-  run.elapsed += delta;
-  run.player.invulnerable = Math.max(0, run.player.invulnerable - delta);
-  run.mode = getClockMode(run);
-  run.lateness = Math.min(100, run.lateness + template.latenessRate * delta * (run.coffeeUntil > run.elapsed ? 0.72 : 1));
-
-  movePlayer(run, parsed, delta);
-  collectAtPlayer(run, parsed, playTone);
-  updateClocks(run, parsed, delta);
-
-  for (const clock of run.clocks) {
-    const distance = Math.hypot(clock.x - run.player.x, clock.y - run.player.y);
-    if (distance < 0.55 && run.player.invulnerable <= 0 && run.mode !== 'stunned') {
-      handleClockHit(run, parsed, playTone, syncPhase);
-      break;
-    }
-  }
-
-  const playerCell = cellAt(run.player);
-  if (parsed.grid[playerCell.y]?.[playerCell.x] === 'G') {
-    if (run.readiness >= template.requiredReadiness) {
-      finishLevel();
-    } else {
-      const collected = countCollectedDots(run, parsed);
-      const needed = Math.ceil((template.requiredReadiness / 100) * parsed.dotCount);
-      run.roccoHint = `Rocco says: Emanuel is waiting, but collect more check-ins first (${collected}/${needed}).`;
-    }
-  }
-
-  if (run.lateness >= 100) {
-    playTone(90, 0.3, 'sawtooth', 0.08);
-    run.roccoHint = 'Rocco says: the session started. Restart and use the loops more calmly.';
-    syncPhase('game-over');
-  }
-}
-
-function movePlayer(run: GameRun, parsed: ParsedLevel, delta: number) {
-  const player = run.player;
-  const speed = levelTemplates[run.level - 1].playerSpeed * (run.coffeeUntil > run.elapsed ? 1.22 : 1);
-  let distanceLeft = speed * delta;
-
-  while (distanceLeft > 0) {
-    const center = nearestCenter(player);
-    const distanceToCenter = Math.hypot(player.x - center.x, player.y - center.y);
-
-    if (distanceToCenter <= 0.035) {
-      player.x = center.x;
-      player.y = center.y;
-      const currentCell = cellAt(player);
-
-      if (!sameDir(player.desired, zero) && canMove(parsed, currentCell, player.desired)) {
-        player.dir = player.desired;
-      } else if (!sameDir(player.dir, zero) && !canMove(parsed, currentCell, player.dir)) {
-        player.dir = zero;
-      }
-    }
-
-    if (sameDir(player.dir, zero)) break;
-
-    const currentCenter = nearestCenter(player);
-    const targetCenter = {
-      x: currentCenter.x + player.dir.x,
-      y: currentCenter.y + player.dir.y,
-    };
-    const targetCell = { x: Math.floor(targetCenter.x), y: Math.floor(targetCenter.y) };
-    if (!canOccupy(parsed, targetCell)) {
-      player.x = currentCenter.x;
-      player.y = currentCenter.y;
-      player.dir = zero;
-      break;
-    }
-
-    const distanceToTarget = Math.hypot(targetCenter.x - player.x, targetCenter.y - player.y);
-    const step = Math.min(distanceLeft, distanceToTarget);
-    const ratio = distanceToTarget > 0 ? step / distanceToTarget : 1;
-    player.x += (targetCenter.x - player.x) * ratio;
-    player.y += (targetCenter.y - player.y) * ratio;
-    distanceLeft -= step;
-
-    if (distanceToTarget <= step + 0.0001) {
-      player.x = targetCenter.x;
-      player.y = targetCenter.y;
-    }
-  }
-}
-
-function collectAtPlayer(run: GameRun, parsed: ParsedLevel, playTone: (frequency: number, duration?: number, type?: OscillatorType, gain?: number) => void) {
-  const cell = cellAt(run.player);
-  const key = keyOf(cell);
-  if (run.collected.has(key)) return;
-  const collectible = parsed.collectibles.find((item) => item.x === cell.x && item.y === cell.y);
-  if (!collectible) return;
-  run.collected.add(key);
-  if (collectible.kind === 'dot') {
-    run.score += 10;
-    run.readiness = Math.min(100, (countCollectedDots(run, parsed) / parsed.dotCount) * 100);
-    run.lateness = Math.max(0, run.lateness - 0.35);
-    return;
-  }
-  if (collectible.kind === 'coffee') {
-    run.coffeeUntil = run.elapsed + 6;
-    run.score += 80;
-    run.roccoHint = 'Coffee gives rhythm. Move faster, but still read the clocks.';
-    playTone(720, 0.08, 'triangle');
-  }
-  if (collectible.kind === 'focus') {
-    run.focusUntil = run.elapsed + 4.5;
-    run.score += 100;
-    run.roccoHint = 'Focus freezes the clocks. Use the window to cross a risky lane.';
-    playTone(540, 0.1, 'sine');
-  }
-  if (collectible.kind === 'bell') {
-    run.bellUntil = run.elapsed + 5.5;
-    run.score += 90;
-    run.roccoHint = 'Bell reveals the safest route toward the Activity Room.';
-    playTone(860, 0.1, 'sine');
-  }
-  if (collectible.kind === 'star') {
-    run.discoveredStar = true;
-    run.score += 180;
-    run.lastLesson = 'Bonus note: optional rewards are strongest when they reveal a design idea.';
-    playTone(980, 0.14, 'sine', 0.08);
-  }
-}
-
-function updateClocks(run: GameRun, parsed: ParsedLevel, delta: number) {
-  if (run.mode === 'stunned') return;
-  const template = levelTemplates[run.level - 1];
-  const speedMultiplier = run.mode === 'warning' ? 0.62 : run.mode === 'scatter' ? 0.82 : 1;
-  const speed = template.clockSpeed * speedMultiplier;
-  for (const clock of run.clocks) {
-    const center = nearestCenter(clock);
-    const nearCenter = Math.abs(clock.x - center.x) < 0.06 && Math.abs(clock.y - center.y) < 0.06;
-    if (nearCenter) {
-      clock.x = center.x;
-      clock.y = center.y;
-      const target = getClockTarget(clock, run, parsed);
-      const next = nextStepToward(parsed, cellAt(clock), target, clock.dir);
-      clock.dir = next ? { x: next.x - Math.floor(clock.x), y: next.y - Math.floor(clock.y) } : clock.dir;
-    }
-    clock.x += clock.dir.x * speed * delta;
-    clock.y += clock.dir.y * speed * delta;
-  }
-}
-
-function handleClockHit(run: GameRun, parsed: ParsedLevel, playTone: (frequency: number, duration?: number, type?: OscillatorType, gain?: number) => void, syncPhase: (phase: Phase) => void) {
-  playTone(110, 0.18, 'sawtooth', 0.08);
-  run.latePasses -= 1;
-  run.lateness = Math.min(100, run.lateness + 16 + run.level);
-  run.player.x = parsed.start.x + 0.5;
-  run.player.y = parsed.start.y + 0.5;
-  run.player.dir = zero;
-  run.player.desired = zero;
-  run.player.invulnerable = 2;
-  run.roccoHint = run.latePasses > 0
-    ? `Rocco says: late pass used. You have ${run.latePasses} recovery chance${run.latePasses === 1 ? '' : 's'} left.`
-    : 'Rocco says: no late passes left. One more hit will end the run.';
-  if (run.latePasses < 0) syncPhase('game-over');
-}
-
-function drawGame(canvas: HTMLCanvasElement, run: GameRun, parsed: ParsedLevel) {
-  const parent = canvas.parentElement;
-  const rect = parent?.getBoundingClientRect();
-  const cssSize = Math.floor(Math.min(rect?.width ?? 720, rect?.height ?? 720));
-  const dpr = window.devicePixelRatio || 1;
-  if (canvas.width !== cssSize * dpr || canvas.height !== cssSize * dpr) {
-    canvas.width = cssSize * dpr;
-    canvas.height = cssSize * dpr;
-  }
-  const context = canvas.getContext('2d');
-  if (!context) return;
-  context.setTransform(dpr, 0, 0, dpr, 0, 0);
-  context.clearRect(0, 0, cssSize, cssSize);
-  context.fillStyle = '#030714';
-  context.fillRect(0, 0, cssSize, cssSize);
-  const tile = cssSize / Math.max(parsed.width, parsed.height);
-  const offsetX = (cssSize - parsed.width * tile) / 2;
-  const offsetY = (cssSize - parsed.height * tile) / 2;
-
-  drawFloor(context, parsed, tile, offsetX, offsetY);
-  drawPathHint(context, run, parsed, tile, offsetX, offsetY);
-  drawCollectibles(context, run, parsed, tile, offsetX, offsetY);
-  drawActivityRoom(context, run, parsed, tile, offsetX, offsetY);
-  for (const clock of run.clocks) drawClock(context, clock, run, tile, offsetX, offsetY);
-  drawPlayer(context, run, tile, offsetX, offsetY);
-}
-
-function drawFloor(context: CanvasRenderingContext2D, parsed: ParsedLevel, tile: number, offsetX: number, offsetY: number) {
-  for (let y = 0; y < parsed.height; y++) {
-    for (let x = 0; x < parsed.width; x++) {
-      const cell = parsed.grid[y][x];
-      const px = offsetX + x * tile;
-      const py = offsetY + y * tile;
-      if (cell === '#') {
-        context.fillStyle = '#063447';
-        roundRect(context, px + tile * 0.08, py + tile * 0.08, tile * 0.84, tile * 0.84, tile * 0.18);
-        context.fill();
-        context.strokeStyle = 'rgba(102, 232, 255, 0.45)';
-        context.lineWidth = Math.max(1, tile * 0.035);
-        context.stroke();
-      } else {
-        context.fillStyle = cell === 'R' || cell === 'G' ? 'rgba(16,185,129,.15)' : '#07111f';
-        context.fillRect(px, py, tile, tile);
-        context.strokeStyle = 'rgba(148, 163, 184, 0.055)';
-        context.lineWidth = 1;
-        context.strokeRect(px, py, tile, tile);
-      }
-    }
-  }
-}
-
-function drawCollectibles(context: CanvasRenderingContext2D, run: GameRun, parsed: ParsedLevel, tile: number, offsetX: number, offsetY: number) {
-  for (const item of parsed.collectibles) {
-    if (run.collected.has(keyOf(item))) continue;
-    const x = offsetX + (item.x + 0.5) * tile;
-    const y = offsetY + (item.y + 0.5) * tile;
-    if (item.kind === 'dot') {
-      drawCheckInIcon(context, x, y, tile);
-      continue;
-    }
-    const color = item.kind === 'coffee' ? '#facc15' : item.kind === 'focus' ? '#86efac' : item.kind === 'bell' ? '#f0abfc' : '#fde68a';
-    context.fillStyle = color;
-    context.shadowBlur = tile * 0.4;
-    context.shadowColor = color;
-    context.beginPath();
-    context.arc(x, y, tile * 0.28, 0, Math.PI * 2);
-    context.fill();
-    context.shadowBlur = 0;
-    if (item.kind === 'coffee') drawCoffeeIcon(context, x, y, tile);
-    if (item.kind === 'focus') drawFocusIcon(context, x, y, tile);
-    if (item.kind === 'bell') drawBellIcon(context, x, y, tile);
-    if (item.kind === 'star') drawYouthPassIcon(context, x, y, tile);
-  }
-}
-
-function drawCheckInIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
-  const size = tile * 0.26;
-  context.fillStyle = 'rgba(165, 243, 252, 0.92)';
-  context.strokeStyle = 'rgba(8, 47, 73, 0.95)';
-  context.lineWidth = Math.max(1.2, tile * 0.035);
-  roundRect(context, x - size * 0.48, y - size * 0.42, size * 0.96, size * 0.84, size * 0.18);
-  context.fill();
-  context.stroke();
-  context.strokeStyle = '#064e3b';
-  context.lineWidth = Math.max(1.3, tile * 0.045);
-  context.beginPath();
-  context.moveTo(x - size * 0.25, y + size * 0.02);
-  context.lineTo(x - size * 0.05, y + size * 0.22);
-  context.lineTo(x + size * 0.30, y - size * 0.20);
-  context.stroke();
-}
-
-function drawCoffeeIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
-  context.strokeStyle = '#111827';
-  context.fillStyle = '#111827';
-  context.lineWidth = Math.max(1.5, tile * 0.045);
-  roundRect(context, x - tile * 0.14, y - tile * 0.08, tile * 0.25, tile * 0.18, tile * 0.04);
-  context.stroke();
-  context.beginPath();
-  context.arc(x + tile * 0.14, y, tile * 0.07, -Math.PI / 2, Math.PI / 2);
-  context.stroke();
-  context.beginPath();
-  context.moveTo(x - tile * 0.12, y - tile * 0.16);
-  context.lineTo(x - tile * 0.06, y - tile * 0.24);
-  context.moveTo(x + tile * 0.02, y - tile * 0.16);
-  context.lineTo(x + tile * 0.08, y - tile * 0.24);
-  context.stroke();
-}
-
-function drawFocusIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
-  context.strokeStyle = '#052e16';
-  context.lineWidth = Math.max(1.6, tile * 0.045);
-  for (const radius of [0.18, 0.10]) {
-    context.beginPath();
-    context.arc(x, y, tile * radius, 0, Math.PI * 2);
-    context.stroke();
-  }
-  context.beginPath();
-  context.moveTo(x - tile * 0.23, y);
-  context.lineTo(x + tile * 0.23, y);
-  context.moveTo(x, y - tile * 0.23);
-  context.lineTo(x, y + tile * 0.23);
-  context.stroke();
-}
-
-function drawBellIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
-  context.strokeStyle = '#2e1065';
-  context.fillStyle = '#2e1065';
-  context.lineWidth = Math.max(1.5, tile * 0.045);
-  context.beginPath();
-  context.moveTo(x - tile * 0.16, y + tile * 0.08);
-  context.quadraticCurveTo(x - tile * 0.11, y - tile * 0.17, x, y - tile * 0.17);
-  context.quadraticCurveTo(x + tile * 0.11, y - tile * 0.17, x + tile * 0.16, y + tile * 0.08);
-  context.lineTo(x - tile * 0.16, y + tile * 0.08);
-  context.stroke();
-  context.beginPath();
-  context.arc(x, y + tile * 0.14, tile * 0.035, 0, Math.PI * 2);
-  context.fill();
-}
-
-function drawYouthPassIcon(context: CanvasRenderingContext2D, x: number, y: number, tile: number) {
-  context.fillStyle = '#111827';
-  context.strokeStyle = '#111827';
-  context.lineWidth = Math.max(1.3, tile * 0.035);
-  roundRect(context, x - tile * 0.15, y - tile * 0.18, tile * 0.30, tile * 0.36, tile * 0.04);
-  context.stroke();
-  context.beginPath();
-  for (let point = 0; point < 5; point++) {
-    const angle = -Math.PI / 2 + point * (Math.PI * 2 / 5);
-    const outer = { x: x + Math.cos(angle) * tile * 0.10, y: y + Math.sin(angle) * tile * 0.10 };
-    const innerAngle = angle + Math.PI / 5;
-    const inner = { x: x + Math.cos(innerAngle) * tile * 0.045, y: y + Math.sin(innerAngle) * tile * 0.045 };
-    if (point === 0) context.moveTo(outer.x, outer.y);
-    else context.lineTo(outer.x, outer.y);
-    context.lineTo(inner.x, inner.y);
-  }
-  context.closePath();
-  context.fill();
-}
-
-function drawActivityRoom(context: CanvasRenderingContext2D, run: GameRun, parsed: ParsedLevel, tile: number, offsetX: number, offsetY: number) {
-  const roomCells: Point[] = [];
-  parsed.grid.forEach((row, y) => row.forEach((cell, x) => {
-    if (cell === 'R' || cell === 'G') roomCells.push({ x, y });
-  }));
-  if (!roomCells.length) return;
-  const minX = Math.min(...roomCells.map((cell) => cell.x));
-  const minY = Math.min(...roomCells.map((cell) => cell.y));
-  const maxX = Math.max(...roomCells.map((cell) => cell.x));
-  const maxY = Math.max(...roomCells.map((cell) => cell.y));
-  const rawX = offsetX + minX * tile;
-  const rawY = offsetY + minY * tile;
-  const rawWidth = (maxX - minX + 1) * tile;
-  const rawHeight = (maxY - minY + 1) * tile;
-  const width = Math.max(rawWidth, tile * 4.2);
-  const height = Math.max(rawHeight, tile * 3.35);
-  const x = rawX + rawWidth / 2 - width / 2;
-  const y = rawY + rawHeight / 2 - height / 2;
-  const ready = run.readiness >= levelTemplates[run.level - 1].requiredReadiness;
-  context.fillStyle = '#07111f';
-  context.fillRect(x - tile * 0.08, y - tile * 0.08, width + tile * 0.16, height + tile * 0.16);
-  context.fillStyle = ready ? 'rgba(16, 185, 129, .24)' : 'rgba(8, 145, 178, .16)';
-  context.strokeStyle = ready ? '#86efac' : '#67e8f9';
-  context.lineWidth = Math.max(2.5, tile * 0.07);
-  roundRect(context, x + tile * 0.10, y + tile * 0.18, width - tile * 0.20, height - tile * 0.30, tile * 0.22);
-  context.fill();
-  context.stroke();
-  const centerX = offsetX + (parsed.goal.x + 0.5) * tile;
-  const centerY = offsetY + (parsed.goal.y + 0.5) * tile;
-
-  const doorWidth = tile * 1.38;
-  context.fillStyle = '#07111f';
-  context.fillRect(centerX - doorWidth / 2, y + height - tile * 0.42, doorWidth, tile * 0.48);
-  context.strokeStyle = '#facc15';
-  context.lineWidth = Math.max(2, tile * 0.045);
-  context.beginPath();
-  context.moveTo(centerX - doorWidth / 2, y + height - tile * 0.24);
-  context.lineTo(centerX + doorWidth / 2, y + height - tile * 0.24);
-  context.stroke();
-
-  context.fillStyle = 'rgba(15, 23, 42, .78)';
-  roundRect(context, x + tile * 0.45, y + tile * 0.42, width - tile * 0.9, tile * 0.58, tile * 0.10);
-  context.fill();
-  context.fillStyle = '#f8fafc';
-  context.font = `900 ${tile * 0.22}px sans-serif`;
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText('ACTIVITY ROOM', centerX, y + tile * 0.72);
-
-  context.fillStyle = '#2563eb';
-  context.beginPath();
-  context.arc(centerX, centerY, tile * 0.22, 0, Math.PI * 2);
-  context.fill();
-  context.strokeStyle = '#dbeafe';
-  context.lineWidth = Math.max(1.5, tile * 0.04);
-  context.stroke();
-  context.fillStyle = '#f8fafc';
-  context.font = `900 ${tile * 0.20}px sans-serif`;
-  context.fillText('E', centerX, centerY + tile * 0.01);
-}
-
-function drawPathHint(context: CanvasRenderingContext2D, run: GameRun, parsed: ParsedLevel, tile: number, offsetX: number, offsetY: number) {
-  if (run.bellUntil <= run.elapsed) return;
-  const path = findPath(parsed, cellAt(run.player), parsed.goal).slice(0, 18);
-  context.fillStyle = 'rgba(253, 224, 71, 0.42)';
-  for (const point of path) {
-    context.beginPath();
-    context.arc(offsetX + (point.x + 0.5) * tile, offsetY + (point.y + 0.5) * tile, tile * 0.15, 0, Math.PI * 2);
-    context.fill();
-  }
-}
-
-function drawPlayer(context: CanvasRenderingContext2D, run: GameRun, tile: number, offsetX: number, offsetY: number) {
-  const x = offsetX + run.player.x * tile;
-  const y = offsetY + run.player.y * tile;
-  const pulse = 1 + Math.sin(run.elapsed * 12) * 0.04;
-  const radius = tile * 0.37 * pulse;
-  context.shadowBlur = tile * 0.35;
-  context.shadowColor = run.participantFlag === 'turkiye' ? '#ef4444' : '#60a5fa';
-  drawFlagAvatar(context, run.participantFlag, x, y, radius, run.player.invulnerable > 0 && Math.floor(run.elapsed * 10) % 2 === 0);
-  context.shadowBlur = 0;
-  const direction = sameDir(run.player.dir, zero) ? run.player.desired : run.player.dir;
-  if (!sameDir(direction, zero)) {
-    context.strokeStyle = '#fef08a';
-    context.lineWidth = Math.max(1.5, tile * 0.035);
-    context.beginPath();
-    context.moveTo(x + direction.x * radius * 0.22, y + direction.y * radius * 0.22);
-    context.lineTo(x + direction.x * radius * 0.68, y + direction.y * radius * 0.68);
-    context.stroke();
-  }
-}
-
-function drawFlagAvatar(context: CanvasRenderingContext2D, flag: FlagId, x: number, y: number, radius: number, blink: boolean) {
-  context.save();
-  context.beginPath();
-  context.arc(x, y, radius, 0, Math.PI * 2);
-  context.clip();
-  if (blink) {
-    context.fillStyle = '#fef3c7';
-    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-  } else if (flag === 'eu') {
-    context.fillStyle = '#24459b';
-    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-    drawEuStars(context, x, y, radius * 0.58, radius * 0.16);
-  } else if (flag === 'italy') {
-    drawVerticalStripes(context, x, y, radius, ['#009246', '#f8fafc', '#ce2b37']);
-  } else if (flag === 'france') {
-    drawVerticalStripes(context, x, y, radius, ['#0055a4', '#f8fafc', '#ef4135']);
-  } else if (flag === 'romania') {
-    drawVerticalStripes(context, x, y, radius, ['#002b7f', '#fcd116', '#ce1126']);
-  } else if (flag === 'serbia') {
-    drawHorizontalStripes(context, x, y, radius, ['#c6363c', '#0c4076', '#f8fafc']);
-  } else if (flag === 'bulgaria') {
-    drawHorizontalStripes(context, x, y, radius, ['#f8fafc', '#00966e', '#d62612']);
-  } else if (flag === 'turkiye') {
-    context.fillStyle = '#e30a17';
-    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-    context.fillStyle = '#f8fafc';
-    context.beginPath();
-    context.arc(x - radius * 0.12, y, radius * 0.34, 0, Math.PI * 2);
-    context.fill();
-    context.fillStyle = '#e30a17';
-    context.beginPath();
-    context.arc(x - radius * 0.02, y, radius * 0.27, 0, Math.PI * 2);
-    context.fill();
-    context.fillStyle = '#f8fafc';
-    drawStar(context, x + radius * 0.34, y, radius * 0.14, radius * 0.06, 5);
-  } else {
-    context.fillStyle = '#d82126';
-    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-    context.fillStyle = '#f8d616';
-    const sunRadius = radius * 0.24;
-    context.beginPath();
-    context.arc(x, y, sunRadius, 0, Math.PI * 2);
-    context.fill();
-    for (let index = 0; index < 8; index++) {
-      const angle = (Math.PI * 2 * index) / 8;
-      context.beginPath();
-      context.moveTo(x, y);
-      context.lineTo(x + Math.cos(angle) * radius * 0.58, y + Math.sin(angle) * radius * 0.58);
-      context.lineWidth = radius * 0.08;
-      context.strokeStyle = '#f8d616';
-      context.stroke();
-    }
-  }
-  context.restore();
-  context.strokeStyle = '#f8fafc';
-  context.lineWidth = Math.max(2, radius * 0.16);
-  context.beginPath();
-  context.arc(x, y, radius, 0, Math.PI * 2);
-  context.stroke();
-}
-
-function drawVerticalStripes(context: CanvasRenderingContext2D, x: number, y: number, radius: number, colors: string[]) {
-  colors.forEach((color, index) => {
-    context.fillStyle = color;
-    context.fillRect(x - radius + (radius * 2 * index) / colors.length, y - radius, (radius * 2) / colors.length, radius * 2);
-  });
-}
-
-function drawHorizontalStripes(context: CanvasRenderingContext2D, x: number, y: number, radius: number, colors: string[]) {
-  colors.forEach((color, index) => {
-    context.fillStyle = color;
-    context.fillRect(x - radius, y - radius + (radius * 2 * index) / colors.length, radius * 2, (radius * 2) / colors.length);
-  });
-}
-
-function drawEuStars(context: CanvasRenderingContext2D, x: number, y: number, radius: number, starRadius: number) {
-  context.fillStyle = '#ffd500';
-  for (let index = 0; index < 12; index++) {
-    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / 12;
-    drawStar(context, x + Math.cos(angle) * radius, y + Math.sin(angle) * radius, starRadius, starRadius * 0.42, 5);
-  }
-}
-
-function drawStar(context: CanvasRenderingContext2D, x: number, y: number, outer: number, inner: number, points: number) {
-  context.beginPath();
-  for (let index = 0; index < points * 2; index++) {
-    const angle = -Math.PI / 2 + (Math.PI * index) / points;
-    const radius = index % 2 === 0 ? outer : inner;
-    const px = x + Math.cos(angle) * radius;
-    const py = y + Math.sin(angle) * radius;
-    if (index === 0) context.moveTo(px, py);
-    else context.lineTo(px, py);
-  }
-  context.closePath();
-  context.fill();
-}
-
-function drawClock(context: CanvasRenderingContext2D, clock: ClockEnemy, run: GameRun, tile: number, offsetX: number, offsetY: number) {
-  const x = offsetX + clock.x * tile;
-  const y = offsetY + clock.y * tile;
-  const stunned = run.mode === 'stunned';
-  const color = stunned ? '#94a3b8' : run.mode === 'warning' && Math.floor(run.elapsed * 8) % 2 === 0 ? '#ffffff' : clock.color;
-  context.fillStyle = color;
-  context.shadowBlur = tile * 0.4;
-  context.shadowColor = color;
-  context.beginPath();
-  context.arc(x, y, tile * 0.35, 0, Math.PI * 2);
-  context.fill();
-  context.shadowBlur = 0;
-  context.strokeStyle = '#0f172a';
-  context.lineWidth = Math.max(2, tile * 0.06);
-  context.beginPath();
-  context.arc(x, y, tile * 0.22, 0, Math.PI * 2);
-  context.stroke();
-  const handAngle = run.elapsed * 5 + clock.id;
-  context.strokeStyle = '#0f172a';
-  context.lineWidth = Math.max(2, tile * 0.045);
-  context.beginPath();
-  context.moveTo(x, y);
-  context.lineTo(x + Math.cos(handAngle) * tile * 0.16, y + Math.sin(handAngle) * tile * 0.16);
-  context.stroke();
-}
-
-function CompactHud({ level, hud, required, dotCount }: { level: number; hud: { readiness: number; lateness: number; score: number; latePasses: number; mode: ClockMode }; required: number; dotCount: number }) {
-  const collected = Math.min(dotCount, Math.round((hud.readiness / 100) * dotCount));
-  const needed = Math.ceil((required / 100) * dotCount);
+function Tile({ cell, isPlayer, isClock, isPathHint, collected, playerFlag }: { key?: string; cell: Cell; isPlayer: boolean; isClock: boolean; isPathHint: boolean; collected: boolean; playerFlag: FlagId }) {
+  const isWall = cell === 'wall';
+  const isRoom = cell === 'room' || cell === 'exit';
+  const isDot = cell === 'dot' || cell === 'start';
   return (
-    <div className="grid grid-cols-2 gap-2 border-b border-cyan-300/20 bg-slate-950/95 p-3 text-xs font-black uppercase text-gray-100 md:grid-cols-5">
-      <HudItem label="Level" value={`${level}/10`} />
-      <HudItem label="Check-ins" value={`${collected}/${needed}`} tone="cyan" />
-      <HudItem label="Lateness" value={`${Math.round(hud.lateness)}%`} tone={hud.lateness > 75 ? 'pink' : 'yellow'} />
-      <HudItem label="Late Passes" value={String(Math.max(0, hud.latePasses))} tone="green" />
-      <HudItem label="Score" value={String(hud.score)} />
+    <div className={`relative min-w-0 min-h-0 ${
+      isWall
+        ? 'bg-cyan-950 border border-cyan-400/40 shadow-[inset_0_0_8px_rgba(0,242,255,.18)]'
+        : isRoom
+          ? 'bg-emerald-950 border border-emerald-500/40'
+          : cell === 'checkpoint'
+            ? 'bg-blue-950 border border-blue-300/50'
+            : 'bg-slate-950 border border-slate-900'
+    }`}>
+      {!isWall && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.05),transparent_65%)]" />}
+      {isPathHint && <span className="absolute inset-[30%] rounded-full bg-yellow-200/70 shadow-[0_0_12px_rgba(254,240,138,.85)]" />}
+      {isDot && <span className="absolute left-1/2 top-1/2 h-[10%] w-[10%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-200/45" />}
+      {cell === 'checkpoint' && <span className="absolute inset-[24%] rounded-md border border-blue-200 bg-blue-300/30 shadow-[0_0_10px_rgba(147,197,253,.55)]" />}
+      {!collected && cell === 'coffee' && <Token icon={<Coffee className="h-[68%] w-[68%]" />} className="bg-yellow-300 text-black border-yellow-100" />}
+      {!collected && cell === 'focus' && <Token icon={<Focus className="h-[68%] w-[68%]" />} className="bg-green-300 text-black border-green-100" />}
+      {!collected && cell === 'bell' && <Token icon={<Bell className="h-[68%] w-[68%]" />} className="bg-pink-300 text-black border-pink-100" />}
+      {isClock && <ClockEnemySprite />}
+      {isPlayer && <PlayerSprite flag={playerFlag} />}
     </div>
   );
 }
 
-function HudItem({ label, value, tone = 'white' }: { label: string; value: string; tone?: 'white' | 'cyan' | 'pink' | 'yellow' | 'green' }) {
-  const color = tone === 'cyan' ? 'text-cyan-200' : tone === 'pink' ? 'text-pink-200' : tone === 'yellow' ? 'text-yellow-200' : tone === 'green' ? 'text-green-200' : 'text-white';
+function Token({ icon, className }: { icon: ReactNode; className: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/45 p-2">
-      <p className="text-[9px] tracking-widest text-gray-500">{label}</p>
-      <p className={`mt-1 ${color}`}>{value}</p>
+    <div className={`absolute inset-[18%] z-10 flex items-center justify-center rounded-full border-2 shadow-[0_0_12px_rgba(255,255,255,.5)] ${className}`}>
+      {icon}
     </div>
   );
 }
 
-function DPad({ onMove }: { onMove: (direction: Direction) => void }) {
-  const handlePointer = (event: PointerEvent<HTMLButtonElement>, direction: Direction) => {
-    event.preventDefault();
-    onMove(direction);
-  };
+function PlayerSprite({ flag }: { flag: FlagId }) {
   return (
-    <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 border-t border-cyan-300/20 bg-slate-950/95 p-3 xl:hidden">
-      <div />
-      <div className="grid w-44 grid-cols-3 gap-2">
-        <span />
-        <PadButton label="Up" onPointerDown={(event) => handlePointer(event, { x: 0, y: -1 })} />
-        <span />
-        <PadButton label="Left" onPointerDown={(event) => handlePointer(event, { x: -1, y: 0 })} />
-        <div className="flex h-12 items-center justify-center rounded-xl border border-white/10 bg-black/55">
-          <Gamepad2 className="h-5 w-5 text-cyan-200" />
-        </div>
-        <PadButton label="Right" onPointerDown={(event) => handlePointer(event, { x: 1, y: 0 })} />
-        <span />
-        <PadButton label="Down" onPointerDown={(event) => handlePointer(event, { x: 0, y: 1 })} />
-        <span />
+    <div className="absolute inset-[13%] z-30 overflow-hidden rounded-full border-2 border-white bg-blue-700 shadow-[0_0_14px_rgba(96,165,250,.9)]">
+      <FlagFace flag={flag} />
+    </div>
+  );
+}
+
+function FlagFace({ flag }: { flag: FlagId }) {
+  if (flag === 'eu') {
+    return (
+      <div className="relative h-full w-full bg-[#24459b]">
+        {Array.from({ length: 12 }).map((_, index) => {
+          const angle = -Math.PI / 2 + (Math.PI * 2 * index) / 12;
+          return (
+            <span
+              key={index}
+              className="absolute h-[9%] w-[9%] -translate-x-1/2 -translate-y-1/2 text-yellow-300"
+              style={{
+                left: `${50 + Math.cos(angle) * 28}%`,
+                top: `${50 + Math.sin(angle) * 28}%`,
+                clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 56%, 79% 91%, 50% 70%, 21% 91%, 32% 56%, 2% 35%, 39% 35%)',
+                backgroundColor: '#ffd500',
+              }}
+            />
+          );
+        })}
       </div>
-      <div />
+    );
+  }
+
+  if (flag === 'italy') return <VerticalFlag colors={['#009246', '#f8fafc', '#ce2b37']} />;
+  if (flag === 'france') return <VerticalFlag colors={['#0055a4', '#f8fafc', '#ef4135']} />;
+  if (flag === 'romania') return <VerticalFlag colors={['#002b7f', '#fcd116', '#ce1126']} />;
+  if (flag === 'serbia') return <HorizontalFlag colors={['#c6363c', '#0c4076', '#f8fafc']} />;
+  if (flag === 'bulgaria') return <HorizontalFlag colors={['#f8fafc', '#00966e', '#d62612']} />;
+
+  if (flag === 'turkiye') {
+    return (
+      <div className="relative h-full w-full bg-[#e30a17]">
+        <span className="absolute left-[30%] top-1/2 h-[44%] w-[44%] -translate-y-1/2 rounded-full bg-white" />
+        <span className="absolute left-[40%] top-1/2 h-[34%] w-[34%] -translate-y-1/2 rounded-full bg-[#e30a17]" />
+        <span className="absolute left-[63%] top-[42%] h-[18%] w-[18%] bg-white" style={{ clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 56%, 79% 91%, 50% 70%, 21% 91%, 32% 56%, 2% 35%, 39% 35%)' }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative h-full w-full bg-[#d82126]">
+      <span className="absolute left-1/2 top-1/2 h-[34%] w-[34%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f8d616]" />
+      {Array.from({ length: 8 }).map((_, index) => (
+        <span
+          key={index}
+          className="absolute left-1/2 top-1/2 h-[7%] w-[58%] origin-left bg-[#f8d616]"
+          style={{ transform: `rotate(${index * 22.5}deg)` }}
+        />
+      ))}
     </div>
   );
 }
 
-function PadButton({ label, onPointerDown }: { label: string; onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void }) {
+function VerticalFlag({ colors }: { colors: string[] }) {
   return (
-    <button onPointerDown={onPointerDown} className="h-12 rounded-xl border border-cyan-300/45 bg-cyan-300/10 text-[10px] font-black uppercase text-cyan-100 active:bg-cyan-300 active:text-black">
+    <div className="flex h-full w-full">
+      {colors.map((color) => <span key={color} className="h-full flex-1" style={{ backgroundColor: color }} />)}
+    </div>
+  );
+}
+
+function HorizontalFlag({ colors }: { colors: string[] }) {
+  return (
+    <div className="flex h-full w-full flex-col">
+      {colors.map((color) => <span key={color} className="w-full flex-1" style={{ backgroundColor: color }} />)}
+    </div>
+  );
+}
+
+function ClockEnemySprite() {
+  return (
+    <div className="absolute inset-[14%] z-20 flex items-center justify-center rounded-full border-2 border-red-200 bg-red-500 text-white shadow-[0_0_14px_rgba(248,113,113,.9)]">
+      <Clock className="h-[70%] w-[70%]" strokeWidth={3} />
+    </div>
+  );
+}
+
+function ActivityRoomLayer({ room, tileCount, tick, visible }: { room: ActivityRoom; tileCount: number; tick: number; visible: boolean }) {
+  const cell = 100 / tileCount;
+  const participants = Array.from({ length: 21 }).map((_, index) => {
+    const angle = Math.PI * 0.08 + (Math.PI * 1.84 * index) / 20;
+    return {
+      x: 50 + Math.cos(angle) * 35,
+      y: 53 + Math.sin(angle) * 34,
+    };
+  });
+  const emanuelLeft = tick % 2 === 0 ? 42 : 58;
+  return (
+    <div
+      className={`pointer-events-none absolute z-10 rounded-lg border-2 border-emerald-300/80 bg-emerald-500/10 shadow-[0_0_22px_rgba(16,185,129,.45)] transition-opacity ${visible ? 'opacity-100' : 'opacity-45'}`}
+      style={{
+        left: `${room.x * cell}%`,
+        top: `${room.y * cell}%`,
+        width: `${room.width * cell}%`,
+        height: `${room.height * cell}%`,
+      }}
+    >
+      <p className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[7px] font-black uppercase text-emerald-100">
+        Activity Room
+      </p>
+      <div className="absolute left-[29%] top-[38%] h-[24%] w-[42%] rounded-full border-2 border-yellow-200/70 bg-yellow-900/20" />
+      {participants.map((position, index) => (
+        <span
+          key={index}
+          className="absolute h-[8%] w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-100 bg-white/90 shadow-[0_0_5px_rgba(255,255,255,.35)]"
+          style={{ left: `${position.x}%`, top: `${position.y}%` }}
+        />
+      ))}
+      <div
+        className="absolute h-[13%] w-[13%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-yellow-300 transition-all duration-500 shadow-[0_0_10px_rgba(253,224,71,.7)]"
+        style={{ left: `${emanuelLeft}%`, top: '49%' }}
+      />
+    </div>
+  );
+}
+
+function AngerBar({ anger, timeLeft, clockCount, latePasses }: { anger: number; timeLeft: number; clockCount: number; latePasses: number }) {
+  const color = anger > 78 ? 'bg-red-500' : anger > 48 ? 'bg-yellow-300' : 'bg-green-400';
+  return (
+    <div className="w-full md:w-80 bg-black/70 border border-white/10 rounded-xl p-3">
+      <div className="flex items-center justify-between text-[10px] font-bold uppercase mb-2">
+        <span className="text-gray-400">Emanuel Barometer</span>
+        <span className={anger > 78 ? 'text-red-300' : 'text-white'}>{timeLeft}s</span>
+      </div>
+      <div className="h-4 rounded-full bg-gray-900 overflow-hidden border border-white/10">
+        <div className={`h-full ${color} ${anger > 78 ? 'animate-pulse' : ''}`} style={{ width: `${anger}%` }} />
+      </div>
+      <div className="mt-2 flex items-center justify-between text-[10px] font-black uppercase">
+        <span className="text-red-200 flex items-center gap-1"><Clock className="w-3 h-3" /> {clockCount} clocks</span>
+        <span className="text-cyan-200">{latePasses} late passes</span>
+        {anger > 78 && <span className="text-red-300 flex items-center gap-1"><Flame className="w-3 h-3" /> high</span>}
+      </div>
+    </div>
+  );
+}
+
+function ToolStatus({ active, icon, label }: { active: boolean; icon: ReactNode; label: string }) {
+  return (
+    <div className={`rounded-lg border p-2 text-center ${active ? 'border-green-300 bg-green-300/15 text-green-100' : 'border-white/10 bg-black/50 text-gray-500'}`}>
+      <div className="flex justify-center">{icon}</div>
+      <p className="mt-1 text-[9px] font-black uppercase">{label}</p>
+    </div>
+  );
+}
+
+function DPad({ onMove }: { onMove: (dx: number, dy: number) => void }) {
+  return (
+    <div className="mt-4 grid grid-cols-3 gap-2 w-44 mx-auto xl:hidden">
+      <span />
+      <PadButton label="Up" onClick={() => onMove(0, -1)} />
+      <span />
+      <PadButton label="Left" onClick={() => onMove(-1, 0)} />
+      <div className="rounded-lg border border-white/10 bg-black/60 flex items-center justify-center">
+        <Gamepad2 className="w-5 h-5 text-gray-500" />
+      </div>
+      <PadButton label="Right" onClick={() => onMove(1, 0)} />
+      <span />
+      <PadButton label="Down" onClick={() => onMove(0, 1)} />
+      <span />
+    </div>
+  );
+}
+
+function PadButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="h-12 rounded-lg border border-cyan-400/50 bg-cyan-400/10 text-[10px] font-bold uppercase text-cyan-100 active:bg-cyan-400 active:text-black">
       {label}
     </button>
   );
 }
 
-function InfoCard({ title, color, children }: { title: string; color: 'cyan' | 'pink' | 'green' | 'yellow'; children: string }) {
-  const classes = {
-    cyan: 'border-cyan-300/25 text-cyan-200',
-    pink: 'border-pink-300/25 text-pink-200',
-    green: 'border-green-300/25 text-green-200',
-    yellow: 'border-yellow-300/25 text-yellow-200',
-  };
+function Overlay({ title, tone, children }: { title: string; tone: 'pink' | 'green' | 'red'; children: ReactNode }) {
+  const toneClass = tone === 'green' ? 'arcade-border-green' : tone === 'red' ? 'border-2 border-red-400 shadow-[0_0_16px_rgba(248,113,113,.45)]' : 'arcade-border-pink';
   return (
-    <div className={`rounded-2xl border bg-black/55 p-4 ${classes[color]}`}>
-      <p className="text-xs font-black uppercase tracking-widest">{title}</p>
-      <p className="mt-3 text-sm font-bold leading-relaxed text-gray-100">{children}</p>
-    </div>
-  );
-}
-
-function Overlay({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/82 p-4 backdrop-blur-md">
-      <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-2xl rounded-3xl border border-cyan-300/40 bg-slate-950/95 p-6 text-center shadow-[0_0_42px_rgba(34,211,238,.22)]">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-300/35 bg-cyan-300/10 text-cyan-200">
-          <HelpCircle className="h-7 w-7" />
-        </div>
-        <h2 className="mt-4 text-2xl font-arcade text-white mobile-readable-arcade">{title}</h2>
+    <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`${toneClass} bg-black/90 rounded-xl p-6 max-w-xl w-full text-center`}>
+        <h2 className="text-xl sm:text-2xl font-arcade mobile-readable-arcade text-white">{title}</h2>
         <div className="mt-5">{children}</div>
       </motion.div>
     </div>
   );
 }
 
-function parseLevel(template: LevelTemplate): ParsedLevel {
-  const width = Math.max(...template.rows.map((row) => row.length));
-  const height = template.rows.length;
-  const grid = template.rows.map((row) => row.padEnd(width, '#').split('') as Cell[]);
+function parseLevel(template: LevelTemplate) {
+  const size = Math.max(template.rows.length, ...template.rows.map((row) => row.length));
+  const grid: Cell[][] = template.rows.map((row) => row.padEnd(size, '#').split('').map(charToCell));
   let start = { x: 1, y: 1 };
-  let goal = { x: width - 2, y: 1 };
-  const collectibles: Collectible[] = [];
-  let dotCount = 0;
+  let goal = { x: 1, y: 1 };
 
   grid.forEach((row, y) => row.forEach((cell, x) => {
-    if (cell === 'S') {
-      start = { x, y };
-      collectibles.push({ kind: 'dot', x, y });
-      dotCount += 1;
-    }
-    if (cell === 'G') goal = { x, y };
-    if (cell === '.') {
-      collectibles.push({ kind: 'dot', x, y });
-      dotCount += 1;
-    }
-    if (cell === 'C') collectibles.push({ kind: 'coffee', x, y });
-    if (cell === 'F') collectibles.push({ kind: 'focus', x, y });
-    if (cell === 'B') collectibles.push({ kind: 'bell', x, y });
-    if (cell === 'Y') collectibles.push({ kind: 'star', x, y });
+    if (cell === 'start') start = { x, y };
+    if (cell === 'exit') goal = { x, y };
   }));
 
-  const clocks = template.clocks.map((clock, id) => ({
-    id,
-    kind: clock.kind,
-    x: clock.at.x + 0.5,
-    y: clock.at.y + 0.5,
-    dir: zero,
-    home: clock.at,
-    scatter: clock.scatter,
-    color: clockStyles[clock.kind].color,
-    name: clockStyles[clock.kind].name,
-  }));
-
-  return { width, height, grid, start, goal, collectibles, clocks, dotCount };
+  const room = carveActivityRoom(grid, goal);
+  const clocks = template.patrols.map((path, id) => ({ id, path, step: 0, direction: 1 as const, alertUntil: 0 }));
+  return { grid, start, room, clocks, time: template.time, hitPenalty: template.hitPenalty, clockSpeed: template.clockSpeed };
 }
 
-function getClockMode(run: GameRun): ClockMode {
-  if (run.focusUntil > run.elapsed) return 'stunned';
-  const cycle = run.elapsed % 14;
-  if (cycle > 12.4) return 'warning';
-  return cycle < 5 ? 'scatter' : 'chase';
+function charToCell(char: string): Cell {
+  if (char === '#') return 'wall';
+  if (char === 'S') return 'start';
+  if (char === 'G') return 'exit';
+  if (char === 'R') return 'room';
+  if (char === 'C') return 'checkpoint';
+  if (char === 'K') return 'coffee';
+  if (char === 'F') return 'focus';
+  if (char === 'B') return 'bell';
+  if (char === '.') return 'dot';
+  return 'floor';
 }
 
-function getClockTarget(clock: ClockEnemy, run: GameRun, parsed: ParsedLevel): Point {
-  if (run.mode === 'scatter') return clock.scatter;
-  const playerCell = cellAt(run.player);
-  if (clock.kind === 'direct') return playerCell;
-  if (clock.kind === 'ambush') {
-    return clampPoint(parsed, {
-      x: playerCell.x + run.player.dir.x * 3,
-      y: playerCell.y + run.player.dir.y * 3,
-    });
+function carveActivityRoom(grid: Cell[][], goal: Point): ActivityRoom {
+  const roomWidth = 5;
+  const roomHeight = 5;
+  const maxX = Math.max(1, grid[0].length - roomWidth - 1);
+  const maxY = Math.max(1, grid.length - roomHeight - 1);
+  const x = clampInt(goal.x - 2, 1, maxX);
+  const y = clampInt(goal.y - 2, 1, maxY);
+  const center = { x: x + Math.floor(roomWidth / 2), y: y + Math.floor(roomHeight / 2) };
+
+  for (let row = y; row < y + roomHeight; row++) {
+    for (let column = x; column < x + roomWidth; column++) {
+      grid[row][column] = same({ x: column, y: row }, center) ? 'exit' : 'room';
+    }
   }
-  if (clock.kind === 'patrol') return run.readiness > 65 ? parsed.goal : clock.home;
-  const options = directions
-    .map((direction) => ({ x: Math.floor(clock.x) + direction.x, y: Math.floor(clock.y) + direction.y }))
-    .filter((point) => canOccupy(parsed, point) && parsed.grid[point.y][point.x] !== 'R' && parsed.grid[point.y][point.x] !== 'G');
-  return options[(Math.floor(run.elapsed * 2 + clock.id) % Math.max(1, options.length))] ?? clock.scatter;
+
+  return {
+    x,
+    y,
+    width: roomWidth,
+    height: roomHeight,
+    goal: center,
+  };
 }
 
-function nextStepToward(parsed: ParsedLevel, from: Point, target: Point, currentDir: Direction) {
-  const options = directions
-    .map((direction) => ({ x: from.x + direction.x, y: from.y + direction.y, direction }))
-    .filter((option) => canOccupy(parsed, option) && parsed.grid[option.y][option.x] !== 'R' && parsed.grid[option.y][option.x] !== 'G');
-  if (!options.length) return null;
-  const path = findPath(parsed, from, target, true);
-  if (path[1]) return path[1];
-  return options.sort((a, b) => {
-    const aReverse = a.direction.x === -currentDir.x && a.direction.y === -currentDir.y ? 2 : 0;
-    const bReverse = b.direction.x === -currentDir.x && b.direction.y === -currentDir.y ? 2 : 0;
-    return manhattan(a, target) + aReverse - (manhattan(b, target) + bReverse);
-  })[0];
+function clampInt(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
-function findPath(parsed: ParsedLevel, start: Point, goal: Point, blockRoom = false) {
+function moveClock(clockEnemy: ClockEnemy, player: Point, level: number, tick: number, grid: Cell[][]): ClockEnemy {
+  const position = clockEnemy.path[clockEnemy.step];
+  const canAlert = level >= 3 && manhattan(position, player) <= (level >= 6 ? 5 : 3);
+  if (canAlert && tick > clockEnemy.alertUntil) {
+    const chaseStep = bestStepToward(position, player, grid);
+    if (chaseStep) {
+      const existingIndex = clockEnemy.path.findIndex((point) => same(point, chaseStep));
+      if (existingIndex >= 0) {
+        return { ...clockEnemy, step: existingIndex, alertUntil: tick + (level >= 6 ? 2 : 1) };
+      }
+    }
+  }
+
+  let nextStep = clockEnemy.step + clockEnemy.direction;
+  let nextDirection = clockEnemy.direction;
+  if (nextStep >= clockEnemy.path.length || nextStep < 0) {
+    nextDirection = clockEnemy.direction === 1 ? -1 : 1;
+    nextStep = clockEnemy.step + nextDirection;
+  }
+  return { ...clockEnemy, step: nextStep, direction: nextDirection };
+}
+
+function bestStepToward(from: Point, to: Point, grid: Cell[][]) {
+  const options = directions
+    .map((direction) => ({ x: from.x + direction.x, y: from.y + direction.y }))
+    .filter((point) => isWalkable(grid, point) && grid[point.y][point.x] !== 'room' && grid[point.y][point.x] !== 'exit')
+    .sort((a, b) => manhattan(a, to) - manhattan(b, to));
+  return options[0];
+}
+
+function findPath(grid: Cell[][], start: Point, goal: Point) {
   const queue = [start];
   const visited = new Set([keyOf(start)]);
   const previous = new Map<string, Point>();
+
   for (let index = 0; index < queue.length; index++) {
     const current = queue[index];
-    if (samePoint(current, goal)) break;
+    if (same(current, goal)) break;
     for (const direction of directions) {
       const next = { x: current.x + direction.x, y: current.y + direction.y };
       const key = keyOf(next);
-      const cell = parsed.grid[next.y]?.[next.x];
-      if (visited.has(key) || !canOccupy(parsed, next)) continue;
-      if (blockRoom && (cell === 'R' || cell === 'G')) continue;
+      if (visited.has(key) || !isWalkable(grid, next)) continue;
       visited.add(key);
       previous.set(key, current);
       queue.push(next);
     }
   }
+
   const path: Point[] = [];
   let current = goal;
-  while (!samePoint(current, start) && previous.has(keyOf(current))) {
+  while (!same(current, start) && previous.has(keyOf(current))) {
     path.unshift(current);
     current = previous.get(keyOf(current))!;
   }
-  return [start, ...path];
+  return path.slice(0, 16);
 }
 
-function modeCopy(mode: ClockMode) {
-  if (mode === 'scatter') return 'Clocks return to their corners. Use this time to plan.';
-  if (mode === 'warning') return 'Clocks are flashing. A chase wave is about to change.';
-  if (mode === 'stunned') return 'Focus is active. Clocks are paused for a short window.';
-  return 'Clocks are chasing with different personalities. Read who is doing what.';
-}
-
-function canMove(parsed: ParsedLevel, cell: Point, direction: Direction) {
-  return canOccupy(parsed, { x: cell.x + direction.x, y: cell.y + direction.y });
-}
-
-function canOccupy(parsed: ParsedLevel, point: Point) {
-  const cell = parsed.grid[point.y]?.[point.x];
-  return Boolean(cell && cell !== '#');
-}
-
-function nearestCenter(point: { x: number; y: number }) {
-  return { x: Math.floor(point.x) + 0.5, y: Math.floor(point.y) + 0.5 };
-}
-
-function cellAt(point: { x: number; y: number }) {
-  return { x: Math.floor(point.x), y: Math.floor(point.y) };
-}
-
-function clampPoint(parsed: ParsedLevel, point: Point) {
-  return {
-    x: Math.max(1, Math.min(parsed.width - 2, point.x)),
-    y: Math.max(1, Math.min(parsed.height - 2, point.y)),
-  };
+function isWalkable(grid: Cell[][], point: Point) {
+  const cell = grid[point.y]?.[point.x];
+  return Boolean(cell && cell !== 'wall');
 }
 
 function keyOf(point: Point) {
   return `${point.x},${point.y}`;
 }
 
-function sameDir(a: Direction, b: Direction) {
-  return a.x === b.x && a.y === b.y;
-}
-
-function samePoint(a: Point, b: Point) {
-  return a.x === b.x && a.y === b.y;
-}
-
 function manhattan(a: Point, b: Point) {
   return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 }
 
-function roundRect(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-  context.beginPath();
-  context.moveTo(x + radius, y);
-  context.arcTo(x + width, y, x + width, y + height, radius);
-  context.arcTo(x + width, y + height, x, y + height, radius);
-  context.arcTo(x, y + height, x, y, radius);
-  context.arcTo(x, y, x + width, y, radius);
-  context.closePath();
-}
-
-function countCollectedDots(run: GameRun, parsed: ParsedLevel) {
-  return parsed.collectibles.filter((item) => item.kind === 'dot' && run.collected.has(keyOf(item))).length;
+function same(a: Point, b: Point) {
+  return a.x === b.x && a.y === b.y;
 }
 
 const levelTemplates: LevelTemplate[] = [
   {
-    title: 'First Bell',
-    briefing: 'Rocco says: collect check-ins, then enter the Activity Room when you are ready.',
-    requiredReadiness: 54,
-    latePasses: 3,
-    latenessRate: 2.4,
-    playerSpeed: 4.8,
-    clockSpeed: 3.2,
+    title: 'Readable Patrol',
+    time: 62,
+    hitPenalty: 12,
+    clockSpeed: 760,
     rows: [
-      '###################',
-      '#S....#.....#....C#',
-      '#.###.#.###.#.###.#',
-      '#...#...#...#...#.#',
-      '###.###.#.###.#.#.#',
-      '#.....#...#...#...#',
-      '#.###.###.#.###.###',
-      '#...#.....#.....#B#',
-      '#.#.#####.#####.#.#',
-      '#.#.......P.....#.#',
-      '#.#.###.RRR.###.#.#',
-      '#...#...RGR...#...#',
-      '###.#.##RRR##.#.###',
-      '#...#.....#.....#Y#',
-      '#.###.###.#.###.###',
-      '#F....#.....#.....#',
-      '###################',
+      '###############',
+      '#S..K....#RRR#',
+      '#.#####..#RGR#',
+      '#.....#..#RRR#',
+      '#####.#..##..#',
+      '#.....#......#',
+      '#.C.###.####.#',
+      '#...#...#....#',
+      '#.#.#.###.##.#',
+      '#.#...#...#..#',
+      '#.#####.#.#B##',
+      '#.......#....#',
+      '#.##########.#',
+      '#F............#'.slice(0, 15),
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 9, y: 9 }, scatter: { x: 1, y: 1 } },
-      { kind: 'patrol', at: { x: 5, y: 7 }, scatter: { x: 17, y: 1 } },
+    patrols: [
+      [{ x: 6, y: 5 }, { x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }],
     ],
   },
   {
-    title: 'Two Loops',
-    briefing: 'Rocco says: there are two loops. Do not force the center when a clock is entering it.',
-    requiredReadiness: 58,
-    latePasses: 3,
-    latenessRate: 2.6,
-    playerSpeed: 4.85,
-    clockSpeed: 3.35,
+    title: 'Safe Zone',
+    time: 60,
+    hitPenalty: 12,
+    clockSpeed: 720,
     rows: [
-      '###################',
-      '#S..C....#....B...#',
-      '#.#####..#..#####.#',
-      '#.....#.....#.....#',
-      '#####.#.###.#.#####',
-      '#.....#..F..#.....#',
-      '#.###.#######.###.#',
-      '#.#.............#.#',
-      '#.#.###.RRR.###.#.#',
-      '#...#...RGR...#...#',
-      '#.#.###.RRR.###.#.#',
-      '#.#.............#.#',
-      '#.###.###.###.###.#',
-      '#.....#.....#.....#',
-      '#.###.#.###.#.###.#',
-      '#Y....#.....#.....#',
-      '###################',
+      '###############',
+      '#S....#....RR#',
+      '#.###.#.##.RG#',
+      '#...#.#....RR#',
+      '###.#.####...#',
+      '#...#....#.#.#',
+      '#.#####K.#.#.#',
+      '#.....#..#.#.#',
+      '#.C.#.#..#...#',
+      '###.#.##.###.#',
+      '#...#....#B..#',
+      '#.######.#.###',
+      '#F.......#...#',
+      '#...........##',
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 9, y: 7 }, scatter: { x: 1, y: 1 } },
-      { kind: 'ambush', at: { x: 9, y: 11 }, scatter: { x: 17, y: 1 } },
+    patrols: [
+      [{ x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 7 }, { x: 7, y: 6 }, { x: 7, y: 5 }],
     ],
   },
   {
-    title: 'Ambush Lesson',
-    briefing: 'Rocco says: orange clocks aim ahead. Turn early and use side corridors.',
-    requiredReadiness: 60,
-    latePasses: 3,
-    latenessRate: 2.8,
-    playerSpeed: 4.9,
-    clockSpeed: 3.45,
+    title: 'Risky Shortcut',
+    time: 58,
+    hitPenalty: 14,
+    clockSpeed: 700,
     rows: [
-      '###################',
-      '#S....#...C.#.....#',
-      '#.###.#.###.#.###.#',
-      '#B..#.........#...#',
-      '###.#.#######.#.###',
-      '#...#....F....#...#',
-      '#.#####.###.#####.#',
-      '#.......#.#.......#',
-      '#.#####.#.#.#####.#',
-      '#.....#RRGRR#.....#',
-      '#####.#RRRRR#.#####',
-      '#.....#.....#.....#',
-      '#.###.###.###.###.#',
-      '#...#.........#...#',
-      '###.#.#######.#.###',
-      '#Y....#.....#.....#',
-      '###################',
+      '###############',
+      '#S....K..#RRR#',
+      '#.#####..#RGR#',
+      '#.#...#..#RRR#',
+      '#.#.#.#..##..#',
+      '#...#.#......#',
+      '###.#.######.#',
+      '#...#....C...#',
+      '#.######.###.#',
+      '#....B...#...#',
+      '#.########.#.#',
+      '#......F...#.#',
+      '######.#####.#',
+      '#............#',
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 4, y: 7 }, scatter: { x: 1, y: 15 } },
-      { kind: 'ambush', at: { x: 14, y: 7 }, scatter: { x: 17, y: 1 } },
-      { kind: 'wander', at: { x: 9, y: 11 }, scatter: { x: 17, y: 15 } },
+    patrols: [
+      [{ x: 5, y: 3 }, { x: 5, y: 4 }, { x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 }],
+      [{ x: 9, y: 9 }, { x: 10, y: 9 }, { x: 11, y: 9 }],
     ],
   },
   {
-    title: 'Recovery Corners',
-    briefing: 'Rocco says: corners are safe only if you arrive before the chase wave.',
-    requiredReadiness: 62,
-    latePasses: 3,
-    latenessRate: 3,
-    playerSpeed: 5,
-    clockSpeed: 3.55,
+    title: 'Checkpoint Lesson',
+    time: 56,
+    hitPenalty: 15,
+    clockSpeed: 670,
     rows: [
-      '###################',
-      '#S..#.....#.....C.#',
-      '#.#.#.###.#.###.#.#',
-      '#.#...#.....#...#.#',
-      '#.#####.###.#####.#',
-      '#.....#..B..#.....#',
-      '#####.#######.#####',
-      '#.....#.....#.....#',
-      '#.###.#.RRR.#.###.#',
-      '#...#...RGR...#...#',
-      '#.###.#.RRR.#.###.#',
-      '#.....#.....#.....#',
-      '#####.###.###.#####',
-      '#F....#.....#....Y#',
-      '#.###.#######.###.#',
-      '#.................#',
-      '###################',
+      '###############',
+      '#S..#.....#RR#',
+      '#.#.#.###.#RG#',
+      '#.#...#K..#RR#',
+      '#.#####.###..#',
+      '#.....#......#',
+      '#####.####.#.#',
+      '#...#..C...#.#',
+      '#.#.#####.##.#',
+      '#.#.....#....#',
+      '#.#####.####.#',
+      '#...B...#F...#',
+      '###.#####.##.#',
+      '#...........##',
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 9, y: 7 }, scatter: { x: 1, y: 1 } },
-      { kind: 'patrol', at: { x: 5, y: 11 }, scatter: { x: 1, y: 15 } },
-      { kind: 'ambush', at: { x: 13, y: 11 }, scatter: { x: 17, y: 1 } },
+    patrols: [
+      [{ x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 }, { x: 8, y: 5 }],
+      [{ x: 5, y: 9 }, { x: 6, y: 9 }, { x: 7, y: 9 }, { x: 7, y: 10 }],
     ],
   },
   {
-    title: 'Power State',
-    briefing: 'Rocco says: Focus is not decoration. Use it when two clocks cross.',
-    requiredReadiness: 64,
-    latePasses: 3,
-    latenessRate: 3.15,
-    playerSpeed: 5,
-    clockSpeed: 3.7,
+    title: 'Pickup Choice',
+    time: 54,
+    hitPenalty: 16,
+    clockSpeed: 640,
     rows: [
-      '###################',
-      '#S....#.....#....C#',
-      '#.###.#.###.#.###.#',
-      '#...#.#.....#.#...#',
-      '###.#.#.###.#.#.###',
-      '#...#...#B#...#...#',
-      '#.#####.#.#.#####.#',
-      '#.......#.#.......#',
-      '#.###.##RRR##.###.#',
-      '#.....#.RGR.#.....#',
-      '#.###.##RRR##.###.#',
-      '#.......#.#.......#',
-      '#.#####.#.#.#####.#',
-      '#...F...#.#...Y...#',
-      '#.###.###.###.###.#',
-      '#.................#',
-      '###################',
+      '###############',
+      '#S....#K...RR#',
+      '####..#.##.RG#',
+      '#.....#....RR#',
+      '#.#########..#',
+      '#.#.....B....#',
+      '#.#.#######.##',
+      '#.#...C.....##',
+      '#.###.#####..#',
+      '#...#.....#..#',
+      '###.#####.#.##',
+      '#...F.....#..#',
+      '#.##########.#',
+      '#............#',
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 9, y: 7 }, scatter: { x: 1, y: 1 } },
-      { kind: 'ambush', at: { x: 9, y: 11 }, scatter: { x: 17, y: 1 } },
-      { kind: 'patrol', at: { x: 4, y: 13 }, scatter: { x: 1, y: 15 } },
+    patrols: [
+      [{ x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 }],
+      [{ x: 7, y: 9 }, { x: 8, y: 9 }, { x: 9, y: 9 }, { x: 10, y: 9 }],
     ],
   },
   {
-    title: 'Four Personalities',
-    briefing: 'Rocco says: each clock has a different logic. Learn them before rushing.',
-    requiredReadiness: 66,
-    latePasses: 3,
-    latenessRate: 3.25,
-    playerSpeed: 5.05,
-    clockSpeed: 3.75,
+    title: 'Alert Clock',
+    time: 54,
+    hitPenalty: 20,
+    clockSpeed: 610,
     rows: [
-      '###################',
-      '#S..C....#....B...#',
-      '#.#####..#..#####.#',
-      '#.....#.....#.....#',
-      '###.#.#.###.#.#.###',
-      '#...#.#.....#.#...#',
-      '#.###.#######.###.#',
-      '#.................#',
-      '#.#####.RRR.#####.#',
-      '#.....#.RGR.#.....#',
-      '#.#####.RRR.#####.#',
-      '#.................#',
-      '#.###.###.###.###.#',
-      '#F....#.....#....Y#',
-      '#.###.#.###.#.###.#',
-      '#.....#.....#.....#',
-      '###################',
+      '###############',
+      '#S...K....#RR#',
+      '#.######..#RG#',
+      '#......#..#RR#',
+      '######.#..##.#',
+      '#B.....#.....#',
+      '#.##########.#',
+      '#.....C......#',
+      '#.######.###.#',
+      '#.#....#...#.#',
+      '#.#.##.###.#.#',
+      '#...F......#.#',
+      '##########.#.#',
+      '#............#',
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 3, y: 7 }, scatter: { x: 1, y: 1 } },
-      { kind: 'ambush', at: { x: 15, y: 7 }, scatter: { x: 17, y: 1 } },
-      { kind: 'patrol', at: { x: 3, y: 11 }, scatter: { x: 1, y: 15 } },
-      { kind: 'wander', at: { x: 15, y: 11 }, scatter: { x: 17, y: 15 } },
+    patrols: [
+      [{ x: 6, y: 3 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }],
+      [{ x: 6, y: 7 }, { x: 7, y: 7 }, { x: 8, y: 7 }, { x: 9, y: 7 }],
+      [{ x: 9, y: 11 }, { x: 10, y: 11 }, { x: 11, y: 11 }],
     ],
   },
   {
-    title: 'Side Door',
-    briefing: 'Rocco says: the fastest route is not always the safest route.',
-    requiredReadiness: 68,
-    latePasses: 2,
-    latenessRate: 3.4,
-    playerSpeed: 5.1,
-    clockSpeed: 3.85,
+    title: 'Recovery Space',
+    time: 52,
+    hitPenalty: 20,
+    clockSpeed: 580,
     rows: [
-      '###################',
-      '#S....#.....#....C#',
-      '#.###.#.###.#.###.#',
-      '#.#...#.....#...#.#',
-      '#.#.#####.#####.#.#',
-      '#...#.........#...#',
-      '###.#.###B###.#.###',
-      '#.....#.....#.....#',
-      '#.###.#.RRR.#.###.#',
-      '#...#...RGR...#...#',
-      '#.###.#.RRR.#.###.#',
-      '#.....#.....#.....#',
-      '###.#.###.###.#.###',
-      '#...#....F....#...#',
-      '#.#####.###.#####.#',
-      '#Y................#',
-      '###################',
+      '###############',
+      '#S.....#K.#RR#',
+      '#.###..#..#RG#',
+      '#...#..#..#RR#',
+      '###.#.###.##.#',
+      '#...#...#....#',
+      '#.#####.####.#',
+      '#...C...#B...#',
+      '###.###.###.##',
+      '#...#.....#..#',
+      '#.###.###.#..#',
+      '#.....#F..#..#',
+      '#.##########.#',
+      '#............#',
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 5, y: 7 }, scatter: { x: 1, y: 1 } },
-      { kind: 'ambush', at: { x: 13, y: 7 }, scatter: { x: 17, y: 1 } },
-      { kind: 'patrol', at: { x: 5, y: 13 }, scatter: { x: 1, y: 15 } },
-      { kind: 'wander', at: { x: 13, y: 13 }, scatter: { x: 17, y: 15 } },
+    patrols: [
+      [{ x: 5, y: 1 }, { x: 6, y: 1 }, { x: 6, y: 2 }, { x: 6, y: 3 }],
+      [{ x: 4, y: 9 }, { x: 5, y: 9 }, { x: 6, y: 9 }, { x: 7, y: 9 }],
+      [{ x: 10, y: 5 }, { x: 11, y: 5 }, { x: 12, y: 5 }],
     ],
   },
   {
     title: 'Timing Window',
-    briefing: 'Rocco says: wait for scatter mode, then cross the middle.',
-    requiredReadiness: 70,
-    latePasses: 2,
-    latenessRate: 3.55,
-    playerSpeed: 5.15,
-    clockSpeed: 3.95,
+    time: 50,
+    hitPenalty: 22,
+    clockSpeed: 550,
     rows: [
-      '###################',
-      '#S..C#.......#B...#',
-      '#.##.#.#####.#.##.#',
-      '#....#...F...#....#',
-      '####.###.#.###.####',
-      '#........#........#',
-      '#.######.#.######.#',
-      '#.#............Y#.#',
-      '#.#.####RRR####.#.#',
-      '#.....#.RGR.#.....#',
-      '#.#.####RRR####.#.#',
-      '#.#.............#.#',
-      '#.######.#.######.#',
-      '#........#........#',
-      '#.##.###.#.###.##.#',
-      '#.................#',
-      '###################',
+      '###############',
+      '#S..K.....#RR#',
+      '#.######..#RG#',
+      '#.#....#..#RR#',
+      '#.#.##.##.##.#',
+      '#...#.......B#',
+      '###.#######.##',
+      '#...C........#',
+      '#.####.#######',
+      '#.#....#.....#',
+      '#.#.####.###.#',
+      '#...F....#...#',
+      '#.########.#.#',
+      '#............#',
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 4, y: 5 }, scatter: { x: 1, y: 1 } },
-      { kind: 'ambush', at: { x: 14, y: 5 }, scatter: { x: 17, y: 1 } },
-      { kind: 'patrol', at: { x: 4, y: 13 }, scatter: { x: 1, y: 15 } },
-      { kind: 'wander', at: { x: 14, y: 13 }, scatter: { x: 17, y: 15 } },
+    patrols: [
+      [{ x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }],
+      [{ x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 7 }, { x: 8, y: 7 }],
+      [{ x: 8, y: 11 }, { x: 9, y: 11 }, { x: 10, y: 11 }],
     ],
   },
   {
-    title: 'Readable Pressure',
-    briefing: 'Rocco says: use Bell to read the route, then commit.',
-    requiredReadiness: 72,
-    latePasses: 2,
-    latenessRate: 3.7,
-    playerSpeed: 5.2,
-    clockSpeed: 4.05,
+    title: 'Two Routes',
+    time: 49,
+    hitPenalty: 23,
+    clockSpeed: 520,
     rows: [
-      '###################',
-      '#S....#..C..#....B#',
-      '#.###.#.###.#.###.#',
-      '#...#.........#...#',
-      '###.#.#######.#.###',
-      '#...#....F....#...#',
-      '#.#####.###.#####.#',
-      '#.......#.#.......#',
-      '#.###.##RRR##.###.#',
-      '#.....#.RGR.#.....#',
-      '#.###.##RRR##.###.#',
-      '#.......#.#.......#',
-      '#.#####.#.#.#####.#',
-      '#...#.........#...#',
-      '###.#.#######.#.###',
-      '#Y................#',
-      '###################',
+      '###############',
+      '#S...#K...#RR#',
+      '#.##.#.##.#RG#',
+      '#....#....#RR#',
+      '####.........#',
+      '#....B......##',
+      '#.#########..#',
+      '#...C.....#..#',
+      '###.#####.#.##',
+      '#...#F..#.#..#',
+      '#.###.#.#.##.#',
+      '#.....#......#',
+      '#.##########.#',
+      '#............#',
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 3, y: 7 }, scatter: { x: 1, y: 1 } },
-      { kind: 'ambush', at: { x: 15, y: 7 }, scatter: { x: 17, y: 1 } },
-      { kind: 'patrol', at: { x: 9, y: 5 }, scatter: { x: 1, y: 15 } },
-      { kind: 'wander', at: { x: 9, y: 13 }, scatter: { x: 17, y: 15 } },
+    patrols: [
+      [{ x: 4, y: 3 }, { x: 5, y: 3 }, { x: 6, y: 3 }, { x: 7, y: 3 }],
+      [{ x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }],
+      [{ x: 6, y: 11 }, { x: 7, y: 11 }, { x: 8, y: 11 }, { x: 9, y: 11 }],
+      [{ x: 11, y: 7 }, { x: 12, y: 7 }, { x: 12, y: 8 }],
     ],
   },
   {
-    title: 'Final Arrival',
-    briefing: 'Rocco says: master the pattern. The Activity Room is close, but you still need enough check-ins.',
-    requiredReadiness: 74,
-    latePasses: 2,
-    latenessRate: 3.85,
-    playerSpeed: 5.25,
-    clockSpeed: 4.15,
+    title: 'Final Fair Maze',
+    time: 48,
+    hitPenalty: 24,
+    clockSpeed: 500,
     rows: [
-      '###################',
-      '#S..C....#....B...#',
-      '#.#####..#..#####.#',
-      '#.....#.....#.....#',
-      '#.###.#.###.#.###.#',
-      '#...#.........#...#',
-      '###.#.#######.#.###',
-      '#.....#..F..#.....#',
-      '#.###.#.RRR.#.###.#',
-      '#...#...RGR...#...#',
-      '#.###.#.RRR.#.###.#',
-      '#.....#.....#.....#',
-      '###.#.###.###.#.###',
-      '#...#.........#...#',
-      '#.#####.###.#####.#',
-      '#Y................#',
-      '###################',
+      '###############',
+      '#S..K....#RRR#',
+      '#.#####..#RGR#',
+      '#.....#..#RRR#',
+      '#####.#.###..#',
+      '#B....#......#',
+      '#.##########.#',
+      '#...C........#',
+      '#.#####.####.#',
+      '#.#...#....#.#',
+      '#.#.#.####.#.#',
+      '#...#F.....#.#',
+      '#.########.#.#',
+      '#............#',
+      '###############',
     ],
-    clocks: [
-      { kind: 'direct', at: { x: 3, y: 5 }, scatter: { x: 1, y: 1 } },
-      { kind: 'ambush', at: { x: 15, y: 5 }, scatter: { x: 17, y: 1 } },
-      { kind: 'patrol', at: { x: 3, y: 13 }, scatter: { x: 1, y: 15 } },
-      { kind: 'wander', at: { x: 15, y: 13 }, scatter: { x: 17, y: 15 } },
+    patrols: [
+      [{ x: 5, y: 3 }, { x: 6, y: 3 }, { x: 7, y: 3 }],
+      [{ x: 5, y: 5 }, { x: 6, y: 5 }, { x: 7, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }],
+      [{ x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 7 }, { x: 8, y: 7 }, { x: 9, y: 7 }],
+      [{ x: 8, y: 11 }, { x: 9, y: 11 }, { x: 10, y: 11 }],
+      [{ x: 12, y: 12 }, { x: 12, y: 11 }, { x: 12, y: 10 }],
     ],
   },
 ];
