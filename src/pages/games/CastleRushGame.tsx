@@ -6,6 +6,7 @@ import { useStore } from '../../store/useStore';
 
 type Cell = 'wall' | 'floor' | 'dot' | 'start' | 'exit' | 'room' | 'checkpoint' | 'coffee' | 'focus' | 'bell';
 type Point = { x: number; y: number };
+type Direction = Point | null;
 type ClockEnemy = { id: number; path: Point[]; step: number; direction: 1 | -1; alertUntil: number };
 type GameState = 'intro' | 'playing' | 'paused' | 'won-level' | 'game-over' | 'completed';
 type TokenKind = 'coffee' | 'focus' | 'bell';
@@ -66,6 +67,8 @@ export default function CastleRushGame() {
   const audioRef = useRef<AudioContext | null>(null);
   const ambientRef = useRef<number | null>(null);
   const matchCounterRef = useRef(0);
+  const currentDirectionRef = useRef<Direction>(null);
+  const queuedDirectionRef = useRef<Direction>(null);
 
   const levelData = useMemo(() => parseLevel(levelTemplates[level - 1]), [level]);
   const [player, setPlayer] = useState<Point>(levelData.start);
@@ -105,6 +108,8 @@ export default function CastleRushGame() {
     setCollectedTokens(new Set());
     setActiveUntil({ coffee: 0, focus: 0, bell: 0 });
     setPlayerFlag(partnerFlags[matchCounterRef.current++ % partnerFlags.length]);
+    currentDirectionRef.current = null;
+    queuedDirectionRef.current = null;
     setTick(0);
     setLastEvent('Plan your route. Checkpoints and pickups make the pressure fair.');
     setGameState('playing');
@@ -148,20 +153,17 @@ export default function CastleRushGame() {
     playTone(kind === 'coffee' ? 720 : kind === 'focus' ? 520 : 640, 0.08, 'sine');
   }, [nowTick, playTone]);
 
-  const movePlayer = useCallback((dx: number, dy: number) => {
+  const stepPlayer = useCallback((dx: number, dy: number) => {
     if (gameState !== 'playing') return;
-    const steps = 1;
     setPlayer((current) => {
-      let nextPosition = current;
-      for (let index = 0; index < steps; index++) {
-        const next = { x: nextPosition.x + dx, y: nextPosition.y + dy };
-        const nextCell = levelData.grid[next.y]?.[next.x];
-        if (!nextCell || nextCell === 'wall') break;
-        nextPosition = next;
-        if (nextCell === 'room' || nextCell === 'exit' || same(next, levelData.room.goal)) {
-          window.setTimeout(finishLevel, 0);
-          break;
-        }
+      const nextPosition = { x: current.x + dx, y: current.y + dy };
+      const nextCell = levelData.grid[nextPosition.y]?.[nextPosition.x];
+      if (!nextCell || nextCell === 'wall') {
+        currentDirectionRef.current = null;
+        return current;
+      }
+      if (nextCell === 'room' || nextCell === 'exit' || same(nextPosition, levelData.room.goal)) {
+        window.setTimeout(finishLevel, 0);
       }
 
       const cell = levelData.grid[nextPosition.y]?.[nextPosition.x];
@@ -181,13 +183,41 @@ export default function CastleRushGame() {
     });
   }, [clocks, collectToken, collectedTokens, finishLevel, gameState, handleClockHit, level, levelData.grid, levelData.room.goal, playTone]);
 
+  const queueDirection = useCallback((dx: number, dy: number) => {
+    if (gameState !== 'playing') return;
+    queuedDirectionRef.current = { x: dx, y: dy };
+    currentDirectionRef.current = currentDirectionRef.current ?? { x: dx, y: dy };
+  }, [gameState]);
+
   useEffect(() => {
     const parsed = parseLevel(levelTemplates[level - 1]);
     setPlayer(parsed.start);
     setCheckpoint(parsed.start);
     setClocks(parsed.clocks);
     setTimeLeft(parsed.time);
+    currentDirectionRef.current = null;
+    queuedDirectionRef.current = null;
   }, [level]);
+
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+    const interval = window.setInterval(() => {
+      const queued = queuedDirectionRef.current;
+      const currentDirection = currentDirectionRef.current;
+      setPlayer((current) => {
+        const canUseQueued = Boolean(queued && canStep(levelData.grid, current, queued));
+        const nextDirection = canUseQueued ? queued : currentDirection;
+        if (canUseQueued) currentDirectionRef.current = queued;
+        if (!nextDirection || !canStep(levelData.grid, current, nextDirection)) {
+          currentDirectionRef.current = null;
+          return current;
+        }
+        window.setTimeout(() => stepPlayer(nextDirection.x, nextDirection.y), 0);
+        return current;
+      });
+    }, activeCoffee ? 120 : 155);
+    return () => window.clearInterval(interval);
+  }, [activeCoffee, gameState, levelData.grid, stepPlayer]);
 
   useEffect(() => {
     if (gameState !== 'playing') return;
@@ -241,12 +271,12 @@ export default function CastleRushGame() {
       const direction = keyMap[event.key];
       if (direction) {
         event.preventDefault();
-        movePlayer(direction.x, direction.y);
+        queueDirection(direction.x, direction.y);
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [movePlayer]);
+  }, [queueDirection]);
 
   useEffect(() => {
     if (!audioEnabled || gameState !== 'playing') {
@@ -324,8 +354,8 @@ export default function CastleRushGame() {
                     <Tile
                       key={`${x}-${y}`}
                       cell={cell}
-                      isPlayer={same(player, point)}
-                      isClock={clocks.some((clockEnemy) => same(clockEnemy.path[clockEnemy.step], point))}
+                      isPlayer={false}
+                      isClock={false}
                       isPathHint={safePath.some((safePoint) => same(safePoint, point))}
                       collected={collectedTokens.has(tokenKey)}
                       playerFlag={playerFlag}
@@ -333,11 +363,19 @@ export default function CastleRushGame() {
                   );
                 }),
               )}
+              <EntityLayer point={player} tileCount={levelData.grid.length}>
+                <PlayerSprite flag={playerFlag} />
+              </EntityLayer>
+              {clocks.map((clockEnemy) => (
+                <EntityLayer key={clockEnemy.id} point={clockEnemy.path[clockEnemy.step]} tileCount={levelData.grid.length}>
+                  <ClockEnemySprite />
+                </EntityLayer>
+              ))}
               <ActivityRoomLayer room={levelData.room} tileCount={levelData.grid.length} tick={tick} visible={manhattan(player, levelData.room.goal) < 8 || gameState !== 'playing'} />
             </div>
           </div>
 
-          <DPad onMove={movePlayer} />
+          <DPad onMove={queueDirection} />
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {Array.from({ length: maxLevel }).map((_, index) => {
               const levelNumber = index + 1;
@@ -484,9 +522,26 @@ function Token({ icon, className }: { icon: ReactNode; className: string }) {
   );
 }
 
+function EntityLayer({ point, tileCount, children }: { key?: number; point: Point; tileCount: number; children: ReactNode }) {
+  const cell = 100 / tileCount;
+  return (
+    <div
+      className="pointer-events-none absolute z-30 transition-[left,top] duration-150 ease-linear"
+      style={{
+        left: `${point.x * cell}%`,
+        top: `${point.y * cell}%`,
+        width: `${cell}%`,
+        height: `${cell}%`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function PlayerSprite({ flag }: { flag: FlagId }) {
   return (
-    <div className="absolute inset-[13%] z-30 overflow-hidden rounded-full border-2 border-white bg-blue-700 shadow-[0_0_14px_rgba(96,165,250,.9)]">
+    <div className="absolute inset-[13%] overflow-hidden rounded-full border-2 border-white bg-blue-700 shadow-[0_0_14px_rgba(96,165,250,.9)]">
       <FlagFace flag={flag} />
     </div>
   );
@@ -563,7 +618,7 @@ function HorizontalFlag({ colors }: { colors: string[] }) {
 
 function ClockEnemySprite() {
   return (
-    <div className="absolute inset-[14%] z-20 flex items-center justify-center rounded-full border-2 border-red-200 bg-red-500 text-white shadow-[0_0_14px_rgba(248,113,113,.9)]">
+    <div className="absolute inset-[14%] flex items-center justify-center rounded-full border-2 border-red-200 bg-red-500 text-white shadow-[0_0_14px_rgba(248,113,113,.9)]">
       <Clock className="h-[70%] w-[70%]" strokeWidth={3} />
     </div>
   );
@@ -792,6 +847,10 @@ function findPath(grid: Cell[][], start: Point, goal: Point) {
 function isWalkable(grid: Cell[][], point: Point) {
   const cell = grid[point.y]?.[point.x];
   return Boolean(cell && cell !== 'wall');
+}
+
+function canStep(grid: Cell[][], point: Point, direction: Point) {
+  return isWalkable(grid, { x: point.x + direction.x, y: point.y + direction.y });
 }
 
 function keyOf(point: Point) {
