@@ -24,13 +24,10 @@
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    overflow-y: scroll;
-    scrollbar-gutter: stable both-edges;
   }
 
   body {
     @apply bg-arcade-bg text-white font-sans m-0 overflow-x-hidden;
-    scrollbar-gutter: stable both-edges;
     overscroll-behavior-y: none;
   }
 
