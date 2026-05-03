@@ -10,7 +10,7 @@ export function ManualButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-yellow-300"
+      className="game-manual-button rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-yellow-300"
     >
       <HelpCircle className="w-4 h-4 inline mr-2" />
       Manual
@@ -31,11 +31,11 @@ export function GameManualPanel({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/80 p-3 backdrop-blur-sm">
+    <div className="game-manual-overlay fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/80 p-3 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="max-h-[88vh] w-full max-w-3xl overflow-y-auto rounded-2xl border-2 border-yellow-300 bg-slate-950 p-5 shadow-[0_0_28px_rgba(253,224,71,.35)]"
+        className="game-manual-panel max-h-[88vh] w-full max-w-3xl overflow-y-auto rounded-2xl border-2 border-yellow-300 bg-slate-950 p-5 shadow-[0_0_28px_rgba(253,224,71,.35)]"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -44,7 +44,7 @@ export function GameManualPanel({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg border border-white/10 bg-black/50 p-2 text-gray-300 hover:border-red-300 hover:text-red-200"
+            className="game-manual-close rounded-lg border border-white/10 bg-black/50 p-2 text-gray-300 hover:border-red-300 hover:text-red-200"
             aria-label="Close manual"
           >
             <X className="h-5 w-5" />
@@ -53,7 +53,7 @@ export function GameManualPanel({
 
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
           {sections.map((section) => (
-            <div key={section.title} className="rounded-xl border border-white/10 bg-black/45 p-4">
+            <div key={section.title} className="game-manual-section rounded-xl border border-white/10 bg-black/45 p-4">
               <p className="text-xs font-black uppercase tracking-widest text-cyan-300">{section.title}</p>
               <ul className="mt-3 space-y-2">
                 {section.items.map((item) => (

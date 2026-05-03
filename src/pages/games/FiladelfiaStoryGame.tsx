@@ -1004,7 +1004,7 @@ export default function FiladelfiaStoryGame() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen pb-10 max-w-6xl mx-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen filadelfia-screen pb-10 max-w-6xl mx-auto">
       <section className="arcade-border-green glass-panel-green rounded-xl p-4 md:p-5 mb-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -1014,7 +1014,7 @@ export default function FiladelfiaStoryGame() {
               Follow one participant through Games Are No Joke in Filadelfia. Your choices change the team, the board game, and the final outcome.
             </p>
           </div>
-          <button onClick={restart} className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-green-400">
+          <button onClick={restart} className="filadelfia-control-button rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-green-400">
             <RotateCcw className="w-4 h-4 inline mr-2" /> Restart
           </button>
         </div>
@@ -1058,7 +1058,7 @@ export default function FiladelfiaStoryGame() {
               </div>
             </div>
 
-            <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+            <div className="filadelfia-side-panel bg-black/60 border border-white/10 rounded-xl p-4">
               <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Story Meters</p>
               <div className="mt-4 space-y-3">
                 {(Object.keys(meters) as MeterKey[]).map((key) => (
@@ -1069,7 +1069,7 @@ export default function FiladelfiaStoryGame() {
 
             <StoryLogPanel storyLog={storyLog} protagonist={protagonist} compact />
 
-            <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+            <div className="filadelfia-side-panel bg-black/60 border border-white/10 rounded-xl p-4">
               <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Hidden Logic</p>
               {!ending && <p className="text-sm text-gray-300 leading-relaxed mt-3">Flags stay hidden while you play. At the end, the game reveals why you got your ending.</p>}
               {ending && <FlagList flags={flags} />}
@@ -1092,7 +1092,7 @@ function ProtagonistSelect({ onStart }: { onStart: (id: ProtagonistId) => void }
             Each perspective starts with a different strength and risk. The story follows one participant from arrival to final showcase.
           </p>
         </div>
-        <div className="rounded-xl border border-white/10 bg-black/50 p-3 text-xs text-gray-300">
+        <div className="filadelfia-country-list rounded-xl border border-white/10 bg-black/50 p-3 text-xs text-gray-300">
           France, N. Macedonia, Bulgaria, Italy, Romania, Turkiye, Greece, Serbia
         </div>
       </div>
@@ -1102,7 +1102,7 @@ function ProtagonistSelect({ onStart }: { onStart: (id: ProtagonistId) => void }
           <button
             key={participant.id}
             onClick={() => onStart(participant.id)}
-            className="group rounded-xl border border-white/10 bg-black/55 p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
+            className="filadelfia-protagonist-card group rounded-xl border border-white/10 bg-black/55 p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
           >
             <Avatar name={participant.name} tone={participant.id === 'andrea' ? 'bg-pink-300' : participant.id === 'slave' ? 'bg-cyan-300' : 'bg-green-300'} large />
             <p className="mt-4 text-lg font-black text-white">{participant.name}</p>
@@ -1133,16 +1133,16 @@ function StoryStage({
   onChoose: (choice: Choice) => void;
 }) {
   return (
-    <div className="rounded-xl border border-green-400/30 bg-slate-950 overflow-hidden">
+    <div className="filadelfia-stage rounded-xl border border-green-400/30 bg-slate-950 overflow-hidden">
       <LocationPanel node={node} protagonist={protagonist} />
       <div className="p-4">
-        <div className="grid grid-cols-5 gap-1 rounded-lg border border-white/10 bg-black/70 p-2 mb-4">
+        <div className="filadelfia-meter-pips grid grid-cols-5 gap-1 rounded-lg border border-white/10 bg-black/70 p-2 mb-4">
           {(Object.keys(meters) as MeterKey[]).map((key) => (
             <MeterPip key={key} label={key} value={meters[key]} />
           ))}
         </div>
 
-        <div className="rounded-xl border-2 border-green-300/60 bg-black/90 p-4 shadow-[0_0_24px_rgba(34,197,94,.18)]">
+        <div className="filadelfia-story-scene rounded-xl border-2 border-green-300/60 bg-black/90 p-4 shadow-[0_0_24px_rgba(34,197,94,.18)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[10px] font-black uppercase tracking-widest text-green-300">{node.speaker}</p>
             <p className="text-[10px] font-bold uppercase text-gray-500">{node.chapter} - {node.dayLabel}</p>
@@ -1150,14 +1150,14 @@ function StoryStage({
           <h2 className="mt-2 text-base sm:text-xl font-arcade mobile-readable-arcade text-white">{node.title}</h2>
           <p className="mt-3 text-sm leading-relaxed text-gray-200">{formatText(node.text, protagonist)}</p>
 
-          <div className="mt-4 rounded-lg border border-white/10 bg-white/[.03] p-3">
+          <div className="filadelfia-story-beat mt-4 rounded-lg border border-white/10 bg-white/[.03] p-3">
             <p className="text-[10px] font-black uppercase tracking-widest text-green-300">Story beat</p>
             <p className="mt-2 text-sm leading-relaxed text-gray-100">{formatText(storyBeat(node.id), protagonist)}</p>
           </div>
 
           <div className="mt-4 space-y-2">
             {node.dialogue.map((line, index) => (
-              <div key={`${line.speaker}-${index}`} className="rounded-lg border border-white/10 bg-black/55 p-3">
+              <div key={`${line.speaker}-${index}`} className="filadelfia-dialogue-card rounded-lg border border-white/10 bg-black/55 p-3">
                 <div className="flex items-start gap-3">
                   <Avatar name={line.speaker} tone={line.speaker === protagonist.name || line.speaker === 'Narrator' ? 'bg-green-300' : 'bg-cyan-300'} />
                   <div className="min-w-0">
@@ -1169,7 +1169,7 @@ function StoryStage({
             ))}
           </div>
 
-          <div className="mt-4 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-100">
+          <div className="filadelfia-consequence-card mt-4 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-100">
             Consequence memory: {lastFeedback}
           </div>
         </div>
@@ -1179,7 +1179,7 @@ function StoryStage({
             <button
               key={choice.id}
               onClick={() => onChoose(choice)}
-              className="group rounded-lg border border-white/10 bg-white/[.04] p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
+              className="filadelfia-choice-card group rounded-lg border border-white/10 bg-white/[.04] p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -1200,8 +1200,8 @@ function StoryStage({
 function LocationPanel({ node, protagonist }: { node: StoryNode; protagonist: Protagonist }) {
   const cast = node.cast.map((name) => findParticipant(name, protagonist));
   return (
-    <div className="relative overflow-hidden border-b border-green-300/20 bg-gradient-to-br from-slate-950 via-emerald-950 to-cyan-950 p-4">
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] bg-[size:28px_28px]" />
+    <div className="filadelfia-location-panel relative overflow-hidden border-b border-green-300/20 bg-gradient-to-br from-slate-950 via-emerald-950 to-cyan-950 p-4">
+      <div className="filadelfia-location-grid absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] bg-[size:28px_28px]" />
       <div className="relative z-10 flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -1210,7 +1210,7 @@ function LocationPanel({ node, protagonist }: { node: StoryNode; protagonist: Pr
             </p>
             <p className="mt-2 text-sm text-gray-200 leading-relaxed">{formatText(protagonist.opening, protagonist)}</p>
           </div>
-          <div className="rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-xs font-bold text-white">
+          <div className="filadelfia-day-badge rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-xs font-bold text-white">
             {node.dayLabel}
           </div>
         </div>
@@ -1228,7 +1228,7 @@ function LocationPanel({ node, protagonist }: { node: StoryNode; protagonist: Pr
 function CharacterChip({ participant, protagonist }: { key?: string; participant: Participant; protagonist: Protagonist }) {
   const isYou = participant.name === protagonist.name;
   return (
-    <div className={`rounded-lg border p-2 ${isYou ? 'border-green-300 bg-green-300/15' : 'border-white/10 bg-black/55'}`}>
+    <div className={`filadelfia-character-chip rounded-lg border p-2 ${isYou ? 'border-green-300 bg-green-300/15' : 'border-white/10 bg-black/55'}`}>
       <div className="flex items-center gap-2">
         <Avatar name={participant.name} tone={isYou ? 'bg-green-300' : 'bg-cyan-300'} />
         <div className="min-w-0">
@@ -1282,7 +1282,7 @@ function EndingPanel({
 
       <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
         <StoryLogPanel storyLog={storyLog} protagonist={protagonist} />
-        <div className="rounded-xl border border-white/10 bg-black/60 p-4">
+        <div className="filadelfia-side-panel rounded-xl border border-white/10 bg-black/60 p-4">
           <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Hidden Flags Revealed</p>
           <FlagList flags={flags} />
           <div className="mt-5 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3">
@@ -1302,7 +1302,7 @@ function StoryLogPanel({ storyLog, protagonist, compact = false }: { storyLog: S
     <div className="mt-3 space-y-3 max-h-[520px] overflow-y-auto pr-1">
       {storyLog.length === 0 && <p className="text-sm text-gray-400">No story choices yet.</p>}
       {storyLog.map((entry, index) => (
-        <div key={`${entry.nodeId}-${entry.chosenAction}-${index}`} className="rounded-lg border border-white/10 bg-black/45 p-3">
+        <div key={`${entry.nodeId}-${entry.chosenAction}-${index}`} className="filadelfia-log-entry rounded-lg border border-white/10 bg-black/45 p-3">
           <p className="text-[10px] font-bold uppercase text-cyan-200">{entry.dayLabel} - {entry.nodeTitle}</p>
           <p className="text-[10px] text-gray-500">{entry.location}</p>
           <div className="mt-2 space-y-1">
@@ -1321,7 +1321,7 @@ function StoryLogPanel({ storyLog, protagonist, compact = false }: { storyLog: S
 
   if (compact) {
     return (
-      <details className="bg-black/60 border border-white/10 rounded-xl p-4 xl:block" open>
+      <details className="filadelfia-log-panel bg-black/60 border border-white/10 rounded-xl p-4 xl:block" open>
         <summary className="cursor-pointer text-xs text-cyan-300 font-bold uppercase tracking-widest">Full Story Log</summary>
         {content}
       </details>
@@ -1329,7 +1329,7 @@ function StoryLogPanel({ storyLog, protagonist, compact = false }: { storyLog: S
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-black/60 p-4">
+    <div className="filadelfia-log-panel rounded-xl border border-white/10 bg-black/60 p-4">
       <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest flex items-center gap-2">
         <MessageSquare className="w-4 h-4" /> Full Story Log
       </p>
@@ -1341,7 +1341,7 @@ function StoryLogPanel({ storyLog, protagonist, compact = false }: { storyLog: S
 function LogicDiagram({ chosenChoiceIds, endingId }: { chosenChoiceIds: Set<string>; endingId: EndingId | null }) {
   const importantNodes: StoryNodeId[] = ['arrival', 'team-shared', 'team-solo', 'team-fun', 'prototype-playtest', 'prototype-polish', 'prototype-alone', 'showcase'];
   return (
-    <div className="mt-5 bg-black/60 border border-white/10 rounded-xl p-4">
+    <div className="filadelfia-logic-panel mt-5 bg-black/60 border border-white/10 rounded-xl p-4">
       <h3 className="text-sm font-arcade text-green-300 flex items-center gap-2">
         <GitBranch className="w-5 h-5" /> Branching Map
       </h3>
@@ -1349,13 +1349,13 @@ function LogicDiagram({ chosenChoiceIds, endingId }: { chosenChoiceIds: Set<stri
         {importantNodes.map((id) => {
           const node = storyNodes[id];
           return (
-            <div key={id} className="rounded-lg border border-white/10 bg-black/45 p-3">
+            <div key={id} className="filadelfia-logic-card rounded-lg border border-white/10 bg-black/45 p-3">
               <p className="text-[10px] font-bold uppercase text-gray-500">{node.chapter}: {node.title}</p>
               <div className="mt-3 space-y-2">
                 {node.choices.map((choice) => {
                   const chosen = chosenChoiceIds.has(choice.id);
                   return (
-                    <div key={choice.id} className={`rounded border p-2 ${chosen ? 'border-green-300 bg-green-300/10' : 'border-white/10 bg-black/40'}`}>
+                    <div key={choice.id} className={`filadelfia-logic-choice rounded border p-2 ${chosen ? 'border-green-300 bg-green-300/10' : 'border-white/10 bg-black/40'}`}>
                       <p className={`text-xs font-bold ${chosen ? 'text-green-200' : 'text-gray-300'}`}>{choice.label}</p>
                       <p className="text-[10px] text-gray-500 mt-1">Next: {choice.next === 'ending' ? 'Ending logic' : storyNodes[choice.next].title}</p>
                     </div>
@@ -1370,7 +1370,7 @@ function LogicDiagram({ chosenChoiceIds, endingId }: { chosenChoiceIds: Set<stri
       <h3 className="text-sm font-arcade text-cyan-300 mt-6">Other Endings</h3>
       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
         {(Object.entries(endings) as Array<[EndingId, Ending]>).map(([id, ending]) => (
-          <div key={id} className={`rounded-lg border p-3 ${id === endingId ? 'border-green-300 bg-green-300/10' : 'border-white/10 bg-black/45'}`}>
+          <div key={id} className={`filadelfia-logic-card rounded-lg border p-3 ${id === endingId ? 'border-green-300 bg-green-300/10' : 'border-white/10 bg-black/45'}`}>
             <p className="text-sm text-white font-bold">{ending.title}</p>
             <p className="text-xs text-gray-300 leading-relaxed mt-2">{ending.howToReach}</p>
           </div>
@@ -1394,7 +1394,7 @@ function MeterPip({ label, value }: { key?: MeterKey; label: MeterKey; value: nu
   return (
     <div className="text-center">
       <p className="text-[8px] font-black uppercase text-gray-400">{label[0]}</p>
-      <div className="mt-1 h-8 rounded border border-white/10 bg-black/50 flex items-end overflow-hidden">
+      <div className="filadelfia-meter-pip-track mt-1 h-8 rounded border border-white/10 bg-black/50 flex items-end overflow-hidden">
         <div className={`w-full ${color}`} style={{ height: `${value}%` }} />
       </div>
     </div>
@@ -1409,7 +1409,7 @@ function Meter({ label, value }: { key?: MeterKey; label: MeterKey; value: numbe
         <span>{label}</span>
         <span className="text-white">{value}</span>
       </div>
-      <div className="mt-2 h-2 rounded-full bg-gray-900 overflow-hidden">
+      <div className="filadelfia-meter-track mt-2 h-2 rounded-full bg-gray-900 overflow-hidden">
         <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
       </div>
     </div>

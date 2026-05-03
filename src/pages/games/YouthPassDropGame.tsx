@@ -551,7 +551,7 @@ function MoveButton({ label, icon, onDown, onUp }: { label: string; icon: ReactN
       onPointerDown={onDown}
       onPointerUp={onUp}
       onPointerLeave={onUp}
-      className="h-14 rounded-xl border border-cyan-400/50 bg-cyan-400/10 text-xs font-bold uppercase text-cyan-100 active:bg-cyan-400 active:text-black flex items-center justify-center gap-2"
+      className="youthpass-move-button h-14 rounded-xl border border-cyan-400/50 bg-cyan-400/10 text-xs font-bold uppercase text-cyan-100 active:bg-cyan-400 active:text-black flex items-center justify-center gap-2"
     >
       {icon}
       {label}

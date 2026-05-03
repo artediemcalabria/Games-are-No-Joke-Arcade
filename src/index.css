@@ -816,13 +816,18 @@
   }
 
   .theme-notebook .theme-game-screen [class*="bg-black"] {
-    background-color: rgba(18, 23, 27, 0.78) !important;
-    color: #ffffff !important;
+    background-color: rgba(255, 250, 240, 0.88) !important;
+    color: var(--notebook-ink) !important;
   }
 
   .theme-notebook .theme-game-screen [class*="bg-slate"] {
-    background-color: rgba(28, 36, 43, 0.78) !important;
-    color: #ffffff !important;
+    background-color: rgba(255, 250, 240, 0.88) !important;
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .theme-game-screen [class*="bg-gray-900"] {
+    background-color: rgba(88, 72, 47, 0.16) !important;
+    color: var(--notebook-ink) !important;
   }
 
   .theme-notebook .theme-game-screen [class*="bg-pink-900"] {
@@ -865,7 +870,7 @@
   .theme-notebook .theme-game-screen [class*="bg-slate"] [class*="text-gray-100"],
   .theme-notebook .theme-game-screen [class*="bg-slate"] [class*="text-gray-200"],
   .theme-notebook .theme-game-screen [class*="bg-slate"] [class*="text-gray-300"] {
-    color: #ffffff !important;
+    color: var(--notebook-ink) !important;
   }
 
   .theme-notebook .theme-game-screen [class*="text-cyan"],
@@ -893,7 +898,60 @@
     color: var(--notebook-ink) !important;
   }
 
+  .theme-notebook .game-paper-overlay,
+  .theme-notebook .game-manual-overlay {
+    background: rgba(37, 32, 24, 0.34) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  .theme-notebook .game-paper-modal,
+  .theme-notebook .game-manual-panel {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.52), transparent 13rem),
+      linear-gradient(145deg, rgba(255, 250, 240, 0.97), rgba(242, 233, 216, 0.97)) !important;
+    border-color: rgba(88, 72, 47, 0.34) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: 0 18px 44px rgba(68, 52, 31, 0.22) !important;
+  }
+
+  .theme-notebook .game-paper-modal h2,
+  .theme-notebook .game-paper-modal p,
+  .theme-notebook .game-paper-modal li,
+  .theme-notebook .game-manual-panel h2,
+  .theme-notebook .game-manual-panel p,
+  .theme-notebook .game-manual-panel li {
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .game-manual-button,
+  .theme-notebook .game-manual-close {
+    background: rgba(255, 250, 240, 0.94) !important;
+    border-color: rgba(88, 72, 47, 0.42) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: 0 1px 0 rgba(255,255,255,.72), 0 8px 18px rgba(68, 52, 31, 0.08) !important;
+  }
+
+  .theme-notebook .game-manual-section {
+    background: rgba(255, 250, 240, 0.84) !important;
+    border-color: rgba(88, 72, 47, 0.3) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: none !important;
+  }
+
+  .theme-notebook .game-manual-panel [class*="text-yellow"],
+  .theme-notebook .game-paper-modal [class*="text-yellow"],
+  .theme-notebook .game-paper-modal [class*="text-pink"],
+  .theme-notebook .game-paper-modal [class*="text-red"] {
+    color: var(--notebook-accent) !important;
+  }
+
+  .theme-notebook .game-manual-panel [class*="text-cyan"],
+  .theme-notebook .game-paper-modal [class*="text-cyan"] {
+    color: var(--notebook-blue) !important;
+  }
+
   .theme-notebook .theme-game-screen.youthpass-screen .youthpass-action-button,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-move-button,
   .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel button {
     background: rgba(255, 250, 240, 0.94) !important;
     border-color: rgba(88, 72, 47, 0.42) !important;
@@ -902,6 +960,7 @@
   }
 
   .theme-notebook .theme-game-screen.youthpass-screen .youthpass-action-button:hover,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-move-button:hover,
   .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel button:hover {
     background: rgba(124, 79, 36, 0.1) !important;
     border-color: rgba(124, 79, 36, 0.44) !important;
@@ -1016,6 +1075,143 @@
     color: var(--notebook-accent) !important;
   }
 
+  .theme-notebook .castle-screen .castle-board {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,255,255,0.46), transparent 13rem),
+      linear-gradient(180deg, rgba(255, 250, 240, 0.96), rgba(238, 229, 210, 0.94)) !important;
+    border-color: rgba(88, 72, 47, 0.42) !important;
+    box-shadow: 0 16px 34px rgba(68, 52, 31, 0.12) !important;
+  }
+
+  .theme-notebook .castle-screen .castle-tile {
+    background: rgba(255, 250, 240, 0.46) !important;
+    border-color: rgba(88, 72, 47, 0.14) !important;
+    box-shadow: none !important;
+  }
+
+  .theme-notebook .castle-screen .castle-tile[class*="bg-cyan-950"] {
+    background: rgba(56, 95, 115, 0.14) !important;
+    border-color: rgba(56, 95, 115, 0.3) !important;
+  }
+
+  .theme-notebook .castle-screen .castle-tile[class*="bg-emerald"],
+  .theme-notebook .castle-screen .castle-tile[class*="bg-green"] {
+    background: rgba(66, 107, 61, 0.12) !important;
+    border-color: rgba(66, 107, 61, 0.32) !important;
+  }
+
+  .theme-notebook .castle-screen .castle-tile[class*="bg-blue"] {
+    background: rgba(56, 95, 115, 0.1) !important;
+    border-color: rgba(56, 95, 115, 0.3) !important;
+  }
+
+  .theme-notebook .castle-screen .castle-level-button,
+  .theme-notebook .castle-screen .castle-dpad-center,
+  .theme-notebook .castle-screen .castle-room-label {
+    background: rgba(255, 250, 240, 0.9) !important;
+    border-color: rgba(88, 72, 47, 0.34) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: none !important;
+  }
+
+  .theme-notebook .castle-screen .castle-level-button[class*="bg-green"] {
+    background: rgba(66, 107, 61, 0.16) !important;
+    border-color: rgba(66, 107, 61, 0.46) !important;
+    color: var(--notebook-green) !important;
+  }
+
+  .theme-notebook .castle-screen .castle-board [class*="bg-yellow"],
+  .theme-notebook .castle-screen .castle-board [class*="bg-pink"],
+  .theme-notebook .castle-screen .castle-board [class*="bg-red"],
+  .theme-notebook .castle-screen .castle-board [class*="bg-blue-700"] {
+    color: inherit;
+  }
+
+  .theme-notebook .filadelfia-screen .filadelfia-control-button,
+  .theme-notebook .filadelfia-screen .filadelfia-country-list,
+  .theme-notebook .filadelfia-screen .filadelfia-protagonist-card,
+  .theme-notebook .filadelfia-screen .filadelfia-stage,
+  .theme-notebook .filadelfia-screen .filadelfia-story-scene,
+  .theme-notebook .filadelfia-screen .filadelfia-story-beat,
+  .theme-notebook .filadelfia-screen .filadelfia-dialogue-card,
+  .theme-notebook .filadelfia-screen .filadelfia-choice-card,
+  .theme-notebook .filadelfia-screen .filadelfia-side-panel,
+  .theme-notebook .filadelfia-screen .filadelfia-log-panel,
+  .theme-notebook .filadelfia-screen .filadelfia-log-entry,
+  .theme-notebook .filadelfia-screen .filadelfia-logic-panel,
+  .theme-notebook .filadelfia-screen .filadelfia-logic-card,
+  .theme-notebook .filadelfia-screen .filadelfia-logic-choice,
+  .theme-notebook .filadelfia-screen .filadelfia-character-chip,
+  .theme-notebook .filadelfia-screen .filadelfia-day-badge,
+  .theme-notebook .filadelfia-screen .filadelfia-meter-pips {
+    background: rgba(255, 250, 240, 0.9) !important;
+    border-color: rgba(88, 72, 47, 0.32) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: 0 10px 22px rgba(68, 52, 31, 0.08) !important;
+  }
+
+  .theme-notebook .filadelfia-screen .filadelfia-protagonist-card:hover,
+  .theme-notebook .filadelfia-screen .filadelfia-choice-card:hover {
+    background: rgba(66, 107, 61, 0.08) !important;
+    border-color: rgba(66, 107, 61, 0.42) !important;
+  }
+
+  .theme-notebook .filadelfia-screen .filadelfia-location-panel {
+    background:
+      radial-gradient(circle at 18% 0%, rgba(255,255,255,0.6), transparent 15rem),
+      linear-gradient(145deg, rgba(255, 250, 240, 0.95), rgba(238, 229, 210, 0.92)) !important;
+    border-color: rgba(88, 72, 47, 0.26) !important;
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .filadelfia-screen .filadelfia-location-grid {
+    background-image:
+      linear-gradient(rgba(86, 73, 52, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(86, 73, 52, 0.08) 1px, transparent 1px) !important;
+  }
+
+  .theme-notebook .filadelfia-screen .filadelfia-consequence-card {
+    background: rgba(56, 95, 115, 0.08) !important;
+    border-color: rgba(56, 95, 115, 0.28) !important;
+    color: var(--notebook-blue) !important;
+  }
+
+  .theme-notebook .filadelfia-screen .filadelfia-meter-track,
+  .theme-notebook .filadelfia-screen .filadelfia-meter-pip-track {
+    background: rgba(88, 72, 47, 0.16) !important;
+    border-color: rgba(88, 72, 47, 0.24) !important;
+  }
+
+  .theme-notebook .filadelfia-screen .filadelfia-logic-choice[class*="bg-green"],
+  .theme-notebook .filadelfia-screen .filadelfia-logic-card[class*="bg-green"] {
+    background: rgba(66, 107, 61, 0.12) !important;
+    border-color: rgba(66, 107, 61, 0.36) !important;
+  }
+
+  .theme-notebook .filadelfia-screen p,
+  .theme-notebook .filadelfia-screen h2,
+  .theme-notebook .filadelfia-screen span,
+  .theme-notebook .filadelfia-screen summary {
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .filadelfia-screen [class*="text-cyan"],
+  .theme-notebook .filadelfia-screen [class*="text-blue"] {
+    color: var(--notebook-blue) !important;
+  }
+
+  .theme-notebook .filadelfia-screen [class*="text-green"],
+  .theme-notebook .filadelfia-screen [class*="text-lime"],
+  .theme-notebook .filadelfia-screen [class*="text-emerald"] {
+    color: var(--notebook-green) !important;
+  }
+
+  .theme-notebook .filadelfia-screen [class*="text-pink"],
+  .theme-notebook .filadelfia-screen [class*="text-yellow"],
+  .theme-notebook .filadelfia-screen [class*="text-red"] {
+    color: var(--notebook-accent) !important;
+  }
+
   .theme-notebook .future-exchange-screen {
     color: var(--notebook-ink) !important;
   }
@@ -1077,9 +1273,15 @@
   .theme-notebook .future-exchange-screen .future-panel [class*="text-cyan"],
   .theme-notebook .future-exchange-screen .future-panel [class*="text-blue"],
   .theme-notebook .future-exchange-screen .future-panel [class*="text-sky"],
+  .theme-notebook .future-exchange-screen .future-panel [class*="text-indigo"],
+  .theme-notebook .future-exchange-screen .future-panel [class*="text-violet"],
   .theme-notebook .future-exchange-screen .future-card [class*="text-cyan"],
   .theme-notebook .future-exchange-screen .future-card [class*="text-blue"],
-  .theme-notebook .future-exchange-screen .future-card [class*="text-sky"] {
+  .theme-notebook .future-exchange-screen .future-card [class*="text-sky"],
+  .theme-notebook .future-exchange-screen .future-card [class*="text-indigo"],
+  .theme-notebook .future-exchange-screen .future-card [class*="text-violet"],
+  .theme-notebook .future-exchange-screen .future-mini-resource[class*="text-slate"],
+  .theme-notebook .future-exchange-screen .future-resource-card[class*="text-slate"] {
     color: var(--notebook-blue) !important;
   }
 

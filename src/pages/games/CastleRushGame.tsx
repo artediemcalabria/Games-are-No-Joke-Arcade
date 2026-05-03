@@ -295,7 +295,7 @@ export default function CastleRushGame() {
   const nextLevel = () => resetLevel(Math.min(level + 1, maxLevel));
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen pb-10 max-w-6xl mx-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen castle-screen pb-10 max-w-6xl mx-auto">
       <section className="arcade-border-pink glass-panel-pink rounded-xl p-4 md:p-5 mb-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
@@ -340,7 +340,7 @@ export default function CastleRushGame() {
 
           <div className="mx-auto w-full max-w-[min(720px,calc(100vw-2rem))]">
             <div
-              className="relative grid overflow-hidden rounded-xl border-2 border-cyan-400/60 bg-[#020617] shadow-[0_0_28px_rgba(0,242,255,.18)] touch-none"
+              className="castle-board relative grid overflow-hidden rounded-xl border-2 border-cyan-400/60 bg-[#020617] shadow-[0_0_28px_rgba(0,242,255,.18)] touch-none"
               style={{
                 gridTemplateColumns: `repeat(${levelData.grid.length}, minmax(0, 1fr))`,
                 aspectRatio: '1 / 1',
@@ -385,7 +385,7 @@ export default function CastleRushGame() {
                   key={levelNumber}
                   onClick={() => unlocked && resetLevel(levelNumber)}
                   disabled={!unlocked}
-                  className={`h-9 min-w-9 rounded border text-[10px] font-black ${level === levelNumber ? 'border-green-300 bg-green-300 text-black' : unlocked ? 'border-white/20 bg-black/50 text-gray-200 hover:border-cyan-300' : 'border-white/10 bg-black/20 text-gray-700'}`}
+                  className={`castle-level-button h-9 min-w-9 rounded border text-[10px] font-black ${level === levelNumber ? 'border-green-300 bg-green-300 text-black' : unlocked ? 'border-white/20 bg-black/50 text-gray-200 hover:border-cyan-300' : 'border-white/10 bg-black/20 text-gray-700'}`}
                   aria-label={`Start Castle Rush level ${levelNumber}`}
                 >
                   {levelNumber}
@@ -492,7 +492,7 @@ function Tile({ cell, isPlayer, isClock, isPathHint, collected, playerFlag }: { 
   const isRoom = cell === 'room' || cell === 'exit';
   const isDot = cell === 'dot' || cell === 'start';
   return (
-    <div className={`relative min-w-0 min-h-0 ${
+    <div className={`castle-tile relative min-w-0 min-h-0 ${
       isWall
         ? 'bg-cyan-950 border border-cyan-400/40 shadow-[inset_0_0_8px_rgba(0,242,255,.18)]'
         : isRoom
@@ -656,7 +656,7 @@ function ActivityRoomLayer({ room, tileCount, tick, visible }: { room: ActivityR
         height: `${room.height * cell}%`,
       }}
     >
-      <p className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[7px] font-black uppercase text-emerald-100">
+      <p className="castle-room-label absolute left-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[7px] font-black uppercase text-emerald-100">
         Activity Room
       </p>
       <div className="absolute left-[29%] top-[38%] h-[24%] w-[42%] rounded-full border-2 border-yellow-200/70 bg-yellow-900/20" />
@@ -711,7 +711,7 @@ function DPad({ onMove }: { onMove: (dx: number, dy: number) => void }) {
       <PadButton label="Up" onClick={() => onMove(0, -1)} />
       <span />
       <PadButton label="Left" onClick={() => onMove(-1, 0)} />
-      <div className="rounded-lg border border-white/10 bg-black/60 flex items-center justify-center">
+      <div className="castle-dpad-center rounded-lg border border-white/10 bg-black/60 flex items-center justify-center">
         <Gamepad2 className="w-5 h-5 text-gray-500" />
       </div>
       <PadButton label="Right" onClick={() => onMove(1, 0)} />
@@ -724,7 +724,7 @@ function DPad({ onMove }: { onMove: (dx: number, dy: number) => void }) {
 
 function PadButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="h-12 rounded-lg border border-cyan-400/50 bg-cyan-400/10 text-[10px] font-bold uppercase text-cyan-100 active:bg-cyan-400 active:text-black">
+    <button onClick={onClick} className="castle-control-button h-12 rounded-lg border border-cyan-400/50 bg-cyan-400/10 text-[10px] font-bold uppercase text-cyan-100 active:bg-cyan-400 active:text-black">
       {label}
     </button>
   );
@@ -733,8 +733,8 @@ function PadButton({ label, onClick }: { label: string; onClick: () => void }) {
 function Overlay({ title, tone, children }: { title: string; tone: 'pink' | 'green' | 'red'; children: ReactNode }) {
   const toneClass = tone === 'green' ? 'arcade-border-green' : tone === 'red' ? 'border-2 border-red-400 shadow-[0_0_16px_rgba(248,113,113,.45)]' : 'arcade-border-pink';
   return (
-    <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`${toneClass} bg-black/90 rounded-xl p-6 max-w-xl w-full text-center`}>
+    <div className="game-paper-overlay fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`game-paper-modal ${toneClass} bg-black/90 rounded-xl p-6 max-w-xl w-full text-center`}>
         <h2 className="text-xl sm:text-2xl font-arcade mobile-readable-arcade text-white">{title}</h2>
         <div className="mt-5">{children}</div>
       </motion.div>
