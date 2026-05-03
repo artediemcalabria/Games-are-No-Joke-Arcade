@@ -59,6 +59,16 @@ type DialogueLine = {
   text: string;
 };
 
+type StoryMoment = {
+  id: string;
+  timeLabel: string;
+  title: string;
+  location: string;
+  text: string;
+  dialogue: DialogueLine[];
+  tone: string;
+};
+
 type Choice = {
   id: string;
   label: string;
@@ -77,7 +87,7 @@ type StoryNode = {
   location: string;
   speaker: string;
   text: string;
-  dialogue: DialogueLine[];
+  moments: StoryMoment[];
   cast: string[];
   choices: Choice[];
 };
@@ -87,7 +97,7 @@ type StoryLogEntry = {
   nodeTitle: string;
   dayLabel: string;
   location: string;
-  dialogue: DialogueLine[];
+  moments: StoryMoment[];
   chosenAction: string;
   feedback: string;
   meterChanges: Partial<Meters>;
@@ -175,11 +185,34 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Rocco',
     text: '{you} reaches the stone courtyard with a backpack, a tired smile, and the first question: stay safe, or enter the group?',
     cast: ['Rocco', 'Emanuel', 'Sophie', 'Mihaela', 'Giuseppe', 'Buse Naz'],
-    dialogue: [
-      { speaker: 'Rocco', text: 'Welcome to Filadelfia. Put your luggage near the desk. The first circle starts soon.' },
-      { speaker: 'Sophie', text: 'First circle already? I know nobody yet. I hope the group is friendly.' },
-      { speaker: 'Emanuel', text: 'That is the first design challenge. Before we make games, we make a group where people can play.' },
-      { speaker: 'Mihaela', text: 'So the first move is not on a board. It is how we enter the room.' },
+    moments: [
+      {
+        id: 'arrival-courtyard',
+        timeLabel: 'Afternoon arrival',
+        title: 'Suitcases in the courtyard',
+        location: 'Stone Courtyard',
+        tone: 'Nervous and warm',
+        text: 'People arrive in small groups. Some hug friends. Some look for the right room. {you} hears many languages at the same time.',
+        dialogue: [
+          { speaker: 'Rocco', text: 'Welcome. Leave your bag near the desk. First, breathe. The week starts now, but nobody needs to be perfect.' },
+          { speaker: 'Sophie', text: 'I know no one yet. I am smiling too much because I am nervous.' },
+          { speaker: 'Mihaela', text: 'Same. Maybe we can be nervous together. That is already a small team.' },
+        ],
+      },
+      {
+        id: 'arrival-evening-circle',
+        timeLabel: 'Evening circle',
+        title: 'Names, mistakes, and first laughs',
+        location: 'Common Room',
+        tone: 'Informal start',
+        text: 'After dinner, Emanuel asks everyone to say their name and one thing they hope will happen this week.',
+        dialogue: [
+          { speaker: 'Emanuel', text: 'Before board games, we need a room where people can try, fail, and laugh safely.' },
+          { speaker: 'Giuseppe', text: 'My hope is simple: I want to understand the rules before I lose.' },
+          { speaker: 'Buse Naz', text: 'I hope we do not sit all week. A game should make us move at least sometimes.' },
+          { speaker: 'Narrator', text: '{you} notices who speaks fast, who waits, and who needs a softer invitation.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -220,12 +253,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Emanuel',
     text: 'Emanuel forms mixed teams. {you} sits with Sophie, Mihaela, Rasim Hamza, Cristina, and Gjoko. The team must choose a topic for a board game.',
     cast: ['Emanuel', 'Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Gjoko'],
-    dialogue: [
-      { speaker: 'Emanuel', text: 'Choose one real need. Not the most impressive topic. The one your rules can make players feel.' },
-      { speaker: 'Mihaela', text: 'Then I want inclusion. In groups, quiet people can disappear without anyone noticing.' },
-      { speaker: 'Rasim Hamza', text: 'For me it is misinformation. People move fast when they trust the wrong signal.' },
-      { speaker: 'Cristina', text: 'Maybe those are connected. What if the wrong signal makes the group ignore someone?' },
-      { speaker: 'Gjoko', text: 'That could become a rule, not only a discussion.' },
+    moments: [
+      {
+        id: 'circle-connect-breakfast',
+        timeLabel: 'Morning breakfast',
+        title: 'A table with too many cups',
+        location: 'Breakfast Room',
+        tone: 'Friendly and unsure',
+        text: 'The team meets before the workshop. Someone spills sugar. Someone translates a word. The table becomes less formal.',
+        dialogue: [
+          { speaker: 'Sophie', text: 'I can explain better with my hands than with English this morning.' },
+          { speaker: 'Mihaela', text: 'Use your hands. We will understand the idea first and fix the words later.' },
+          { speaker: 'Rasim Hamza', text: 'Good. My brain is still loading. Coffee is doing a software update.' },
+        ],
+      },
+      {
+        id: 'circle-connect-workshop',
+        timeLabel: 'Late morning workshop',
+        title: 'One topic from many needs',
+        location: 'Activity Room',
+        tone: 'Focused',
+        text: 'Emanuel asks the group to choose a real need, not just a nice title for a poster.',
+        dialogue: [
+          { speaker: 'Emanuel', text: 'Do not choose the loudest topic. Choose a need that your players can feel through a rule.' },
+          { speaker: 'Cristina', text: 'Inclusion and misinformation can meet. A wrong signal can make the group ignore someone.' },
+          { speaker: 'Gjoko', text: 'Then it can become an action in the game, not only a speech after the game.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -266,11 +320,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Narrator',
     text: '{you} understands the group dynamics, but the team has already started to move without a clear invitation.',
     cast: ['Emanuel', 'Kaotar', 'Elena', 'Ethan', 'Stefan', 'Loredana'],
-    dialogue: [
-      { speaker: 'Kaotar', text: 'We need to choose soon. If we keep opening ideas, we will never build anything.' },
-      { speaker: 'Elena', text: 'I have an idea, but I am not sure I can explain it in English.' },
-      { speaker: 'Ethan', text: 'Try with an example. We can help shape the words.' },
-      { speaker: 'Emanuel', text: 'Exactly. A complicated idea is welcome. A hidden idea cannot help the team.' },
+    moments: [
+      {
+        id: 'circle-distance-morning',
+        timeLabel: 'Morning workshop',
+        title: 'Good notes, quiet chair',
+        location: 'Activity Room',
+        tone: 'Careful',
+        text: '{you} writes useful notes, but the team is already speaking across the table.',
+        dialogue: [
+          { speaker: 'Kaotar', text: 'We need to choose soon. If we open ten ideas, we will build zero games.' },
+          { speaker: 'Elena', text: 'I have an idea, but I need an example. The words are slow today.' },
+          { speaker: 'Ethan', text: 'Slow is fine. Give us one story, not a perfect sentence.' },
+        ],
+      },
+      {
+        id: 'circle-distance-lunch',
+        timeLabel: 'Lunch break',
+        title: 'The seat beside Elena',
+        location: 'Lunch Table',
+        tone: 'Small repair',
+        text: 'At lunch, Elena sketches a small map on a napkin. It is clearer than the morning discussion.',
+        dialogue: [
+          { speaker: 'Elena', text: 'This is what I meant. One player has information, but another player pays the cost.' },
+          { speaker: 'Loredana', text: 'Now I see it. You needed paper, not more pressure.' },
+          { speaker: 'Narrator', text: '{you} can still help the idea enter the team before it is too late.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -311,11 +387,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Rocco',
     text: 'Rocco brings biscuits. {you} is comfortable, but the mixed team is forming on the other side of the room.',
     cast: ['Rocco', 'Claudia', 'Giuseppe', 'Buse Naz', 'Ognjen'],
-    dialogue: [
-      { speaker: 'Rocco', text: 'Coffee helps, but the team table is filling up. Do not let the project start without you.' },
-      { speaker: 'Buse Naz', text: 'I want the game to be funny first. If people laugh, they relax.' },
-      { speaker: 'Ognjen', text: 'I agree, but someone must hold the structure. Otherwise we will only have funny fragments.' },
-      { speaker: 'Giuseppe', text: 'Maybe the question is: who brings fun, and who checks if the fun teaches something?' },
+    moments: [
+      {
+        id: 'circle-familiar-coffee',
+        timeLabel: 'Morning coffee',
+        title: 'The easy corner',
+        location: 'Coffee Break Table',
+        tone: 'Comfortable',
+        text: 'The coffee table is warm and easy. People laugh about travel delays and try to remember names.',
+        dialogue: [
+          { speaker: 'Claudia', text: 'I already forgot three names. I may need name tags for the name tags.' },
+          { speaker: 'Giuseppe', text: 'Stay here. We have biscuits and no decisions.' },
+          { speaker: 'Rocco', text: 'Biscuits are useful, but the mixed team is filling up without you.' },
+        ],
+      },
+      {
+        id: 'circle-familiar-midday',
+        timeLabel: 'Before lunch',
+        title: 'The team starts without you',
+        location: 'Activity Room Door',
+        tone: 'Gentle pressure',
+        text: 'From the doorway, {you} sees a new group choosing roles. There is still one empty chair.',
+        dialogue: [
+          { speaker: 'Buse Naz', text: 'I want the game to be funny first. If people laugh, they relax.' },
+          { speaker: 'Ognjen', text: 'Yes, but someone must hold the structure, or we will only have funny fragments.' },
+          { speaker: 'Rocco', text: 'You can enter with a question. That is less heavy than entering with a full plan.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -356,11 +454,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Sophie',
     text: 'The team chooses a board game about inclusion and misinformation. Players must decide whom to trust, who to invite, and when to check a source.',
     cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Gjoko'],
-    dialogue: [
-      { speaker: 'Sophie', text: 'What if each player sees only part of the truth?' },
-      { speaker: 'Rasim Hamza', text: 'Then checking a source is not a quiz question. It becomes a move you choose.' },
-      { speaker: 'Mihaela', text: 'And if players ignore one person too long, the team should feel the cost.' },
-      { speaker: 'Cristina', text: 'So the board can ask: do we win faster alone, or better together?' },
+    moments: [
+      {
+        id: 'team-shared-morning',
+        timeLabel: 'Morning build',
+        title: 'Paper everywhere',
+        location: 'Workshop Table',
+        tone: 'Busy and shared',
+        text: 'The table fills with paper arrows, coins, and half-written cards. Nobody owns the whole idea, and that makes the work slower but richer.',
+        dialogue: [
+          { speaker: 'Sophie', text: 'What if each player sees only part of the information?' },
+          { speaker: 'Rasim Hamza', text: 'Then checking a source is not a quiz. It is a move you choose when you feel pressure.' },
+          { speaker: 'Mihaela', text: 'And if players ignore one person too long, the team should feel the cost.' },
+        ],
+      },
+      {
+        id: 'team-shared-evening',
+        timeLabel: 'After dinner',
+        title: 'The rule on the napkin',
+        location: 'Courtyard Steps',
+        tone: 'Relaxed discovery',
+        text: 'The team stops working, but the game follows them outside. Cristina draws a turn order on a napkin while people share snacks.',
+        dialogue: [
+          { speaker: 'Cristina', text: 'Maybe the question is simple: do we win faster alone, or better together?' },
+          { speaker: 'Gjoko', text: 'That is a good rule. Also, this napkin is now official project material.' },
+          { speaker: 'Narrator', text: '{you} sees that informal time can carry the project too.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -401,11 +521,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Narrator',
     text: '{you} writes a strong rule structure. The team watches and helps a little. Slowly, they become an audience.',
     cast: ['Kiril', 'Hatche', 'Liviu', 'Claudia', 'Mehmet Emin'],
-    dialogue: [
-      { speaker: 'Kiril', text: 'The rule system is clear. I can follow it. But where do we put our ideas?' },
-      { speaker: 'Hatche', text: 'Maybe we should touch the prototype before it becomes too finished.' },
-      { speaker: 'Liviu', text: 'If only one person can explain the rules, players will depend on that person too.' },
-      { speaker: 'Mehmet Emin', text: 'So the first test is not only for the game. It is for the team.' },
+    moments: [
+      {
+        id: 'team-solo-morning',
+        timeLabel: 'Morning build',
+        title: 'One notebook, many eyes',
+        location: 'Quiet Corner',
+        tone: 'Productive but tight',
+        text: '{you} writes fast. The rules become clearer, but the table becomes quieter.',
+        dialogue: [
+          { speaker: 'Kiril', text: 'I can follow the rule system. I just do not know where my idea can enter.' },
+          { speaker: 'Hatche', text: 'Can we touch the prototype before it becomes too finished?' },
+          { speaker: 'Mehmet Emin', text: 'If only one person can explain it, players will depend on that person too.' },
+        ],
+      },
+      {
+        id: 'team-solo-evening',
+        timeLabel: 'Evening walk',
+        title: 'The quiet walk back',
+        location: 'Street Outside the Borgo',
+        tone: 'Tired and honest',
+        text: 'After dinner, the group walks back from the small square. Nobody argues, but nobody talks about the game either.',
+        dialogue: [
+          { speaker: 'Liviu', text: 'The board may be ready tomorrow. I am less sure about us.' },
+          { speaker: 'Claudia', text: 'Maybe people are silent because they agree. Or maybe they are tired of asking.' },
+          { speaker: 'Narrator', text: '{you} still has time to open the notebook to the team.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -446,11 +588,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Buse Naz',
     text: 'The team creates fast challenges, jokes, and silly penalties. People laugh, but Emanuel asks where the youth-work learning sits inside the rules.',
     cast: ['Buse Naz', 'Ethan', 'Stefan', 'Loredana', 'Emanuel'],
-    dialogue: [
-      { speaker: 'Ethan', text: 'People will run, laugh, and shout. This will wake up the whole room.' },
-      { speaker: 'Buse Naz', text: 'Good. I do not want another serious poster with rules.' },
-      { speaker: 'Loredana', text: 'I like the energy, but what will players understand after the laughing stops?' },
-      { speaker: 'Emanuel', text: 'Do not remove the fun. Give the fun a job.' },
+    moments: [
+      {
+        id: 'team-fun-morning',
+        timeLabel: 'Morning energy',
+        title: 'The loud prototype',
+        location: 'Courtyard Table',
+        tone: 'Playful',
+        text: 'The table becomes loud quickly. People test silly penalties before the rules are written.',
+        dialogue: [
+          { speaker: 'Ethan', text: 'If people run, laugh, and shout, nobody will sleep through our game.' },
+          { speaker: 'Buse Naz', text: 'Good. I do not want another serious poster pretending to be a game.' },
+          { speaker: 'Stefan', text: 'I volunteer to test any rule that includes dramatic failure.' },
+        ],
+      },
+      {
+        id: 'team-fun-late',
+        timeLabel: 'Late afternoon',
+        title: 'The laugh after the laugh',
+        location: 'Activity Room Window',
+        tone: 'Playful with doubt',
+        text: 'The jokes still work, but Loredana watches the paper cards and asks what players will remember tomorrow.',
+        dialogue: [
+          { speaker: 'Loredana', text: 'I like the energy. I just cannot see the learning yet.' },
+          { speaker: 'Emanuel', text: 'Do not remove the fun. Give the fun a job inside the rule.' },
+          { speaker: 'Narrator', text: '{you} can protect the laughter or help it carry a clearer message.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -491,11 +655,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Tester',
     text: 'Mihaela and Sophie test the first round. A player is blocked for three turns and says the game feels unfair.',
     cast: ['Mihaela', 'Sophie', 'Gjoko', 'Cristina', 'Emanuel'],
-    dialogue: [
-      { speaker: 'Sophie', text: 'I understand the topic, but on my turn I do not know what choice I have.' },
-      { speaker: 'Gjoko', text: 'Maybe that is because the blocked player can only wait.' },
-      { speaker: 'Mihaela', text: 'Then the game is repeating exclusion instead of helping players notice it.' },
-      { speaker: 'Emanuel', text: 'That is useful feedback. What rule would let a player repair the situation?' },
+    moments: [
+      {
+        id: 'prototype-playtest-morning',
+        timeLabel: 'Morning test',
+        title: 'The first round breaks',
+        location: 'Activity Room Floor',
+        tone: 'Useful tension',
+        text: 'The team sits on the floor with paper cards. The first player gets blocked and cannot do anything for three turns.',
+        dialogue: [
+          { speaker: 'Sophie', text: 'I understand the topic, but on my turn I do not know what choice I have.' },
+          { speaker: 'Gjoko', text: 'Maybe that is the problem. The blocked player can only wait.' },
+          { speaker: 'Mihaela', text: 'Then we are repeating exclusion, not helping players notice it.' },
+        ],
+      },
+      {
+        id: 'prototype-playtest-evening',
+        timeLabel: 'Evening debrief',
+        title: 'Feedback over cold pizza',
+        location: 'Common Room',
+        tone: 'Tired but open',
+        text: 'The team eats leftover pizza and talks about the test. The unfair rule is still annoying, but now everyone can see it.',
+        dialogue: [
+          { speaker: 'Cristina', text: 'I was frustrated during the test, but that frustration gave us information.' },
+          { speaker: 'Emanuel', text: 'Good feedback is not always polite. Ask what the discomfort is showing you.' },
+          { speaker: 'Narrator', text: '{you} can treat the conflict as data, defend the rule, or postpone the tension.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -536,11 +722,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Giuseppe',
     text: 'The board has colors, icons, and a name. Then Giuseppe tries one turn and asks what he is allowed to do.',
     cast: ['Giuseppe', 'Kaotar', 'Stasa', 'Stefan', 'Emanuel'],
-    dialogue: [
-      { speaker: 'Giuseppe', text: 'The board looks finished, but when I start, I do not see my real choice.' },
-      { speaker: 'Kaotar', text: 'Maybe there are too many cards. The player is reading more than deciding.' },
-      { speaker: 'Stasa', text: 'Can we remove half of it and test only one round?' },
-      { speaker: 'Emanuel', text: 'Yes. Beauty can wait. First, make the player action visible.' },
+    moments: [
+      {
+        id: 'prototype-polish-morning',
+        timeLabel: 'Morning table',
+        title: 'A board that looks finished',
+        location: 'Workshop Table',
+        tone: 'Proud and uncertain',
+        text: 'The board has colors, icons, and a title. It looks ready from far away. Up close, the first turn is still unclear.',
+        dialogue: [
+          { speaker: 'Giuseppe', text: 'It looks finished, but when I start, I do not know what I am allowed to do.' },
+          { speaker: 'Kaotar', text: 'Maybe there are too many cards. The player is reading more than deciding.' },
+          { speaker: 'Stasa', text: 'Can we remove half of it and test only one round?' },
+        ],
+      },
+      {
+        id: 'prototype-polish-night',
+        timeLabel: 'After dinner',
+        title: 'The beautiful box',
+        location: 'Materials Table',
+        tone: 'Tempted',
+        text: 'Someone finds better markers and a small box for the cards. The prototype suddenly looks more official than it feels.',
+        dialogue: [
+          { speaker: 'Stefan', text: 'If the box looks professional, maybe people will trust the rules.' },
+          { speaker: 'Emanuel', text: 'A nice box can help later. First, make the player action clear.' },
+          { speaker: 'Narrator', text: '{you} can cut the game back, hide the weak part, or invite players to fix it.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -581,11 +789,32 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Narrator',
     text: 'After dinner, {you} keeps working alone. The prototype becomes complete, but the empty chairs around the table become part of the story.',
     cast: ['Rocco', 'Liviu', 'Claudia', 'Kiril'],
-    dialogue: [
-      { speaker: 'Rocco', text: 'Still working? I admire the effort. But remember, this course is not only about having an object tomorrow.' },
-      { speaker: 'Liviu', text: 'I can test one round if you want. But I do not know what your team agreed on.' },
-      { speaker: 'Claudia', text: 'The rules are clear when you explain them. I am not sure the team can explain them without you.' },
-      { speaker: 'Kiril', text: 'Maybe the question is not: is it finished? Maybe it is: who can carry it?' },
+    moments: [
+      {
+        id: 'prototype-alone-after-dinner',
+        timeLabel: 'After dinner',
+        title: 'The empty chairs',
+        location: 'Common Room',
+        tone: 'Quiet pressure',
+        text: '{you} keeps working after the others leave. The board becomes clearer, but the chairs around the table stay empty.',
+        dialogue: [
+          { speaker: 'Rocco', text: 'Still working? I admire the effort. But this week is not only about having an object tomorrow.' },
+          { speaker: 'Liviu', text: 'I can test one round if you want. I just do not know what your team agreed on.' },
+          { speaker: 'Claudia', text: 'The rules are clear when you explain them. Can the team explain them without you?' },
+        ],
+      },
+      {
+        id: 'prototype-alone-late-night',
+        timeLabel: 'Late night',
+        title: 'The message in the group chat',
+        location: 'Dorm Corridor',
+        tone: 'Vulnerable',
+        text: 'The corridor is quiet. A message to the team chat is still unwritten: "I need help, not perfection."',
+        dialogue: [
+          { speaker: 'Kiril', text: 'Maybe the question is not: is it finished? Maybe it is: who can carry it?' },
+          { speaker: 'Narrator', text: '{you} can invite a late test, finish alone, or admit the work is stuck.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -626,11 +855,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Cristina',
     text: 'The team names the conflict: some players have power, others wait. Now the board game can change.',
     cast: ['Cristina', 'Mihaela', 'Sophie', 'Gjoko', 'Emanuel'],
-    dialogue: [
-      { speaker: 'Cristina', text: 'The unfair part is uncomfortable, but it helped us see the real topic.' },
-      { speaker: 'Sophie', text: 'I do not want players to only feel stuck. I want them to have a way to respond.' },
-      { speaker: 'Gjoko', text: 'Then we need a repair move. A player can spend a turn to bring someone back.' },
-      { speaker: 'Emanuel', text: 'Now the rule carries the message: exclusion is visible, and repair is possible.' },
+    moments: [
+      {
+        id: 'conflict-listen-morning',
+        timeLabel: 'Morning repair',
+        title: 'Naming the unfair part',
+        location: 'Courtyard',
+        tone: 'Honest',
+        text: 'The team sits outside because the activity room feels too hot. The conflict sounds less scary in fresh air.',
+        dialogue: [
+          { speaker: 'Cristina', text: 'The unfair part was uncomfortable, but it helped us see the real topic.' },
+          { speaker: 'Sophie', text: 'I do not want players to only feel stuck. I want them to have a way to respond.' },
+          { speaker: 'Gjoko', text: 'Then we need a repair move. A player can spend a turn to bring someone back.' },
+        ],
+      },
+      {
+        id: 'conflict-listen-afternoon',
+        timeLabel: 'Late afternoon',
+        title: 'Testing the repair move',
+        location: 'Activity Room Floor',
+        tone: 'Careful hope',
+        text: 'The team tries the new repair move. The game is still rough, but the blocked player can act again.',
+        dialogue: [
+          { speaker: 'Mihaela', text: 'Now the hard feeling has a door out. That changes everything.' },
+          { speaker: 'Emanuel', text: 'Exactly. The rule carries the message: exclusion is visible, and repair is possible.' },
+          { speaker: 'Narrator', text: '{you} can strengthen the repair move or keep the painful rule as a lesson.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -662,11 +913,32 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Kiril',
     text: 'The team follows the rules, but nobody argues anymore. That silence is not agreement.',
     cast: ['Kiril', 'Hatche', 'Mehmet Emin', 'Buse Naz'],
-    dialogue: [
-      { speaker: 'Kiril', text: 'I can present the rulebook, but I do not feel this is our game.' },
-      { speaker: 'Hatche', text: 'I stopped suggesting changes because every change felt like a problem.' },
-      { speaker: 'Mehmet Emin', text: 'The game is controlled, yes. But controlled by whom?' },
-      { speaker: 'Buse Naz', text: 'It needs life. Right now players may follow it, but not care about it.' },
+    moments: [
+      {
+        id: 'conflict-control-morning',
+        timeLabel: 'Morning build',
+        title: 'A quiet table',
+        location: 'Workshop Table',
+        tone: 'Controlled',
+        text: 'The team follows the rulebook. The board moves forward, but nobody suggests changes anymore.',
+        dialogue: [
+          { speaker: 'Kiril', text: 'I can present the rulebook, but I do not feel this is our game.' },
+          { speaker: 'Hatche', text: 'I stopped suggesting changes because every change felt like a problem.' },
+          { speaker: 'Mehmet Emin', text: 'The game is controlled, yes. But controlled by whom?' },
+        ],
+      },
+      {
+        id: 'conflict-control-dinner',
+        timeLabel: 'Dinner',
+        title: 'Polite silence',
+        location: 'Dinner Table',
+        tone: 'Distant',
+        text: 'At dinner, the group talks about music and travel. Nobody mentions the prototype until Buse Naz pushes her plate away.',
+        dialogue: [
+          { speaker: 'Buse Naz', text: 'It needs life. Right now players may follow it, but not care about it.' },
+          { speaker: 'Narrator', text: '{you} can give the next decision back to the team, or protect the final form.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -698,11 +970,32 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Loredana',
     text: 'The team tries to relax, but the same problem returns during dinner. Someone says they do not want to present tomorrow.',
     cast: ['Loredana', 'Elena', 'Ognjen', 'Rocco'],
-    dialogue: [
-      { speaker: 'Loredana', text: 'I do not want to stand tomorrow and explain a game I do not believe in.' },
-      { speaker: 'Elena', text: 'We tried to be polite, but we never solved the problem.' },
-      { speaker: 'Ognjen', text: 'If we speak now, maybe we lose time. If we do not speak, maybe we lose the team.' },
-      { speaker: 'Rocco', text: 'You still have tonight. Use it for honesty, not panic.' },
+    moments: [
+      {
+        id: 'conflict-avoid-afternoon',
+        timeLabel: 'Late afternoon',
+        title: 'The problem waits',
+        location: 'Workshop Door',
+        tone: 'Uneasy',
+        text: 'The team packs materials quickly. The disagreement is not solved, but everyone acts like the next task will fix it.',
+        dialogue: [
+          { speaker: 'Elena', text: 'We said we would speak later. Later is becoming very close.' },
+          { speaker: 'Ognjen', text: 'If we speak now, maybe we lose time. If we do not speak, maybe we lose the team.' },
+        ],
+      },
+      {
+        id: 'conflict-avoid-dinner',
+        timeLabel: 'Dinner',
+        title: 'The sentence nobody wanted',
+        location: 'Dinner Table',
+        tone: 'Direct',
+        text: 'The same problem returns during dinner. The plates are still full when Loredana says she may not present tomorrow.',
+        dialogue: [
+          { speaker: 'Loredana', text: 'I do not want to stand tomorrow and explain a game I do not believe in.' },
+          { speaker: 'Rocco', text: 'You still have tonight. Use it for honesty, not panic.' },
+          { speaker: 'Narrator', text: '{you} can host a real conversation or smooth things over again.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -734,11 +1027,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Narrator',
     text: 'The team cuts rules, tests again, and adds one clear reflection question. The board is simple, but everyone can explain why it exists.',
     cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Gjoko'],
-    dialogue: [
-      { speaker: 'Sophie', text: 'Now each turn has a real choice: move faster alone, or help someone re-enter the game.' },
-      { speaker: 'Rasim Hamza', text: 'And checking information costs time, but protects group trust.' },
-      { speaker: 'Cristina', text: 'So the system creates tension without punishing only one player.' },
-      { speaker: 'Mihaela', text: 'This finally feels like our project, not only our topic.' },
+    moments: [
+      {
+        id: 'night-repair-evening',
+        timeLabel: 'After dinner',
+        title: 'Cutting the game smaller',
+        location: 'Common Room',
+        tone: 'Focused relief',
+        text: 'The team removes cards, crosses out rules, and keeps only the strongest player choice.',
+        dialogue: [
+          { speaker: 'Sophie', text: 'Now each turn has a real choice: move faster alone, or help someone re-enter the game.' },
+          { speaker: 'Rasim Hamza', text: 'Checking information costs time, but it protects group trust.' },
+          { speaker: 'Cristina', text: 'Good. The tension is still there, but one player is not punished forever.' },
+        ],
+      },
+      {
+        id: 'night-repair-late',
+        timeLabel: 'Late night',
+        title: 'Everyone can explain it',
+        location: 'Common Room Sofa',
+        tone: 'Tired and proud',
+        text: 'The board is simple now. People are tired, but each person can explain one part without looking at {you}.',
+        dialogue: [
+          { speaker: 'Mihaela', text: 'This finally feels like our project, not only our topic.' },
+          { speaker: 'Gjoko', text: 'Also, we should sleep before we improve it into a disaster.' },
+          { speaker: 'Narrator', text: '{you} can present as a team or lead while clearly crediting the others.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -770,11 +1085,32 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Narrator',
     text: '{you} has a playable board. The pieces are aligned. The rulebook is ready. The team is not.',
     cast: ['Claudia', 'Kiril', 'Hatche', 'Rocco'],
-    dialogue: [
-      { speaker: 'Claudia', text: 'I can help present the board, but I do not know why every rule is there.' },
-      { speaker: 'Kiril', text: 'The work is good. I just wish the work had included us earlier.' },
-      { speaker: 'Hatche', text: 'Maybe tomorrow we should say that honestly. It is part of the learning.' },
-      { speaker: 'Rocco', text: 'A complete board is not always a complete project. But honest reflection can still save the lesson.' },
+    moments: [
+      {
+        id: 'night-solo-evening',
+        timeLabel: 'Evening setup',
+        title: 'The board is ready',
+        location: 'Activity Room',
+        tone: 'Impressive but lonely',
+        text: '{you} aligns the pieces and checks the rulebook. The object is ready. The group story is not.',
+        dialogue: [
+          { speaker: 'Claudia', text: 'I can help present the board, but I do not know why every rule is there.' },
+          { speaker: 'Kiril', text: 'The work is good. I just wish the work had included us earlier.' },
+          { speaker: 'Hatche', text: 'Maybe tomorrow we should say that honestly. It is part of the learning.' },
+        ],
+      },
+      {
+        id: 'night-solo-late',
+        timeLabel: 'Late night',
+        title: 'Honesty or easy theatre',
+        location: 'Empty Activity Room',
+        tone: 'Heavy choice',
+        text: 'The room is quiet. It would be easy to present the prototype as a group success. It would also be false.',
+        dialogue: [
+          { speaker: 'Rocco', text: 'A complete board is not always a complete project. Honest reflection can still save the lesson.' },
+          { speaker: 'Narrator', text: '{you} can name the solo process or hide it behind a clean presentation.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -806,11 +1142,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Emanuel',
     text: 'The team admits the game may not fully work. Emanuel does not rescue the prototype. He helps the group rescue the learning.',
     cast: ['Emanuel', 'Elena', 'Loredana', 'Ognjen', 'Rocco'],
-    dialogue: [
-      { speaker: 'Emanuel', text: 'If the prototype is weak, do not pretend it is strong. Ask what the weakness teaches.' },
-      { speaker: 'Elena', text: 'Then our reflection can ask: where did the system fail the players?' },
-      { speaker: 'Loredana', text: 'That feels risky, but more honest than selling a game we do not trust.' },
-      { speaker: 'Ognjen', text: 'We can show one broken round, then ask players to redesign the rule with us.' },
+    moments: [
+      {
+        id: 'night-honest-evening',
+        timeLabel: 'After dinner',
+        title: 'The honest table',
+        location: 'Common Room',
+        tone: 'Brave and nervous',
+        text: 'The team admits the game may not work tomorrow. Nobody celebrates, but nobody pretends either.',
+        dialogue: [
+          { speaker: 'Emanuel', text: 'If the prototype is weak, do not pretend it is strong. Ask what the weakness teaches.' },
+          { speaker: 'Elena', text: 'Then our reflection can ask: where did the system fail the players?' },
+          { speaker: 'Loredana', text: 'That feels risky, but more honest than selling a game we do not trust.' },
+        ],
+      },
+      {
+        id: 'night-honest-late',
+        timeLabel: 'Late night',
+        title: 'A failure that can teach',
+        location: 'Kitchen Doorway',
+        tone: 'Calm acceptance',
+        text: 'The team makes tea and writes one sentence on the box: "Help us fix this rule."',
+        dialogue: [
+          { speaker: 'Ognjen', text: 'We can show one broken round, then ask players to redesign the rule with us.' },
+          { speaker: 'Rocco', text: 'That is not a perfect game. It can still be a strong learning moment.' },
+          { speaker: 'Narrator', text: '{you} can show the failure openly or hide it and speak more than players play.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -842,10 +1200,33 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     speaker: 'Narrator',
     text: 'All teams gather. Chairs make a circle. Emanuel invites the final reflection. The board game is on the table, and the path behind it is now visible.',
     cast: ['Emanuel', 'Rocco', 'All Participants'],
-    dialogue: [
-      { speaker: 'Emanuel', text: 'When you present, show the rule, the player choice, and the feeling it creates.' },
-      { speaker: 'Rocco', text: 'After the showcase we move to YouthPass reflection. So let the last play tell the truth.' },
-      { speaker: 'Narrator', text: 'The board is on the table. The team stands around it. The story now becomes visible.' },
+    moments: [
+      {
+        id: 'showcase-morning',
+        timeLabel: 'Morning setup',
+        title: 'Tape, chairs, and nervous hands',
+        location: 'Activity Room',
+        tone: 'Anticipation',
+        text: 'All teams prepare their tables. Someone fixes tape. Someone practices the first sentence. Everyone looks at the door when new players arrive.',
+        dialogue: [
+          { speaker: 'Emanuel', text: 'When you present, show the rule, the player choice, and the feeling it creates.' },
+          { speaker: 'Rocco', text: 'Do not perform perfection. Let people see the learning inside the game.' },
+          { speaker: 'Narrator', text: '{you} places the board on the table and remembers the path behind it.' },
+        ],
+      },
+      {
+        id: 'showcase-after',
+        timeLabel: 'After the showcase',
+        title: 'The circle after play',
+        location: 'Activity Room Circle',
+        tone: 'Reflective',
+        text: 'The last players stand up. Chairs move into a circle again. The board is still on the table, but now the process is visible too.',
+        dialogue: [
+          { speaker: 'Emanuel', text: 'Now tell us what the players could feel, not only what they could win.' },
+          { speaker: 'Rocco', text: 'After this, we move to YouthPass reflection. Let the last play tell the truth.' },
+          { speaker: 'Narrator', text: '{you} has one final choice: present, sell the fun, or invite others to co-design the last rule.' },
+        ],
+      },
     ],
     choices: [
       {
@@ -970,7 +1351,7 @@ export default function FiladelfiaStoryGame() {
       nodeTitle: node.title,
       dayLabel: node.dayLabel,
       location: node.location,
-      dialogue: node.dialogue,
+      moments: node.moments,
       chosenAction: choice.id,
       feedback: choice.feedback,
       meterChanges: choice.effects,
@@ -1115,7 +1496,7 @@ function ProtagonistSelect({ onStart }: { onStart: (profile: PlayerProfile) => v
           <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Choose Your Participant</p>
           <h2 className="mt-3 text-xl md:text-2xl font-arcade mobile-readable-arcade text-white">One week. One team. One board game.</h2>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-300">
-            Choose a participant, edit the starting profile, and begin the story. Use exactly 20 points. Each meter can receive at most 10 points.
+            Choose a participant, shape how this person usually acts at the start of the story, and begin the week. Use exactly 20 points. Each meter can receive at most 10 points.
           </p>
         </div>
         <div className="filadelfia-country-list rounded-xl border border-white/10 bg-black/50 p-3 text-xs text-gray-300">
@@ -1159,9 +1540,12 @@ function ProtagonistSelect({ onStart }: { onStart: (profile: PlayerProfile) => v
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.8fr)]">
         <div className="rounded-xl border border-white/10 bg-black/35 p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs font-black uppercase tracking-widest text-green-300">Step 2 - Build the profile</p>
+            <p className="text-xs font-black uppercase tracking-widest text-green-300">Step 2 - Shape this participant</p>
             <p className={`text-xs font-black uppercase ${pointsLeft === 0 ? 'text-green-300' : 'text-yellow-300'}`}>Points left: {pointsLeft}</p>
           </div>
+          <p className="mt-2 text-xs font-bold leading-relaxed text-gray-300">
+            These points describe how {profile.name} usually acts at the start of the story, not the quality of the project.
+          </p>
           <div className="mt-4 space-y-3">
             {meterKeys.map((key) => (
               <div key={key} className="rounded-lg border border-white/10 bg-black/45 p-3">
@@ -1245,15 +1629,29 @@ function StoryStage({
             <p className="mt-2 text-sm leading-relaxed text-gray-100">{formatText(storyBeat(node.id), protagonist)}</p>
           </div>
 
-          <div className="mt-4 space-y-2">
-            {node.dialogue.map((line, index) => (
-              <div key={`${line.speaker}-${index}`} className="filadelfia-dialogue-card rounded-lg border border-white/10 bg-black/55 p-3">
-                <div className="flex items-start gap-3">
-                  <Avatar name={line.speaker} tone={line.speaker === protagonist.name || line.speaker === 'Narrator' ? 'bg-green-300' : 'bg-cyan-300'} />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-cyan-300">{line.speaker}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-gray-100">"{formatText(line.text, protagonist)}"</p>
+          <div className="mt-4 space-y-3">
+            {node.moments.map((moment) => (
+              <div key={moment.id} className="filadelfia-story-moment rounded-lg border border-white/10 bg-black/45 p-3">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-green-300">{moment.timeLabel}</p>
+                    <h3 className="mt-1 text-sm font-black text-white">{moment.title}</h3>
+                    <p className="mt-1 text-[10px] font-bold uppercase text-gray-500">{moment.location} - {moment.tone}</p>
                   </div>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-gray-200">{formatText(moment.text, protagonist)}</p>
+                <div className="mt-3 space-y-2">
+                  {moment.dialogue.map((line, index) => (
+                    <div key={`${moment.id}-${line.speaker}-${index}`} className="filadelfia-dialogue-card rounded-lg border border-white/10 bg-black/50 p-3">
+                      <div className="flex items-start gap-3">
+                        <Avatar name={line.speaker} tone={line.speaker === protagonist.name || line.speaker === 'Narrator' ? 'bg-green-300' : 'bg-cyan-300'} />
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-cyan-300">{line.speaker}</p>
+                          <p className="mt-1 text-sm leading-relaxed text-gray-100">"{formatText(line.text, protagonist)}"</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -1395,11 +1793,19 @@ function StoryLogPanel({ storyLog, protagonist, compact = false }: { storyLog: S
         <div key={`${entry.nodeId}-${entry.chosenAction}-${index}`} className="filadelfia-log-entry rounded-lg border border-white/10 bg-black/45 p-3">
           <p className="text-[10px] font-bold uppercase text-cyan-200">{entry.dayLabel} - {entry.nodeTitle}</p>
           <p className="text-[10px] text-gray-500">{entry.location}</p>
-          <div className="mt-2 space-y-1">
-            {entry.dialogue.map((line, lineIndex) => (
-              <p key={`${line.speaker}-${lineIndex}`} className="text-xs leading-relaxed text-gray-300">
-                <span className="font-bold text-white">{line.speaker}:</span> "{formatText(line.text, protagonist)}"
-              </p>
+          <div className="mt-2 space-y-2">
+            {entry.moments.map((moment) => (
+              <div key={`${entry.nodeId}-${moment.id}`} className="rounded border border-white/10 bg-black/25 p-2">
+                <p className="text-[10px] font-black uppercase text-green-300">{moment.timeLabel} - {moment.title}</p>
+                <p className="mt-1 text-[10px] leading-relaxed text-gray-400">{formatText(moment.text, protagonist)}</p>
+                <div className="mt-2 space-y-1">
+                  {moment.dialogue.map((line, lineIndex) => (
+                    <p key={`${moment.id}-${line.speaker}-${lineIndex}`} className="text-xs leading-relaxed text-gray-300">
+                      <span className="font-bold text-white">{line.speaker}:</span> "{formatText(line.text, protagonist)}"
+                    </p>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
           <p className="mt-2 text-sm font-bold text-white">Choice: {choiceLabel(entry.chosenAction)}</p>
@@ -1703,11 +2109,11 @@ function meterLabel(key: MeterKey) {
 
 function meterHelp(key: MeterKey) {
   const labels: Record<MeterKey, string> = {
-    trust: 'People feel safe to join and share.',
-    clarity: 'Rules and next steps are easy to understand.',
-    inclusion: 'Quiet or unsure people are invited into the work.',
-    energy: 'The group has movement, fun, and motivation.',
-    learning: 'The game connects play with a clear youth-work lesson.',
+    trust: 'This participant helps people feel safe to join and share.',
+    clarity: 'This participant makes rules and next steps easier to understand.',
+    inclusion: 'This participant notices quiet people and invites them into the work.',
+    energy: 'This participant brings movement, fun, and motivation to the group.',
+    learning: 'This participant connects play with a clear youth-work lesson.',
   };
   return labels[key];
 }
