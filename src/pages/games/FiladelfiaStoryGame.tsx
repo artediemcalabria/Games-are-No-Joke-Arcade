@@ -6,7 +6,8 @@ import { useStore } from '../../store/useStore';
 
 type MeterKey = 'trust' | 'clarity' | 'inclusion' | 'energy' | 'learning';
 type Meters = Record<MeterKey, number>;
-type ProtagonistId = 'andrea' | 'slave' | 'ivalina';
+type FeaturedProfileId = 'andrea' | 'slave' | 'ivy';
+type ProfilePoints = Record<MeterKey, number>;
 type StoryNodeId =
   | 'arrival'
   | 'circle-connect'
@@ -38,12 +39,19 @@ type Participant = {
   country: string;
 };
 
-type Protagonist = Participant & {
-  id: ProtagonistId;
+type ProfileTemplate = Participant & {
+  id: FeaturedProfileId;
+  points: ProfilePoints;
+};
+
+type PlayerProfile = Participant & {
+  id: string;
   trait: string;
   risk: string;
   opening: string;
-  initialBoost: Partial<Meters>;
+  points: ProfilePoints;
+  strongestMeter: MeterKey;
+  riskMeter: MeterKey;
 };
 
 type DialogueLine = {
@@ -102,37 +110,33 @@ const initialMeters: Meters = {
   trust: 50,
   clarity: 50,
   inclusion: 50,
-  energy: 62,
-  learning: 45,
+  energy: 50,
+  learning: 50,
 };
 
-const protagonists: Record<ProtagonistId, Protagonist> = {
+const meterKeys: MeterKey[] = ['trust', 'clarity', 'inclusion', 'energy', 'learning'];
+const profilePointBudget = 20;
+const maxProfilePointsPerMeter = 10;
+const defaultProfilePoints: ProfilePoints = { trust: 4, clarity: 4, inclusion: 4, energy: 4, learning: 4 };
+
+const featuredProfiles: Record<FeaturedProfileId, ProfileTemplate> = {
   andrea: {
     id: 'andrea',
     name: 'Andrea',
     country: 'France',
-    trait: 'Creative and social',
-    risk: 'Can chase fun and lose the learning message.',
-    opening: 'Andrea arrives with jokes, ideas, and a strong wish to make people play fast.',
-    initialBoost: { energy: 8, trust: 4 },
+    points: { trust: 6, clarity: 0, inclusion: 4, energy: 10, learning: 0 },
   },
   slave: {
     id: 'slave',
     name: 'Slave',
     country: 'N. Macedonia',
-    trait: 'Analytical and structured',
-    risk: 'Can control the prototype alone when pressure rises.',
-    opening: 'Slave arrives with a notebook, already thinking about rules, balance, and a clean system.',
-    initialBoost: { clarity: 8, learning: 4 },
+    points: { trust: 0, clarity: 10, inclusion: 0, energy: 4, learning: 6 },
   },
-  ivalina: {
-    id: 'ivalina',
-    name: 'Ivalina',
+  ivy: {
+    id: 'ivy',
+    name: 'Ivy',
     country: 'Bulgaria',
-    trait: 'Reflective and inclusive',
-    risk: 'Can avoid conflict for too long.',
-    opening: 'Ivalina arrives quietly, watching who speaks, who waits, and who is left outside the circle.',
-    initialBoost: { inclusion: 8, trust: 4 },
+    points: { trust: 6, clarity: 0, inclusion: 10, energy: 0, learning: 4 },
   },
 };
 
@@ -150,8 +154,8 @@ const participants: Participant[] = [
   { country: 'N. Macedonia', name: 'Mihaela' },
   { country: 'N. Macedonia', name: 'Elena' },
   { country: 'N. Macedonia', name: 'Kiril' },
-  { country: 'Bulgaria', name: 'Ivalina' },
-  { country: 'Bulgaria', name: 'Georgi' },
+  { country: 'Bulgaria', name: 'Ivy' },
+  { country: 'Bulgaria', name: 'Gjoko' },
   { country: 'Bulgaria', name: 'Hatche' },
   { country: 'France', name: 'Andrea' },
   { country: 'France', name: 'Sophie' },
@@ -185,7 +189,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { trust: 10, inclusion: 8, energy: -2, learning: 4 },
         flags: ['builtAlliance', 'includedQuietVoice'],
         next: 'circle-connect',
-        feedback: 'You made the first mechanic social: attention created trust.',
+        feedback: 'You used attention as the first game move. It created trust.',
       },
       {
         id: 'observe-courtyard',
@@ -214,14 +218,14 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'The Mixed Team',
     location: 'Activity Room',
     speaker: 'Emanuel',
-    text: 'Emanuel forms mixed teams. {you} sits with Sophie, Mihaela, Rasim Hamza, Cristina, and Georgi. The team must choose a topic for a board game.',
-    cast: ['Emanuel', 'Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Georgi'],
+    text: 'Emanuel forms mixed teams. {you} sits with Sophie, Mihaela, Rasim Hamza, Cristina, and Gjoko. The team must choose a topic for a board game.',
+    cast: ['Emanuel', 'Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Gjoko'],
     dialogue: [
       { speaker: 'Emanuel', text: 'Choose one real need. Not the most impressive topic. The one your rules can make players feel.' },
       { speaker: 'Mihaela', text: 'Then I want inclusion. In groups, quiet people can disappear without anyone noticing.' },
       { speaker: 'Rasim Hamza', text: 'For me it is misinformation. People move fast when they trust the wrong signal.' },
       { speaker: 'Cristina', text: 'Maybe those are connected. What if the wrong signal makes the group ignore someone?' },
-      { speaker: 'Georgi', text: 'That could become a rule, not only a discussion.' },
+      { speaker: 'Gjoko', text: 'That could become a rule, not only a discussion.' },
     ],
     choices: [
       {
@@ -231,7 +235,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { trust: 12, inclusion: 12, clarity: 8, learning: 8, energy: -4 },
         flags: ['sharedRoles', 'learningInsideMechanic'],
         next: 'team-shared',
-        feedback: 'The team did not vote on ego. They designed from needs.',
+        feedback: 'The team did not choose the loudest idea. They started from real needs.',
       },
       {
         id: 'take-structure',
@@ -240,7 +244,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { clarity: 12, energy: 2, trust: -4, inclusion: -6 },
         flags: ['soloDesigner'],
         next: 'team-solo',
-        feedback: 'The rules became clearer, but ownership started moving toward one person.',
+        feedback: 'The rules became clearer, but the game started to feel like one person made all the choices.',
       },
       {
         id: 'choose-funniest',
@@ -330,7 +334,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { clarity: 12, trust: -8, inclusion: -10, energy: 2 },
         flags: ['soloDesigner', 'ignoredTeam'],
         next: 'team-solo',
-        feedback: 'The plan helped speed. It also reduced ownership.',
+        feedback: 'The plan saved time, but other people felt less involved.',
       },
       {
         id: 'make-party-game',
@@ -351,7 +355,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     location: 'Workshop Table',
     speaker: 'Sophie',
     text: 'The team chooses a board game about inclusion and misinformation. Players must decide whom to trust, who to invite, and when to check a source.',
-    cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Georgi'],
+    cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Gjoko'],
     dialogue: [
       { speaker: 'Sophie', text: 'What if each player sees only part of the truth?' },
       { speaker: 'Rasim Hamza', text: 'Then checking a source is not a quiz question. It becomes a move you choose.' },
@@ -371,7 +375,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
       {
         id: 'divide-shared-roles',
         label: 'Divide roles clearly',
-        intention: 'Assign rules, board, cards, and debrief to different people.',
+        intention: 'Assign rules, board, cards, and reflection question to different people.',
         effects: { trust: 8, inclusion: 8, clarity: 8, energy: 2 },
         flags: ['sharedRoles'],
         next: 'prototype-playtest',
@@ -384,7 +388,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { energy: -6, clarity: 4, learning: -8, trust: -2 },
         flags: ['polishedBeforeTesting'],
         next: 'prototype-polish',
-        feedback: 'The table looked better. The mechanic stayed unproven.',
+        feedback: 'The table looked better, but nobody knew if the main rule worked.',
       },
     ],
   },
@@ -395,7 +399,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'The Prototype in One Notebook',
     location: 'Quiet Corner',
     speaker: 'Narrator',
-    text: '{you} writes a strong rule structure. The team watches, helps a little, and slowly becomes an audience.',
+    text: '{you} writes a strong rule structure. The team watches and helps a little. Slowly, they become an audience.',
     cast: ['Kiril', 'Hatche', 'Liviu', 'Claudia', 'Mehmet Emin'],
     dialogue: [
       { speaker: 'Kiril', text: 'The rule system is clear. I can follow it. But where do we put our ideas?' },
@@ -429,7 +433,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { clarity: 8, energy: -8, learning: -8, inclusion: -6 },
         flags: ['polishedBeforeTesting'],
         next: 'prototype-polish',
-        feedback: 'The board looked official before players had tested its truth.',
+        feedback: 'The board looked official before players had tested if it worked.',
       },
     ],
   },
@@ -461,7 +465,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
       {
         id: 'sell-party-energy',
         label: 'Protect the fun',
-        intention: 'Keep the game fast and trust the debrief to explain the meaning later.',
+        intention: 'Keep the game fast and trust the final reflection to explain the meaning later.',
         effects: { energy: 12, learning: -12, clarity: -6 },
         flags: ['funFirst'],
         next: 'prototype-polish',
@@ -474,7 +478,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { clarity: 8, energy: 4, learning: -14, inclusion: -4 },
         flags: ['reskinnedGame'],
         next: 'prototype-polish',
-        feedback: 'Players understood the structure, but the topic did not shape the mechanic.',
+        feedback: 'Players understood the structure, but the topic did not change how the game worked.',
       },
     ],
   },
@@ -486,10 +490,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     location: 'Activity Room Floor',
     speaker: 'Tester',
     text: 'Mihaela and Sophie test the first round. A player is blocked for three turns and says the game feels unfair.',
-    cast: ['Mihaela', 'Sophie', 'Georgi', 'Cristina', 'Emanuel'],
+    cast: ['Mihaela', 'Sophie', 'Gjoko', 'Cristina', 'Emanuel'],
     dialogue: [
       { speaker: 'Sophie', text: 'I understand the topic, but on my turn I do not know what choice I have.' },
-      { speaker: 'Georgi', text: 'Maybe that is because the blocked player can only wait.' },
+      { speaker: 'Gjoko', text: 'Maybe that is because the blocked player can only wait.' },
       { speaker: 'Mihaela', text: 'Then the game is repeating exclusion instead of helping players notice it.' },
       { speaker: 'Emanuel', text: 'That is useful feedback. What rule would let a player repair the situation?' },
     ],
@@ -591,12 +595,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { clarity: 8, learning: 8, trust: 4, energy: -6 },
         flags: ['usedPlaytest'],
         next: 'conflict-listen',
-        feedback: 'A late test saved some learning, but ownership stayed fragile.',
+        feedback: 'A late test helped the learning, but the team still did not fully own the game.',
       },
       {
         id: 'finish-solo',
         label: 'Finish it alone',
-        intention: 'Complete the board, rules, and debrief without waking the team.',
+        intention: 'Complete the board, rules, and reflection question without waking the team.',
         effects: { clarity: 12, energy: -14, trust: -14, inclusion: -14 },
         flags: ['soloDesigner', 'hidFailure'],
         next: 'night-solo',
@@ -621,12 +625,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     location: 'Courtyard',
     speaker: 'Cristina',
     text: 'The team names the conflict: some players have power, others wait. Now the board game can change.',
-    cast: ['Cristina', 'Mihaela', 'Sophie', 'Georgi', 'Emanuel'],
+    cast: ['Cristina', 'Mihaela', 'Sophie', 'Gjoko', 'Emanuel'],
     dialogue: [
       { speaker: 'Cristina', text: 'The unfair part is uncomfortable, but it helped us see the real topic.' },
       { speaker: 'Sophie', text: 'I do not want players to only feel stuck. I want them to have a way to respond.' },
-      { speaker: 'Georgi', text: 'Then we need a repair move. A player can spend a turn to bring someone back.' },
-      { speaker: 'Emanuel', text: 'Now the mechanic carries the message: exclusion is visible, and repair is possible.' },
+      { speaker: 'Gjoko', text: 'Then we need a repair move. A player can spend a turn to bring someone back.' },
+      { speaker: 'Emanuel', text: 'Now the rule carries the message: exclusion is visible, and repair is possible.' },
     ],
     choices: [
       {
@@ -641,11 +645,11 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
       {
         id: 'keep-as-lesson',
         label: 'Keep unfairness as lesson',
-        intention: 'Keep the painful rule and explain it in the debrief.',
+        intention: 'Keep the painful rule and explain it in the final reflection.',
         effects: { learning: 8, trust: -6, inclusion: -8, clarity: -4 },
         flags: ['clearDebrief'],
         next: 'night-honest',
-        feedback: 'The debrief may work, but the play experience still hurts.',
+        feedback: 'The reflection may work, but the play experience still hurts.',
       },
     ],
   },
@@ -667,7 +671,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     choices: [
       {
         id: 'return-ownership',
-        label: 'Return ownership',
+        label: 'Return the game to the team',
         intention: 'Give the team the next decision, even if it changes your rules.',
         effects: { trust: 12, inclusion: 12, energy: -4, clarity: -2 },
         flags: ['sharedRoles'],
@@ -728,8 +732,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'The Game Finds Its Shape',
     location: 'Common Room',
     speaker: 'Narrator',
-    text: 'The team cuts rules, tests again, and adds one clear debrief question. The board is simple, but everyone can explain why it exists.',
-    cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Georgi'],
+    text: 'The team cuts rules, tests again, and adds one clear reflection question. The board is simple, but everyone can explain why it exists.',
+    cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Gjoko'],
     dialogue: [
       { speaker: 'Sophie', text: 'Now each turn has a real choice: move faster alone, or help someone re-enter the game.' },
       { speaker: 'Rasim Hamza', text: 'And checking information costs time, but protects group trust.' },
@@ -740,11 +744,11 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
       {
         id: 'present-as-team',
         label: 'Present as a team',
-        intention: 'Let each person explain one part: rules, feeling, learning, debrief.',
+        intention: 'Let each person explain one part: rules, feeling, learning, reflection.',
         effects: { trust: 10, inclusion: 10, clarity: 6, learning: 8, energy: -2 },
         flags: ['sharedRoles', 'clearDebrief'],
         next: 'showcase',
-        feedback: 'The showcase became shared ownership.',
+        feedback: 'The showcase became shared work.',
       },
       {
         id: 'lead-but-credit',
@@ -776,7 +780,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
       {
         id: 'own-solo-choice',
         label: 'Present it honestly',
-        intention: 'Say the prototype is mostly yours and ask the team to reflect on ownership.',
+        intention: 'Say the prototype is mostly yours and ask the team to reflect on who made the choices.',
         effects: { learning: 10, trust: 2, clarity: 4 },
         flags: ['clearDebrief', 'soloDesigner'],
         next: 'showcase',
@@ -785,7 +789,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
       {
         id: 'pretend-team-game',
         label: 'Pretend it was shared',
-        intention: 'Present it as a group result and avoid the ownership problem.',
+        intention: 'Present it as a group result and avoid the problem of who made the choices.',
         effects: { trust: -12, inclusion: -12, learning: -8, clarity: 2 },
         flags: ['hidFailure', 'soloDesigner'],
         next: 'showcase',
@@ -804,7 +808,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     cast: ['Emanuel', 'Elena', 'Loredana', 'Ognjen', 'Rocco'],
     dialogue: [
       { speaker: 'Emanuel', text: 'If the prototype is weak, do not pretend it is strong. Ask what the weakness teaches.' },
-      { speaker: 'Elena', text: 'Then our debrief can ask: where did the system fail the players?' },
+      { speaker: 'Elena', text: 'Then our reflection can ask: where did the system fail the players?' },
       { speaker: 'Loredana', text: 'That feels risky, but more honest than selling a game we do not trust.' },
       { speaker: 'Ognjen', text: 'We can show one broken round, then ask players to redesign the rule with us.' },
     ],
@@ -851,7 +855,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { trust: 8, inclusion: 8, learning: 10, clarity: 4 },
         flags: ['clearDebrief'],
         next: 'ending',
-        feedback: 'The final activity connected mechanics to reflection.',
+        feedback: 'The final activity connected rules to reflection.',
       },
       {
         id: 'pitch-fun-only',
@@ -878,63 +882,63 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
 const endings: Record<EndingId, Ending> = {
   'shared-board-game-success': {
     title: 'Shared Board Game Success',
-    protagonistOutcome: '{you} becomes a facilitator inside the team, not the owner of the idea.',
-    boardGameOutcome: 'The board game is playable, simple, and clearly connected to inclusion and misinformation.',
+    protagonistOutcome: '{you} helps the team work together. The idea belongs to the group.',
+    boardGameOutcome: 'The board game is simple, playable, and clearly about inclusion and misinformation.',
     teamOutcome: 'The group presents together. Quiet voices are visible in the rules.',
-    logic: 'High trust, inclusion, playtesting, shared roles, and learning inside the mechanic created a shared success.',
-    howToReach: 'Build alliances, share roles, test early, and put the learning message inside a rule.',
-    trainerReflection: 'Emanuel says: This is what game design can do in youth work: make participation visible.',
+    logic: 'You built trust, included people, tested early, shared roles, and put learning inside the rules.',
+    howToReach: 'Build trust, share roles, test early, and make the lesson happen during play.',
+    trainerReflection: 'Emanuel says: This is what game design can do in youth work. It can make participation visible.',
   },
   'solo-prototype-success': {
     title: 'Solo Prototype Success',
-    protagonistOutcome: '{you} finishes a coherent prototype, but carries too much of the process alone.',
-    boardGameOutcome: 'The game works, but the debrief reveals weak group ownership.',
-    teamOutcome: 'The team respects the effort, but some participants feel like helpers, not co-designers.',
-    logic: 'High clarity with low inclusion and solo-designer flags created a technically successful but socially fragile outcome.',
-    howToReach: 'Take control, finish the board alone, and present honestly or with limited shared ownership.',
+    protagonistOutcome: '{you} finishes a clear prototype, but too much work happens alone.',
+    boardGameOutcome: 'The game works, but the reflection shows that the group did not fully own it.',
+    teamOutcome: 'The team respects the effort, but some people feel like helpers instead of co-designers.',
+    logic: 'You created clarity, but inclusion stayed low and many choices were made alone.',
+    howToReach: 'Take control, finish the board mostly alone, and present with limited team involvement.',
     trainerReflection: 'Emanuel says: A good product is not always a good learning process. Who owned the design?',
   },
   'fun-game-weak-message': {
     title: 'Fun Game, Weak Message',
-    protagonistOutcome: '{you} creates energy and laughter, but cannot fully explain the youth-work lesson.',
-    boardGameOutcome: 'The game is enjoyable, but the topic sits mostly in the explanation after play.',
-    teamOutcome: 'The team has fun, yet the reflection feels thin.',
-    logic: 'High energy with low learning and fun-first choices made the game playful but weak as education.',
-    howToReach: 'Choose fun-first options, protect party energy, and skip strong learning mechanics.',
+    protagonistOutcome: '{you} creates energy and laughter, but the youth-work lesson is not clear enough.',
+    boardGameOutcome: 'The game is fun, but the topic mostly appears after play, in the explanation.',
+    teamOutcome: 'The team enjoys the moment, but the reflection is weak.',
+    logic: 'You chose fun many times. Energy was high, but learning stayed too low.',
+    howToReach: 'Choose fun-first options, protect the party feeling, and skip strong learning rules.',
     trainerReflection: 'Emanuel says: Keep the fun. Now redesign one rule so the lesson happens during play.',
   },
   'beautiful-board-broken-rules': {
     title: 'Beautiful Board, Broken Rules',
-    protagonistOutcome: '{you} helps make something that looks ready before it is truly playable.',
-    boardGameOutcome: 'The prototype has strong visuals, but players do not understand the core turn.',
-    teamOutcome: 'The group loses confidence when the first players get confused.',
-    logic: 'Polish-before-testing and hidden failure flags outweighed clarity and playtest learning.',
-    howToReach: 'Decorate early, avoid cutting to the core loop, and hide unclear rules before the showcase.',
+    protagonistOutcome: '{you} helps make a board that looks ready before it is really playable.',
+    boardGameOutcome: 'The prototype looks good, but players do not understand what to do on their turn.',
+    teamOutcome: 'The group loses confidence when the first players are confused.',
+    logic: 'The team polished too early and hid weak rules instead of testing them.',
+    howToReach: 'Decorate early, avoid testing the basic turn, and hide unclear rules before the showcase.',
     trainerReflection: 'Emanuel says: A prototype is not a poster. First make the player action clear.',
   },
   'conflict-breaks-team': {
     title: 'Conflict Breaks the Team',
-    protagonistOutcome: '{you} avoids or controls tension until the group cannot use it as feedback.',
+    protagonistOutcome: '{you} avoids or controls tension until the group cannot learn from it.',
     boardGameOutcome: 'The game reaches the table, but the team cannot present it with real trust.',
     teamOutcome: 'Some participants step back. The conflict becomes the real lesson.',
-    logic: 'Avoided conflict, ignored feedback, low trust, and low inclusion broke the group process.',
-    howToReach: 'Avoid disagreement, defend rules, and do not repair ownership before the showcase.',
-    trainerReflection: 'Emanuel says: Conflict is not failure. Unused conflict is lost information.',
+    logic: 'Conflict was avoided, feedback was ignored, and trust and inclusion became too low.',
+    howToReach: 'Avoid disagreement, defend the rules, and do not repair the group process before the showcase.',
+    trainerReflection: 'Emanuel says: Conflict is not failure. Conflict can give useful information if the team uses it.',
   },
   'failed-prototype-strong-learning': {
     title: 'Failed Prototype, Strong Learning',
     protagonistOutcome: '{you} accepts that the game is unfinished and uses the failure honestly.',
-    boardGameOutcome: 'The prototype breaks, but the debrief is powerful and specific.',
+    boardGameOutcome: 'The prototype breaks, but the reflection is strong and specific.',
     teamOutcome: 'The team learns how testing, feedback, and humility improve design.',
-    logic: 'The prototype stayed weak, but clear debrief and honest failure converted the collapse into learning.',
+    logic: 'The prototype stayed weak, but clear reflection and honest failure turned the problem into learning.',
     howToReach: 'Admit problems, show a broken round, and invite players to redesign the rule.',
-    trainerReflection: 'Emanuel says: This is a valid prototype lesson. You did not hide the system; you learned from it.',
+    trainerReflection: 'Emanuel says: This is a valid prototype lesson. You did not hide the system. You learned from it.',
   },
 };
 
 export default function FiladelfiaStoryGame() {
   const { completeGame, saveGameNote, updatePrototypeField } = useStore();
-  const [protagonistId, setProtagonistId] = useState<ProtagonistId | null>(null);
+  const [protagonist, setProtagonist] = useState<PlayerProfile | null>(null);
   const [nodeId, setNodeId] = useState<StoryNodeId>('arrival');
   const [meters, setMeters] = useState<Meters>(initialMeters);
   const [flags, setFlags] = useState<string[]>([]);
@@ -942,17 +946,15 @@ export default function FiladelfiaStoryGame() {
   const [endingId, setEndingId] = useState<EndingId | null>(null);
   const [lastFeedback, setLastFeedback] = useState('Choose a participant to begin the journey.');
 
-  const protagonist = protagonistId ? protagonists[protagonistId] : null;
   const node = storyNodes[nodeId];
   const ending = endingId ? endings[endingId] : null;
   const chosenChoiceIds = useMemo(() => new Set(storyLog.map((entry) => entry.chosenAction)), [storyLog]);
 
-  const startStory = (id: ProtagonistId) => {
-    const selected = protagonists[id];
-    setProtagonistId(id);
+  const startStory = (selected: PlayerProfile) => {
+    setProtagonist(selected);
     setNodeId('arrival');
-    setMeters(clampMeters(initialMeters, selected.initialBoost));
-    setFlags([`perspective:${id}`]);
+    setMeters(applyProfilePoints(initialMeters, selected.points));
+    setFlags([`perspective:${selected.id}`, `strength:${selected.strongestMeter}`, `risk:${selected.riskMeter}`]);
     setStoryLog([]);
     setEndingId(null);
     setLastFeedback(selected.opening);
@@ -993,7 +995,7 @@ export default function FiladelfiaStoryGame() {
   };
 
   const restart = () => {
-    setProtagonistId(null);
+    setProtagonist(null);
     setNodeId('arrival');
     setMeters(initialMeters);
     setFlags([]);
@@ -1011,7 +1013,7 @@ export default function FiladelfiaStoryGame() {
             <p className="text-xs text-green-300 font-bold uppercase tracking-widest">{game.subtitle}</p>
             <h1 className="text-xl md:text-3xl font-arcade mobile-readable-arcade text-white mt-3">{game.title}</h1>
             <p className="text-sm text-gray-300 leading-relaxed mt-4 max-w-3xl">
-              Follow one participant through Games Are No Joke in Filadelfia. Your choices change the team, the board game, and the final outcome.
+              Follow one participant during Games Are No Joke in Filadelfia. Your choices change the team, the board game, and the final result.
             </p>
           </div>
           <button onClick={restart} className="filadelfia-control-button rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-green-400">
@@ -1056,10 +1058,14 @@ export default function FiladelfiaStoryGame() {
                   <p className="text-xs text-gray-400">{protagonist.country}</p>
                 </div>
               </div>
+              <div className="mt-4 rounded-lg border border-white/10 bg-black/35 p-3">
+                <p className="text-xs font-bold leading-relaxed text-gray-200">{protagonist.trait}</p>
+                <p className="mt-2 text-xs leading-relaxed text-gray-400">Risk: {protagonist.risk}</p>
+              </div>
             </div>
 
             <div className="filadelfia-side-panel bg-black/60 border border-white/10 rounded-xl p-4">
-              <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Story Meters</p>
+              <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Story Profile</p>
               <div className="mt-4 space-y-3">
                 {(Object.keys(meters) as MeterKey[]).map((key) => (
                   <Meter key={key} label={key} value={meters[key]} />
@@ -1070,8 +1076,8 @@ export default function FiladelfiaStoryGame() {
             <StoryLogPanel storyLog={storyLog} protagonist={protagonist} compact />
 
             <div className="filadelfia-side-panel bg-black/60 border border-white/10 rounded-xl p-4">
-              <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Hidden Logic</p>
-              {!ending && <p className="text-sm text-gray-300 leading-relaxed mt-3">Flags stay hidden while you play. At the end, the game reveals why you got your ending.</p>}
+              <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Ending Reasons</p>
+              {!ending && <p className="text-sm text-gray-300 leading-relaxed mt-3">The game remembers your choices while you play. At the end, it explains why you got that result.</p>}
               {ending && <FlagList flags={flags} />}
             </div>
           </aside>
@@ -1081,7 +1087,27 @@ export default function FiladelfiaStoryGame() {
   );
 }
 
-function ProtagonistSelect({ onStart }: { onStart: (id: ProtagonistId) => void }) {
+function ProtagonistSelect({ onStart }: { onStart: (profile: PlayerProfile) => void }) {
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant>(featuredProfiles.andrea);
+  const [points, setPoints] = useState<ProfilePoints>(featuredProfiles.andrea.points);
+  const pointsSpent = totalProfilePoints(points);
+  const pointsLeft = profilePointBudget - pointsSpent;
+  const profile = buildPlayerProfile(selectedParticipant, points);
+
+  const selectParticipant = (participant: Participant) => {
+    setSelectedParticipant(participant);
+    setPoints(getSuggestedProfilePoints(participant.name));
+  };
+
+  const adjustPoint = (key: MeterKey, delta: number) => {
+    setPoints((current) => {
+      const nextValue = current[key] + delta;
+      const nextTotal = totalProfilePoints(current) + delta;
+      if (nextValue < 0 || nextValue > maxProfilePointsPerMeter || nextTotal < 0 || nextTotal > profilePointBudget) return current;
+      return { ...current, [key]: nextValue };
+    });
+  };
+
   return (
     <section className="arcade-border glass-panel rounded-xl p-4 md:p-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -1089,31 +1115,95 @@ function ProtagonistSelect({ onStart }: { onStart: (id: ProtagonistId) => void }
           <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Choose Your Participant</p>
           <h2 className="mt-3 text-xl md:text-2xl font-arcade mobile-readable-arcade text-white">One week. One team. One board game.</h2>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-300">
-            Each perspective starts with a different strength and risk. The story follows one participant from arrival to final showcase.
+            Choose a participant, edit the starting profile, and begin the story. Use exactly 20 points. Each meter can receive at most 10 points.
           </p>
         </div>
         <div className="filadelfia-country-list rounded-xl border border-white/10 bg-black/50 p-3 text-xs text-gray-300">
-          France, N. Macedonia, Bulgaria, Italy, Romania, Turkiye, Greece, Serbia
+          France, N. Macedonia, Bulgaria, Italy, Romania, Turkiye, Serbia
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        {(Object.values(protagonists) as Protagonist[]).map((participant) => (
-          <button
-            key={participant.id}
-            onClick={() => onStart(participant.id)}
-            className="filadelfia-protagonist-card group rounded-xl border border-white/10 bg-black/55 p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
-          >
-            <Avatar name={participant.name} tone={participant.id === 'andrea' ? 'bg-pink-300' : participant.id === 'slave' ? 'bg-cyan-300' : 'bg-green-300'} large />
-            <p className="mt-4 text-lg font-black text-white">{participant.name}</p>
-            <p className="text-xs font-bold uppercase tracking-widest text-green-300">{participant.country}</p>
-            <p className="mt-3 text-sm text-gray-200 font-bold">{participant.trait}</p>
-            <p className="mt-2 text-xs text-gray-400 leading-relaxed">Risk: {participant.risk}</p>
-            <div className="mt-4 flex items-center justify-between text-xs font-bold uppercase text-cyan-200">
-              Start journey <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+      <div className="mt-6 rounded-xl border border-white/10 bg-black/35 p-4">
+        <p className="text-xs font-black uppercase tracking-widest text-pink-300">Step 1 - Pick a person</p>
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+          {(Object.values(featuredProfiles) as ProfileTemplate[]).map((participant) => (
+            <button
+              key={participant.id}
+              onClick={() => selectParticipant(participant)}
+              className={`filadelfia-protagonist-card group rounded-xl border p-4 text-left transition-colors ${selectedParticipant.name === participant.name ? 'border-green-300 bg-green-300/10' : 'border-white/10 bg-black/55 hover:border-green-300 hover:bg-green-300/10'}`}
+            >
+              <Avatar name={participant.name} tone={participant.id === 'andrea' ? 'bg-pink-300' : participant.id === 'slave' ? 'bg-cyan-300' : 'bg-green-300'} large />
+              <p className="mt-4 text-lg font-black text-white">{participant.name}</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-green-300">{participant.country}</p>
+              <p className="mt-3 text-sm font-bold text-gray-200">{buildPlayerProfile(participant, participant.points).trait}</p>
+              <p className="mt-2 text-xs leading-relaxed text-gray-400">Risk: {buildPlayerProfile(participant, participant.points).risk}</p>
+            </button>
+          ))}
+        </div>
+
+        <p className="mt-5 text-xs font-black uppercase tracking-widest text-cyan-300">All participants</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
+          {participants.map((participant) => (
+            <button
+              key={`${participant.country}-${participant.name}`}
+              onClick={() => selectParticipant(participant)}
+              className={`rounded-lg border p-2 text-left transition-colors ${selectedParticipant.name === participant.name ? 'border-green-300 bg-green-300/15' : 'border-white/10 bg-black/40 hover:border-cyan-300'}`}
+            >
+              <p className="truncate text-xs font-black text-white">{participant.name}</p>
+              <p className="truncate text-[10px] font-bold uppercase text-gray-500">{participant.country}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.8fr)]">
+        <div className="rounded-xl border border-white/10 bg-black/35 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs font-black uppercase tracking-widest text-green-300">Step 2 - Build the profile</p>
+            <p className={`text-xs font-black uppercase ${pointsLeft === 0 ? 'text-green-300' : 'text-yellow-300'}`}>Points left: {pointsLeft}</p>
+          </div>
+          <div className="mt-4 space-y-3">
+            {meterKeys.map((key) => (
+              <div key={key} className="rounded-lg border border-white/10 bg-black/45 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase text-white">{meterLabel(key)}</p>
+                    <p className="mt-1 text-[10px] font-bold leading-relaxed text-gray-400">{meterHelp(key)}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button onClick={() => adjustPoint(key, -1)} disabled={points[key] <= 0} className="h-8 w-8 rounded border border-white/10 bg-white/[.04] text-sm font-black text-white disabled:opacity-30">-</button>
+                    <span className="w-8 text-center text-sm font-black text-green-200">{points[key]}</span>
+                    <button onClick={() => adjustPoint(key, 1)} disabled={points[key] >= maxProfilePointsPerMeter || pointsLeft <= 0} className="h-8 w-8 rounded border border-white/10 bg-white/[.04] text-sm font-black text-white disabled:opacity-30">+</button>
+                  </div>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-900">
+                  <div className="h-full bg-green-300" style={{ width: `${points[key] * 10}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-black/45 p-4">
+          <p className="text-xs font-black uppercase tracking-widest text-yellow-300">Step 3 - Review</p>
+          <div className="mt-4 flex items-center gap-3">
+            <Avatar name={profile.name} tone="bg-green-300" large />
+            <div>
+              <p className="text-lg font-black text-white">{profile.name}</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-green-300">{profile.country}</p>
             </div>
+          </div>
+          <p className="mt-4 text-sm font-bold leading-relaxed text-gray-100">{profile.trait}</p>
+          <p className="mt-2 text-sm leading-relaxed text-gray-300">Risk: {profile.risk}</p>
+          <p className="mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-100">{profile.opening}</p>
+          <button
+            onClick={() => onStart(profile)}
+            disabled={pointsLeft !== 0}
+            className="mt-4 flex w-full items-center justify-between rounded-lg border border-green-300/40 bg-green-300/10 px-4 py-3 text-xs font-bold uppercase text-green-100 transition-colors hover:bg-green-300 hover:text-black disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[.04] disabled:text-gray-500"
+          >
+            Start journey <ArrowRight className="h-4 w-4" />
           </button>
-        ))}
+        </div>
       </div>
     </section>
   );
@@ -1127,7 +1217,7 @@ function StoryStage({
   onChoose,
 }: {
   node: StoryNode;
-  protagonist: Protagonist;
+  protagonist: PlayerProfile;
   meters: Meters;
   lastFeedback: string;
   onChoose: (choice: Choice) => void;
@@ -1151,7 +1241,7 @@ function StoryStage({
           <p className="mt-3 text-sm leading-relaxed text-gray-200">{formatText(node.text, protagonist)}</p>
 
           <div className="filadelfia-story-beat mt-4 rounded-lg border border-white/10 bg-white/[.03] p-3">
-            <p className="text-[10px] font-black uppercase tracking-widest text-green-300">Story beat</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-green-300">What is happening</p>
             <p className="mt-2 text-sm leading-relaxed text-gray-100">{formatText(storyBeat(node.id), protagonist)}</p>
           </div>
 
@@ -1170,7 +1260,7 @@ function StoryStage({
           </div>
 
           <div className="filadelfia-consequence-card mt-4 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-100">
-            Consequence memory: {lastFeedback}
+            What changed: {lastFeedback}
           </div>
         </div>
 
@@ -1197,7 +1287,7 @@ function StoryStage({
   );
 }
 
-function LocationPanel({ node, protagonist }: { node: StoryNode; protagonist: Protagonist }) {
+function LocationPanel({ node, protagonist }: { node: StoryNode; protagonist: PlayerProfile }) {
   const cast = node.cast.map((name) => findParticipant(name, protagonist));
   return (
     <div className="filadelfia-location-panel relative overflow-hidden border-b border-green-300/20 bg-gradient-to-br from-slate-950 via-emerald-950 to-cyan-950 p-4">
@@ -1225,7 +1315,7 @@ function LocationPanel({ node, protagonist }: { node: StoryNode; protagonist: Pr
   );
 }
 
-function CharacterChip({ participant, protagonist }: { key?: string; participant: Participant; protagonist: Protagonist }) {
+function CharacterChip({ participant, protagonist }: { key?: string; participant: Participant; protagonist: PlayerProfile }) {
   const isYou = participant.name === protagonist.name;
   return (
     <div className={`filadelfia-character-chip rounded-lg border p-2 ${isYou ? 'border-green-300 bg-green-300/15' : 'border-white/10 bg-black/55'}`}>
@@ -1250,7 +1340,7 @@ function EndingPanel({
   onSendTakeaway,
 }: {
   ending: Ending;
-  protagonist: Protagonist;
+  protagonist: PlayerProfile;
   flags: string[];
   storyLog: StoryLogEntry[];
   chosenChoiceIds: Set<string>;
@@ -1283,7 +1373,7 @@ function EndingPanel({
       <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
         <StoryLogPanel storyLog={storyLog} protagonist={protagonist} />
         <div className="filadelfia-side-panel rounded-xl border border-white/10 bg-black/60 p-4">
-          <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Hidden Flags Revealed</p>
+          <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Story Reasons Revealed</p>
           <FlagList flags={flags} />
           <div className="mt-5 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3">
             <p className="text-xs font-black uppercase tracking-widest text-cyan-300">How this ending happened</p>
@@ -1297,7 +1387,7 @@ function EndingPanel({
   );
 }
 
-function StoryLogPanel({ storyLog, protagonist, compact = false }: { storyLog: StoryLogEntry[]; protagonist: Protagonist; compact?: boolean }) {
+function StoryLogPanel({ storyLog, protagonist, compact = false }: { storyLog: StoryLogEntry[]; protagonist: PlayerProfile; compact?: boolean }) {
   const content = (
     <div className="mt-3 space-y-3 max-h-[520px] overflow-y-auto pr-1">
       {storyLog.length === 0 && <p className="text-sm text-gray-400">No story choices yet.</p>}
@@ -1343,7 +1433,7 @@ function LogicDiagram({ chosenChoiceIds, endingId }: { chosenChoiceIds: Set<stri
   return (
     <div className="filadelfia-logic-panel mt-5 bg-black/60 border border-white/10 rounded-xl p-4">
       <h3 className="text-sm font-arcade text-green-300 flex items-center gap-2">
-        <GitBranch className="w-5 h-5" /> Branching Map
+        <GitBranch className="w-5 h-5" /> Story Map
       </h3>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         {importantNodes.map((id) => {
@@ -1456,40 +1546,60 @@ function humanFlag(flag: string) {
     watchedGroup: 'Observed the group',
     ignoredTeam: 'Stayed outside the team',
     sharedRoles: 'Shared roles',
-    learningInsideMechanic: 'Learning inside the mechanic',
+    learningInsideMechanic: 'Learning inside the rules',
     soloDesigner: 'Worked mostly alone',
     funFirst: 'Chose fun first',
     usedPlaytest: 'Used playtesting',
     polishedBeforeTesting: 'Polished before testing',
-    clearDebrief: 'Clear debrief',
+    clearDebrief: 'Clear reflection',
     ignoredFeedback: 'Ignored feedback',
     avoidedConflict: 'Avoided conflict',
     hidFailure: 'Hid a weak point',
     reskinnedGame: 'Copied a known game',
   };
-  if (flag.startsWith('perspective:')) return `Perspective: ${flag.split(':')[1]}`;
+  if (flag.startsWith('perspective:')) return `Perspective: ${formatProfileFlag(flag.split(':')[1])}`;
+  if (flag.startsWith('strength:')) {
+    const key = flag.split(':')[1];
+    return isMeterKey(key) ? `Strength: ${meterLabel(key)}` : 'Strength set';
+  }
+  if (flag.startsWith('risk:')) {
+    const key = flag.split(':')[1];
+    return isMeterKey(key) ? `Risk: ${meterLabel(key)}` : 'Risk set';
+  }
   return labels[flag] ?? flag.replace(/([A-Z])/g, ' $1').toLowerCase();
+}
+
+function isMeterKey(key: string): key is MeterKey {
+  return meterKeys.includes(key as MeterKey);
+}
+
+function formatProfileFlag(value: string) {
+  return value
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 function storyBeat(nodeId: StoryNodeId) {
   const beats: Record<StoryNodeId, string> = {
     arrival: '{you} has not chosen a board game yet. The first choice is how to enter the group.',
-    'circle-connect': 'The first bridge is built. Now the team must turn many topics into one playable system.',
-    'circle-distance': '{you} has good observations, but the team needs a real invitation before the idea moves too far.',
-    'circle-familiar': 'Comfort is useful, but staying comfortable can make the mixed team start without you.',
-    'team-shared': 'The game idea belongs to several people. The next danger is talking about the game instead of testing it.',
-    'team-solo': 'The rules are becoming clear, but the team is becoming an audience.',
-    'team-fun': 'The energy is high. The risk is that the youth-work message becomes only a speech after play.',
-    'prototype-playtest': 'The first test breaks the prototype. This is the moment where design becomes real.',
-    'prototype-polish': 'The board looks better than the rule system. Now the team must choose truth or decoration.',
-    'prototype-alone': '{you} can finish the object alone, but a group project also needs shared ownership.',
+    'circle-connect': 'The first bridge is built. Now the team must turn many topics into one game system.',
+    'circle-distance': '{you} has useful notes, but the team needs an invitation before the idea moves too far.',
+    'circle-familiar': 'Comfort helps, but staying comfortable can make the mixed team start without you.',
+    'team-shared': 'The idea belongs to several people. Now the team must test it, not only talk about it.',
+    'team-solo': 'The rules are clearer, but the team is becoming an audience.',
+    'team-fun': 'The energy is high. The risk is that the learning message appears only after play.',
+    'prototype-playtest': 'The first test breaks the prototype. This is useful: now the team can see what the rules do.',
+    'prototype-polish': 'The board looks better than the rules. Now the team must choose truth or decoration.',
+    'prototype-alone': '{you} can finish the object alone, but a group project also needs shared work.',
     'conflict-listen': 'The team uses conflict as information. A weak rule can become the best lesson.',
-    'conflict-control': 'Control keeps the prototype stable, but it lowers trust and ownership.',
-    'conflict-avoid': 'Avoided tension returns with higher cost. The group must repair it or hide it.',
-    'night-repair': 'The team simplifies the game and finds one strong playable message.',
-    'night-solo': 'The prototype is complete, but the process is fragile.',
+    'conflict-control': 'Control keeps the prototype stable, but it lowers trust.',
+    'conflict-avoid': 'Avoided tension comes back with a higher cost. The group must repair it or hide it.',
+    'night-repair': 'The team makes the game simpler and finds one strong playable message.',
+    'night-solo': 'The prototype is complete, but the group process is weak.',
     'night-honest': 'The team may not save the prototype, but it can still save the learning.',
-    showcase: 'The final result is not only the board. It is the story of how choices shaped the team and the game.',
+    showcase: 'The final result is not only the board. It is also the story of how choices changed the team and the game.',
   };
   return beats[nodeId];
 }
@@ -1517,7 +1627,92 @@ function clamp(value: number) {
   return Math.min(100, Math.max(0, value));
 }
 
-function findParticipant(name: string, protagonist: Protagonist): Participant {
+function applyProfilePoints(base: Meters, points: ProfilePoints): Meters {
+  return meterKeys.reduce((next, key) => ({
+    ...next,
+    [key]: clamp(base[key] + points[key]),
+  }), {} as Meters);
+}
+
+function totalProfilePoints(points: ProfilePoints) {
+  return meterKeys.reduce((total, key) => total + points[key], 0);
+}
+
+function getSuggestedProfilePoints(name: string): ProfilePoints {
+  const featured = Object.values(featuredProfiles).find((profile) => profile.name === name);
+  return featured ? { ...featured.points } : { ...defaultProfilePoints };
+}
+
+function buildPlayerProfile(participant: Participant, points: ProfilePoints): PlayerProfile {
+  const ordered = [...meterKeys].sort((a, b) => points[b] - points[a]);
+  const strongestMeter = ordered[0];
+  const riskMeter = strongestMeter;
+  const id = makeParticipantId(participant);
+  return {
+    ...participant,
+    id,
+    points: { ...points },
+    strongestMeter,
+    riskMeter,
+    trait: strengthText(strongestMeter),
+    risk: riskText(riskMeter),
+    opening: openingText(participant.name, strongestMeter, riskMeter),
+  };
+}
+
+function makeParticipantId(participant: Participant) {
+  return participant.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function strengthText(key: MeterKey) {
+  const labels: Record<MeterKey, string> = {
+    trust: 'Bridge-builder who helps people feel safe together.',
+    clarity: 'Structured thinker who can make rules easy to follow.',
+    inclusion: 'Inclusive listener who notices quiet voices.',
+    energy: 'Social starter who brings movement and fun.',
+    learning: 'Reflective learner who connects play with meaning.',
+  };
+  return labels[key];
+}
+
+function riskText(key: MeterKey) {
+  const labels: Record<MeterKey, string> = {
+    trust: 'Can wait too long for agreement.',
+    clarity: 'Can control too much when pressure rises.',
+    inclusion: 'Can avoid conflict for too long.',
+    energy: 'Can chase fun and lose the learning message.',
+    learning: 'Can explain too much instead of letting people play.',
+  };
+  return labels[key];
+}
+
+function openingText(name: string, strength: MeterKey, risk: MeterKey) {
+  return `${name} arrives in Filadelfia with ${meterLabel(strength).toLowerCase()} as the strongest meter. Main risk: ${riskText(risk)}`;
+}
+
+function meterLabel(key: MeterKey) {
+  const labels: Record<MeterKey, string> = {
+    trust: 'Trust',
+    clarity: 'Clarity',
+    inclusion: 'Inclusion',
+    energy: 'Energy',
+    learning: 'Learning',
+  };
+  return labels[key];
+}
+
+function meterHelp(key: MeterKey) {
+  const labels: Record<MeterKey, string> = {
+    trust: 'People feel safe to join and share.',
+    clarity: 'Rules and next steps are easy to understand.',
+    inclusion: 'Quiet or unsure people are invited into the work.',
+    energy: 'The group has movement, fun, and motivation.',
+    learning: 'The game connects play with a clear youth-work lesson.',
+  };
+  return labels[key];
+}
+
+function findParticipant(name: string, protagonist: PlayerProfile): Participant {
   if (name === 'All Participants') return { name, country: 'Group' };
   if (name === protagonist.name) return protagonist;
   if (name === 'Emanuel') return { name, country: 'Trainer' };
@@ -1526,7 +1721,7 @@ function findParticipant(name: string, protagonist: Protagonist): Participant {
   return participants.find((participant) => participant.name === name) ?? { name, country: 'Participant' };
 }
 
-function formatText(text: string, protagonist: Protagonist) {
+function formatText(text: string, protagonist: PlayerProfile) {
   return text
     .replaceAll('{you}', protagonist.name)
     .replaceAll('{country}', protagonist.country);
