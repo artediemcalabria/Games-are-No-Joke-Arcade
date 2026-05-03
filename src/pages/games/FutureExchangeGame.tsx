@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   ArrowRightLeft,
@@ -96,6 +96,12 @@ type Trader = {
   receive: ResourceId[];
   unlockStage: TutorialStage;
 };
+type ProgressAction =
+  | { kind: 'recipe'; recipe: Recipe }
+  | { kind: 'module'; module: Module }
+  | { kind: 'collect'; spot: CollectSpot }
+  | { kind: 'trade'; trader: Trader }
+  | { kind: 'locked'; label: string; detail: string };
 
 const game = gameCatalog.find((item) => item.id === 'future-exchange')!;
 
@@ -217,7 +223,7 @@ const modules: Module[] = [
 ];
 
 const collectSpots: CollectSpot[] = [
-  { id: 'group-circle', name: 'Group Circle', gives: ['trust', 'youthVoice', 'friendship'], cost: { energy: -2 }, unlockStage: 5 },
+  { id: 'group-circle', name: 'Group Circle', gives: ['trust', 'youthVoice', 'friendship', 'energy'], cost: { energy: -2 }, unlockStage: 5 },
   { id: 'reflection-wall', name: 'Reflection Wall', gives: ['reflection', 'inclusion'], cost: { energy: -2 }, unlockStage: 5 },
   { id: 'travel-desk', name: 'Travel Desk', gives: ['budgetTokens', 'travelTickets', 'food'], cost: { budget: -4 }, unlockStage: 5 },
   { id: 'venue-office', name: 'Venue Office', gives: ['roomKeys', 'projector', 'speaker'], cost: { budget: -3, energy: -1 }, unlockStage: 5 },
@@ -254,6 +260,8 @@ export default function FutureExchangeGame() {
   const [manualOpen, setManualOpen] = useState(false);
   const [discovery, setDiscovery] = useState<Recipe | null>(null);
   const [failedCraftCount, setFailedCraftCount] = useState(0);
+  const [collectedSpotIds, setCollectedSpotIds] = useState<string[]>([]);
+  const [tradedIds, setTradedIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState('Start with Paper + Pencils. This creates a Materials Kit.');
 
   const discoveredSet = useMemo(() => new Set(discoveredResourceIds), [discoveredResourceIds]);
@@ -268,6 +276,15 @@ export default function FutureExchangeGame() {
     () => getSuggestedExperiments(discoveredResourceIds, discoveredRecipeIds, selectedPair, builtModules),
     [discoveredResourceIds, discoveredRecipeIds, selectedPair, builtModules],
   );
+  const progressAction = useMemo(
+    () => getNextProgressAction(discoveredResourceIds, discoveredRecipeIds, builtModules, tutorialStage, collectedSpotIds, tradedIds),
+    [builtModules, collectedSpotIds, discoveredRecipeIds, discoveredResourceIds, tradedIds, tutorialStage],
+  );
+
+  useEffect(() => {
+    setTutorialStage((current) => getAdvancedTutorialStage(current, discoveredSet, builtModules, collectedSpotIds, tradedIds));
+  }, [builtModules, collectedSpotIds, discoveredSet, tradedIds]);
+
   const selectResource = (id: ResourceId) => {
     if (!discoveredSet.has(id) || ending) return;
     setSelectedPair(([left, right]) => {
@@ -304,10 +321,6 @@ export default function FutureExchangeGame() {
     setFailedCraftCount(0);
     setFeedback(alreadyKnown ? `${label(recipe.output)} is already discovered.` : recipe.learning);
     playSound(alreadyKnown ? 'success' : 'craft', audioEnabled);
-
-    if (tutorialStage === 1 && recipe.id === 'materials-kit') setTutorialStage(2);
-    if (tutorialStage === 2 && recipe.id === 'activity-cards') setTutorialStage(3);
-    if (tutorialStage === 4 && recipe.id === 'rules') setTutorialStage(5);
   };
 
   const installModule = (module: Module) => {
@@ -325,7 +338,6 @@ export default function FutureExchangeGame() {
     playSound('install', audioEnabled);
 
     if (tutorialStage === 3 && module.id === 'activity-plan') {
-      setTutorialStage(4);
       setActiveView('discover');
     }
     if (nextBuilt.length === modules.length) finishGame(nextBuilt);
@@ -334,10 +346,10 @@ export default function FutureExchangeGame() {
   const collect = (spot: CollectSpot) => {
     if (tutorialStage < spot.unlockStage || ending) return;
     setDiscoveredResourceIds((current) => unique([...current, ...spot.gives]));
+    setCollectedSpotIds((current) => current.includes(spot.id) ? current : [...current, spot.id]);
     setMeters((current) => clampMeters(current, { energy: -1, ...spot.cost }));
     setFeedback(`${spot.name} added ${spot.gives.map(label).join(', ')}.`);
     playSound('success', audioEnabled);
-    if (tutorialStage === 5) setTutorialStage(6);
   };
 
   const trade = (trader: Trader) => {
@@ -348,13 +360,11 @@ export default function FutureExchangeGame() {
       return;
     }
     setDiscoveredResourceIds((current) => unique([...current, ...trader.receive]));
+    setTradedIds((current) => current.includes(trader.id) ? current : [...current, trader.id]);
     setMeters((current) => clampMeters(current, { trust: 3, energy: -1 }));
     setFeedback(`${trader.name} traded ${trader.receive.map(label).join(' + ')} for ${label(trader.give)}.`);
     playSound('trade', audioEnabled);
-    if (tutorialStage === 6) {
-      setTutorialStage(7);
-      setActiveView('board');
-    }
+    if (tutorialStage === 6) setActiveView('board');
   };
 
   const finishGame = (finalBuilt = builtModules) => {
@@ -377,6 +387,8 @@ export default function FutureExchangeGame() {
     setEnding(null);
     setDiscovery(null);
     setFailedCraftCount(0);
+    setCollectedSpotIds([]);
+    setTradedIds([]);
     setFeedback('Start with Paper + Pencils. This creates a Materials Kit.');
     saveGameNote(game.id, 'Future Exchange restarted');
   };
@@ -422,10 +434,13 @@ export default function FutureExchangeGame() {
                 selectedRecipe={selectedRecipe}
                 possiblePartners={possiblePartners}
                 suggestions={suggestions}
+                progressAction={progressAction}
                 feedback={feedback}
                 onClear={(side) => setSelectedPair((current) => side === 'left' ? [null, current[1]] : [current[0], null])}
                 onCombine={combine}
                 onTryExperiment={(recipe) => setSelectedPair(recipe.inputs)}
+                onInstallModule={installModule}
+                onOpenView={setActiveView}
               />
               <ElementGroupPanel discoveredResourceIds={discoveredResourceIds} selectedPair={selectedPair} possiblePartners={possiblePartners} triedPairs={triedPairs} onSelect={selectResource} compact={tutorialStage < 4} />
               <BottomActionBar activeView={activeView} unlockedViews={unlockedViews} onChangeView={setActiveView} onHelp={() => setManualOpen(true)} />
@@ -496,21 +511,29 @@ function CombinationWorkbench({
   selectedRecipe,
   possiblePartners,
   suggestions,
+  progressAction,
   feedback,
   onClear,
   onCombine,
   onTryExperiment,
+  onInstallModule,
+  onOpenView,
 }: {
   selectedPair: [ResourceId | null, ResourceId | null];
   selectedRecipe: Recipe | null;
   possiblePartners: ResourceId[];
   suggestions: Recipe[];
+  progressAction: ProgressAction | null;
   feedback: string;
   onClear: (side: 'left' | 'right') => void;
   onCombine: () => void;
   onTryExperiment: (recipe: Recipe) => void;
+  onInstallModule: (module: Module) => void;
+  onOpenView: (view: ActiveView) => void;
 }) {
   const selectedSingle = selectedPair[0] && !selectedPair[1] ? selectedPair[0] : selectedPair[1] && !selectedPair[0] ? selectedPair[1] : null;
+  const showProgressAction = suggestions.length === 0 && progressAction?.kind !== 'recipe';
+  const progressActionCopy = getProgressActionCopy(progressAction);
   return (
     <div className="future-panel rounded-2xl border border-pink-300/30 bg-black/60 p-4">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
@@ -549,6 +572,27 @@ function CombinationWorkbench({
               </button>
             ))}
           </div>
+        </div>
+      )}
+      {showProgressAction && progressActionCopy && (
+        <div className="future-card mt-3 rounded-xl border border-green-300/20 bg-green-300/10 p-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-green-200">Next step</p>
+          <p className="mt-1 text-xs font-bold leading-relaxed text-green-50">{progressActionCopy.detail}</p>
+          {progressAction?.kind === 'module' && (
+            <button onClick={() => onInstallModule(progressAction.module)} className="future-card mt-3 w-full rounded-lg border border-green-300/30 bg-green-300/15 p-3 text-left text-xs font-black uppercase text-green-50 hover:border-green-300">
+              {progressActionCopy.label}
+            </button>
+          )}
+          {progressAction?.kind === 'collect' && (
+            <button onClick={() => onOpenView('collect')} className="future-card mt-3 w-full rounded-lg border border-green-300/30 bg-green-300/15 p-3 text-left text-xs font-black uppercase text-green-50 hover:border-green-300">
+              {progressActionCopy.label}
+            </button>
+          )}
+          {progressAction?.kind === 'trade' && (
+            <button onClick={() => onOpenView('trade')} className="future-card mt-3 w-full rounded-lg border border-green-300/30 bg-green-300/15 p-3 text-left text-xs font-black uppercase text-green-50 hover:border-green-300">
+              {progressActionCopy.label}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -895,6 +939,7 @@ function getSuggestedExperiments(
   const selected = selectedPair.find(Boolean);
   const readyUndiscovered = recipes.filter((recipe) => (
     !discoveredRecipeIds.includes(recipe.id)
+    && !discovered.has(recipe.output)
     && recipe.inputs.every((id) => discovered.has(id))
   ));
   const missingModuleOutputs = modules
@@ -911,6 +956,111 @@ function getSuggestedExperiments(
       return (selectedScoreA + moduleScoreA) - (selectedScoreB + moduleScoreB);
     })
     .slice(0, 3);
+}
+
+function getNextProgressAction(
+  discoveredResourceIds: ResourceId[],
+  discoveredRecipeIds: string[],
+  builtModules: string[],
+  tutorialStage: TutorialStage,
+  collectedSpotIds: string[],
+  tradedIds: string[],
+): ProgressAction | null {
+  const discovered = new Set(discoveredResourceIds);
+  const readyRecipe = recipes.find((recipe) => (
+    !discoveredRecipeIds.includes(recipe.id)
+    && !discovered.has(recipe.output)
+    && recipe.inputs.every((id) => discovered.has(id))
+  ));
+  if (readyRecipe) return { kind: 'recipe', recipe: readyRecipe };
+
+  const readyModule = modules.find((module) => (
+    !builtModules.includes(module.id)
+    && isModuleReady(module, discovered)
+  ));
+  if (readyModule) return { kind: 'module', module: readyModule };
+
+  const usefulCollectSpot = collectSpots.find((spot) => (
+    tutorialStage >= spot.unlockStage
+    && !collectedSpotIds.includes(spot.id)
+    && spot.gives.some((id) => !discovered.has(id))
+  ));
+  if (usefulCollectSpot) return { kind: 'collect', spot: usefulCollectSpot };
+
+  const usefulTrader = traders.find((trader) => (
+    tutorialStage >= trader.unlockStage
+    && !tradedIds.includes(trader.id)
+    && discovered.has(trader.give)
+    && trader.receive.some((id) => !discovered.has(id))
+  ));
+  if (usefulTrader) return { kind: 'trade', trader: usefulTrader };
+
+  const lockedCollectSpot = collectSpots.find((spot) => (
+    tutorialStage < spot.unlockStage
+    && spot.gives.some((id) => !discovered.has(id))
+  ));
+  if (lockedCollectSpot) {
+    return {
+      kind: 'locked',
+      label: 'Build the board to unlock Collect',
+      detail: `${lockedCollectSpot.name} contains new elements, but Collect unlocks after the next board step.`,
+    };
+  }
+
+  const lockedTrader = traders.find((trader) => (
+    tutorialStage < trader.unlockStage
+    && trader.receive.some((id) => !discovered.has(id))
+  ));
+  if (lockedTrader) {
+    return {
+      kind: 'locked',
+      label: 'Collect first to unlock Trade',
+      detail: `${lockedTrader.name} can reveal new elements after the trade step unlocks.`,
+    };
+  }
+
+  return null;
+}
+
+function getProgressActionCopy(action: ProgressAction | null) {
+  if (!action) return null;
+  if (action.kind === 'module') {
+    return {
+      label: `Install ${action.module.name} on the Board`,
+      detail: `No more combinations are available for now. ${action.module.name} is ready, so install it to unlock the next project system.`,
+    };
+  }
+  if (action.kind === 'collect') {
+    return {
+      label: 'Open Collect',
+      detail: `New elements now come from collect spots. Open Collect and choose ${action.spot.name}.`,
+    };
+  }
+  if (action.kind === 'trade') {
+    return {
+      label: 'Open Trade',
+      detail: `A participant trade can reveal new elements. Open Trade and talk with ${action.trader.name}.`,
+    };
+  }
+  if (action.kind === 'locked') return { label: action.label, detail: action.detail };
+  return null;
+}
+
+function getAdvancedTutorialStage(
+  current: TutorialStage,
+  discoveredSet: Set<ResourceId>,
+  builtModules: string[],
+  collectedSpotIds: string[],
+  tradedIds: string[],
+): TutorialStage {
+  let next: TutorialStage = current;
+  if (next === 1 && discoveredSet.has('materialsKit')) next = 2;
+  if (next === 2 && discoveredSet.has('activityCards')) next = 3;
+  if (next === 3 && builtModules.includes('activity-plan')) next = 4;
+  if (next === 4 && discoveredSet.has('rules')) next = 5;
+  if (next === 5 && collectedSpotIds.length > 0) next = 6;
+  if (next === 6 && tradedIds.length > 0) next = 7;
+  return next;
 }
 
 function pairKey(left: ResourceId, right: ResourceId) {
