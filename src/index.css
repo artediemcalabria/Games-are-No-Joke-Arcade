@@ -877,6 +877,129 @@
     color: var(--notebook-ink) !important;
   }
 
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-action-button,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel button {
+    background: rgba(255, 250, 240, 0.94) !important;
+    border-color: rgba(88, 72, 47, 0.42) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: 0 1px 0 rgba(255,255,255,.72), 0 8px 18px rgba(68, 52, 31, 0.08) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-action-button:hover,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel button:hover {
+    background: rgba(124, 79, 36, 0.1) !important;
+    border-color: rgba(124, 79, 36, 0.44) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay {
+    background: rgba(37, 32, 24, 0.34) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.52), transparent 13rem),
+      linear-gradient(145deg, rgba(255, 250, 240, 0.97), rgba(242, 233, 216, 0.97)) !important;
+    border-color: rgba(88, 72, 47, 0.34) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: 0 18px 44px rgba(68, 52, 31, 0.22) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel h2,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel p,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel label,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel span {
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel [class*="text-cyan"],
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel [class*="text-blue"] {
+    color: var(--notebook-blue) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel [class*="text-green"],
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel [class*="text-lime"],
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel [class*="text-emerald"] {
+    color: var(--notebook-green) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel [class*="text-pink"],
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel [class*="text-yellow"],
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-overlay-panel [class*="text-red"] {
+    color: var(--notebook-accent) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-name-input {
+    background: rgba(255, 252, 244, 0.94) !important;
+    border-color: rgba(88, 72, 47, 0.38) !important;
+    color: var(--notebook-ink) !important;
+    caret-color: var(--notebook-blue) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.65) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-playfield {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,255,255,0.58), transparent 12rem),
+      linear-gradient(180deg, rgba(255, 250, 240, 0.96), rgba(238, 229, 210, 0.94)) !important;
+    border-color: rgba(88, 72, 47, 0.42) !important;
+    box-shadow: 0 16px 34px rgba(68, 52, 31, 0.12) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-playfield-grid {
+    background-image:
+      linear-gradient(rgba(86, 73, 52, 0.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(86, 73, 52, 0.1) 1px, transparent 1px) !important;
+    opacity: 1 !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-hud,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-meter,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-info-panel,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-item-card {
+    background: rgba(255, 250, 240, 0.9) !important;
+    border-color: rgba(88, 72, 47, 0.32) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: 0 10px 22px rgba(68, 52, 31, 0.08) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-floor {
+    background: rgba(88, 72, 47, 0.08) !important;
+    border-color: rgba(88, 72, 47, 0.22) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-meter-track {
+    background: rgba(88, 72, 47, 0.16) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-piece-empty {
+    background: rgba(255, 250, 240, 0.78) !important;
+    border-color: rgba(88, 72, 47, 0.3) !important;
+    color: var(--notebook-muted) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-piece-filled {
+    background: rgba(124, 79, 36, 0.18) !important;
+    border-color: rgba(124, 79, 36, 0.5) !important;
+    color: var(--notebook-accent) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-hud p,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-meter p,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-meter span,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-info-panel p,
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-item-card p {
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-hud [class*="text-cyan"],
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-info-panel [class*="text-cyan"] {
+    color: var(--notebook-blue) !important;
+  }
+
+  .theme-notebook .theme-game-screen.youthpass-screen .youthpass-info-panel [class*="text-pink"] {
+    color: var(--notebook-accent) !important;
+  }
+
   .theme-notebook .future-exchange-screen {
     color: var(--notebook-ink) !important;
   }
@@ -969,6 +1092,20 @@
     color: var(--notebook-ink) !important;
   }
 
+  .theme-notebook .theme-game-screen.future-exchange-screen button[class*="bg-black"],
+  .theme-notebook .theme-game-screen.future-exchange-screen button[class*="bg-slate"] {
+    background: rgba(255, 250, 240, 0.94) !important;
+    border-color: rgba(88, 72, 47, 0.42) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: 0 1px 0 rgba(255,255,255,.72), 0 8px 18px rgba(68, 52, 31, 0.08) !important;
+  }
+
+  .theme-notebook .theme-game-screen.future-exchange-screen button[class*="bg-black"]:hover,
+  .theme-notebook .theme-game-screen.future-exchange-screen button[class*="bg-slate"]:hover {
+    background: rgba(124, 79, 36, 0.1) !important;
+    border-color: rgba(124, 79, 36, 0.44) !important;
+  }
+
   .theme-notebook .future-exchange-screen .future-combine-button:not(:disabled) {
     background: rgba(124, 79, 36, 0.14) !important;
     border: 2px solid rgba(124, 79, 36, 0.68) !important;
@@ -1000,12 +1137,12 @@
     box-shadow: none !important;
   }
 
-  .theme-notebook .future-discovery-overlay {
+  .theme-notebook .theme-game-screen .future-discovery-overlay {
     background: rgba(37, 32, 24, 0.34) !important;
     backdrop-filter: blur(4px) !important;
   }
 
-  .theme-notebook .future-discovery-panel {
+  .theme-notebook .theme-game-screen .future-discovery-panel {
     background:
       radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.48), transparent 12rem),
       linear-gradient(145deg, rgba(255, 250, 240, 0.97), rgba(242, 233, 216, 0.97)) !important;
@@ -1014,36 +1151,36 @@
     box-shadow: 0 18px 44px rgba(68, 52, 31, 0.22) !important;
   }
 
-  .theme-notebook .future-discovery-panel h3,
-  .theme-notebook .future-discovery-panel p {
+  .theme-notebook .theme-game-screen .future-discovery-panel h3,
+  .theme-notebook .theme-game-screen .future-discovery-panel p {
     color: var(--notebook-ink) !important;
   }
 
-  .theme-notebook .future-discovery-panel > p:first-child {
+  .theme-notebook .theme-game-screen .future-discovery-panel > p:first-child {
     color: var(--notebook-accent) !important;
   }
 
-  .theme-notebook .future-discovery-resource {
+  .theme-notebook .theme-game-screen .future-discovery-resource {
     background: rgba(255, 252, 244, 0.9) !important;
     border-color: rgba(88, 72, 47, 0.28) !important;
     color: var(--notebook-blue) !important;
     box-shadow: 0 10px 22px rgba(68, 52, 31, 0.1) !important;
   }
 
-  .theme-notebook .future-discovery-lesson {
+  .theme-notebook .theme-game-screen .future-discovery-lesson {
     background: rgba(56, 95, 115, 0.08) !important;
     border-color: rgba(56, 95, 115, 0.25) !important;
     color: var(--notebook-blue) !important;
   }
 
-  .theme-notebook .future-discovery-button {
+  .theme-notebook .theme-game-screen .future-discovery-button {
     background: rgba(255, 250, 240, 0.92) !important;
     border-color: rgba(88, 72, 47, 0.42) !important;
     color: var(--notebook-accent) !important;
     box-shadow: 0 1px 0 rgba(255,255,255,.72), 0 8px 18px rgba(68, 52, 31, 0.08) !important;
   }
 
-  .theme-notebook .future-discovery-button:hover {
+  .theme-notebook .theme-game-screen .future-discovery-button:hover {
     background: rgba(124, 79, 36, 0.1) !important;
     color: var(--notebook-ink) !important;
   }

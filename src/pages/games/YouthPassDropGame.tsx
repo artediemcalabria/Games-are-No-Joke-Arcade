@@ -317,7 +317,7 @@ export default function YouthPassDropGame() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen pb-10 max-w-5xl mx-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen youthpass-screen pb-10 max-w-5xl mx-auto">
       <section className="arcade-border glass-panel rounded-xl p-4 md:p-5 mb-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
@@ -330,12 +330,12 @@ export default function YouthPassDropGame() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setAudioEnabled((value) => !value)}
-              className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-cyan-400"
+              className="youthpass-action-button rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-cyan-400"
             >
               {audioEnabled ? <Volume2 className="w-4 h-4 inline mr-2" /> : <VolumeX className="w-4 h-4 inline mr-2" />}
               Sound
             </button>
-            <button onClick={restartCurrent} className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-pink-400">
+            <button onClick={restartCurrent} className="youthpass-action-button rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-pink-400">
               <RotateCcw className="w-4 h-4 inline mr-2" /> Restart
             </button>
           </div>
@@ -344,15 +344,15 @@ export default function YouthPassDropGame() {
 
       <section className="grid grid-cols-1 lg:grid-cols-[minmax(280px,430px)_1fr] gap-4 items-start">
         <div className="arcade-border-pink glass-panel-pink rounded-xl p-3 md:p-4">
-          <div className="relative mx-auto h-[620px] max-h-[72vh] min-h-[520px] w-full max-w-[390px] overflow-hidden rounded-[1.6rem] border-4 border-cyan-400/50 bg-[radial-gradient(circle_at_top,rgba(34,211,238,.20),transparent_34%),linear-gradient(180deg,#05111f,#16051a_70%,#050507)] shadow-[0_0_28px_rgba(0,242,255,.24)]">
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:34px_34px] opacity-50" />
-            <div className="absolute left-3 right-3 top-3 z-20 rounded-xl border border-white/10 bg-black/65 p-3">
+          <div className="youthpass-playfield relative mx-auto h-[620px] max-h-[72vh] min-h-[520px] w-full max-w-[390px] overflow-hidden rounded-[1.6rem] border-4 border-cyan-400/50 bg-[radial-gradient(circle_at_top,rgba(34,211,238,.20),transparent_34%),linear-gradient(180deg,#05111f,#16051a_70%,#050507)] shadow-[0_0_28px_rgba(0,242,255,.24)]">
+            <div className="youthpass-playfield-grid absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:34px_34px] opacity-50" />
+            <div className="youthpass-hud absolute left-3 right-3 top-3 z-20 rounded-xl border border-white/10 bg-black/65 p-3">
               <div className="flex items-center justify-between text-[10px] font-bold uppercase text-gray-400">
                 <span>Level {level}/10</span>
                 <span>{Math.max(0, Math.ceil(config.duration - elapsed))}s</span>
               </div>
               <p className="mt-2 text-[10px] font-bold uppercase text-cyan-200">{trainingDays[level - 1]}</p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-900">
+              <div className="youthpass-meter-track mt-2 h-2 overflow-hidden rounded-full bg-gray-900">
                 <div className="h-full bg-cyan-300" style={{ width: `${progress}%` }} />
               </div>
             </div>
@@ -369,7 +369,7 @@ export default function YouthPassDropGame() {
               <span className="mt-1 h-4 w-8 rounded-b-full bg-pink-500" />
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 h-[12%] border-t border-cyan-300/30 bg-black/50" />
+            <div className="youthpass-floor absolute bottom-0 left-0 right-0 h-[12%] border-t border-cyan-300/30 bg-black/50" />
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3 lg:hidden">
@@ -386,7 +386,7 @@ export default function YouthPassDropGame() {
                 <div
                   key={index}
                   className={`aspect-[3/4] rounded border text-[9px] font-black flex items-center justify-center ${
-                    index < pieces ? 'border-yellow-300 bg-yellow-300 text-black' : 'border-white/10 bg-black/50 text-gray-600'
+                    index < pieces ? 'youthpass-piece-filled border-yellow-300 bg-yellow-300 text-black' : 'youthpass-piece-empty border-white/10 bg-black/50 text-gray-600'
                   }`}
                 >
                   {index + 1}
@@ -404,19 +404,19 @@ export default function YouthPassDropGame() {
             <Meter label="Happiness" value={meters.happiness} color="bg-pink-400" />
           </div>
 
-          <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+          <div className="youthpass-info-panel bg-black/60 border border-white/10 rounded-xl p-4">
             <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Last Feedback</p>
             <p className="text-sm text-gray-200 leading-relaxed mt-3">{lastCatch}</p>
           </div>
 
-          <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+          <div className="youthpass-info-panel bg-black/60 border border-white/10 rounded-xl p-4">
             <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Design Note</p>
             <p className="text-sm text-gray-300 leading-relaxed mt-3">{designNotes[level - 1]}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             {(Object.keys(itemMeta) as ItemType[]).map((type) => (
-              <div key={type} className="rounded-lg border border-white/10 bg-black/45 p-3">
+              <div key={type} className="youthpass-item-card rounded-lg border border-white/10 bg-black/45 p-3">
                 <p className="text-xs font-black text-white">{itemMeta[type].label}</p>
                 <p className="text-[10px] text-gray-400 mt-1">{itemMeta[type].description}</p>
               </div>
@@ -440,7 +440,7 @@ export default function YouthPassDropGame() {
                 inputMode="text"
                 autoComplete="given-name"
                 enterKeyHint="done"
-                className="mt-2 w-full rounded-xl border-2 border-cyan-400/50 bg-black/80 px-4 py-4 text-center font-sans text-lg font-bold tracking-normal text-white caret-cyan-300 outline-none focus:border-cyan-200 focus:ring-4 focus:ring-cyan-300/20"
+                className="youthpass-name-input mt-2 w-full rounded-xl border-2 border-cyan-400/50 bg-black/80 px-4 py-4 text-center font-sans text-lg font-bold tracking-normal text-white caret-cyan-300 outline-none focus:border-cyan-200 focus:ring-4 focus:ring-cyan-300/20"
                 placeholder="Your name"
               />
             </label>
@@ -533,12 +533,12 @@ function FallingToken({ item }: { key?: number; item: FallingItem }) {
 
 function Meter({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/60 p-4">
+    <div className="youthpass-meter rounded-xl border border-white/10 bg-black/60 p-4">
       <div className="flex items-center justify-between text-[10px] font-bold uppercase text-gray-400">
         <span>{label}</span>
         <span className="text-white">{Math.round(value)}%</span>
       </div>
-      <div className="mt-3 h-3 overflow-hidden rounded-full bg-gray-900">
+      <div className="youthpass-meter-track mt-3 h-3 overflow-hidden rounded-full bg-gray-900">
         <div className={`h-full ${color} ${value < 24 ? 'animate-pulse' : ''}`} style={{ width: `${value}%` }} />
       </div>
     </div>
@@ -566,8 +566,8 @@ function Overlay({ title, tone, children }: { title: string; tone: 'cyan' | 'gre
       ? 'border-2 border-red-400 shadow-[0_0_16px_rgba(248,113,113,.45)]'
       : 'arcade-border';
   return (
-    <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`${toneClass} bg-black/90 rounded-xl p-6 max-w-xl w-full text-center`}>
+    <div className="youthpass-overlay fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`youthpass-overlay-panel ${toneClass} bg-black/90 rounded-xl p-6 max-w-xl w-full text-center`}>
         <h2 className="text-2xl font-arcade text-white">{title}</h2>
         <div className="mt-5">{children}</div>
       </motion.div>
