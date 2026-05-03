@@ -47,6 +47,15 @@ interface InteractiveLab {
   controls: InteractiveControl[];
 }
 
+interface PodcastEpisode {
+  moduleNumber: number;
+  participants: string[];
+  title: string;
+  youtubeUrl: string;
+  youtubeEmbedUrl: string;
+  discussionSummary: string[];
+}
+
 interface CourseLessonBase {
   id: string;
   modelTag: string;
@@ -71,6 +80,7 @@ interface CourseLessonBase {
   tryIt: string;
   flipCards: FlipCard[];
   interactiveLab?: InteractiveLab;
+  podcastEpisode?: PodcastEpisode;
   checkpoint: Checkpoint;
 }
 
@@ -130,6 +140,18 @@ const baseLessons: CourseLessonBase[] = [
     antiPattern: 'Do not start with a topic only. Start with what players do, what rule limits them, and what feedback they receive.',
     example: 'If players must cross a room, it is a task. If they must cross with limited steps, shared resources, and visible feedback, it becomes a game.',
     tryIt: 'Write one sentence: In my game, players try to ___, but they must follow ___, and the system shows ___ after each action.',
+    podcastEpisode: {
+      moduleNumber: 1,
+      participants: ['Buse', 'Sophie', 'Emin', 'Liviu'],
+      title: '🎮 What Is a Game? Rules, Choices, Memories, and Emotion | Games Are No Joke Arcade Podcast',
+      youtubeUrl: 'https://youtu.be/EmW_DOL4kBs',
+      youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/EmW_DOL4kBs',
+      discussionSummary: [
+        'The team explored the meaning of a game by comparing games with exercises, competitions, and everyday life. They suggested that games involve rules, limits, tasks, and choices, but also emotion, fun, memory, and the feeling of being inside a special situation.',
+        'One participant described games as memories from childhood and moments shared with others. The group also discussed how an exercise becomes different from a game when the activity is not only about completing a task, but about playing around the task, enjoying the process, and learning without noticing it directly.',
+        'They used personal examples to show that losing can still be enjoyable when the experience is memorable, funny, or impossible to repeat. They also discussed how games such as GTA can make players question their own morals by offering choices that would not be acceptable in real life. The episode ends with the idea that games are not just for passing time: they are designed experiences that can create memories, transmit emotions, and allow experimentation without real-world consequences.',
+      ],
+    },
     flipCards: [
       { front: 'Voluntary Frame', frontHint: 'Players accept the temporary world and its limits.', back: 'A game begins when people agree to play. In youth work this agreement matters: it creates safety, consent, and a clear border between play and real life.', prompt: 'How will players know they are entering and leaving the game frame?' },
       { front: 'Useful Rules', frontHint: 'Rules make the challenge meaningful, not random.', back: 'A rule is useful when it creates a decision. Good rules are short, visible, and connected to the learning goal. Too many rules hide the experience.', prompt: 'Which rule creates the main challenge in your prototype?' },
@@ -178,6 +200,18 @@ const baseLessons: CourseLessonBase[] = [
     antiPattern: 'Do not throw players into sensitive roles without consent, boundaries, or a way to exit.',
     example: 'Before a community conflict game, players receive fictional village roles, safety rules, and an exit question: "What did the system make you notice?"',
     tryIt: 'Design a 30-second entry ritual and a 2-minute exit/debrief ritual for your prototype.',
+    podcastEpisode: {
+      moduleNumber: 2,
+      participants: ['Kaotar', 'Slave', 'Hatche'],
+      title: '🪄 The Magic Circle: Safe Play, Roles, and Debriefing | Games Are No Joke Arcade Podcast',
+      youtubeUrl: 'https://youtu.be/e3GVMYQ0ByQ',
+      youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/e3GVMYQ0ByQ',
+      discussionSummary: [
+        'The team described the Magic Circle as a safe temporary reality where participants can express themselves, reduce anxiety, and try new behaviors without feeling the same consequences as in everyday life. They used the image of a magical island to explain how a new context can help people feel lighter, braver, and more open.',
+        "They gave special attention to the facilitator's role. The facilitator helps participants enter the Magic Circle through a clear ritual, accepts a role inside the story, and makes sure the group respects the agreed rules of the safe space. The group explained that roles and narrative context make the activity more believable and help participants step into actions they might avoid in normal life.",
+        'The team also emphasized two key responsibilities: exit strategy and debriefing. Participants need a clear way to leave the Magic Circle if something becomes uncomfortable. After the activity, the facilitator must connect the experience back to real life, otherwise the play remains only fantasy. They also mentioned Huizinga as the thinker connected to this concept and noted that the Magic Circle is especially useful in youth work when groups need safe space for expression and experimentation.',
+      ],
+    },
     flipCards: [
       { front: 'Entry Ritual', frontHint: 'A small action that tells players they are entering the game world.', back: 'The entry can be reading a story card, choosing a role, placing a token, or hearing the first rule. It helps players understand the temporary frame.', prompt: 'How do players enter your game world?' },
       { front: 'Shared Rules', frontHint: 'The agreements that make play fair, safe, and meaningful.', back: 'Rules do more than create challenge. They also create trust. In youth work, rules should say what players can do and how the group stays safe.', prompt: 'What rule protects the group while keeping the game interesting?' },
@@ -239,6 +273,18 @@ const baseLessons: CourseLessonBase[] = [
     antiPattern: 'Do not use a game only as entertainment and then add a moral speech at the end. Put the learning inside the mechanic.',
     example: 'A group plays a resource-sharing game. During play they feel unfairness. In the debrief they connect it to inclusion and access in youth projects.',
     tryIt: 'Choose one youth work topic. Write one action players should repeat and one feeling that action should create.',
+    podcastEpisode: {
+      moduleNumber: 3,
+      participants: ['Stasa', 'Ivy', 'Mihaela'],
+      title: '🌱 Why Games Matter for Learning and Social Development | Games Are No Joke Arcade Podcast',
+      youtubeUrl: 'https://youtu.be/yzuTAVnBYBo',
+      youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/yzuTAVnBYBo',
+      discussionSummary: [
+        'The team discussed games as tools for learning and social development from childhood to adulthood. Stasa spoke from her experience working with children, explaining that children explore the world through games and develop social skills such as emotional regulation, reacting to losing or winning, and stepping outside their comfort zone in a supportive way.',
+        'Mihaela connected games to adult learning, saying that adults often have less time for games but still use board games, video games, and hobbies to develop creativity, teamwork, patience, tolerance, strategic thinking, logic, and emotional control. She also connected this to non-formal education and Erasmus activities, where gamification can help people learn and raise awareness about important topics in an engaging mood.',
+        'The group also discussed games for older people and language learners. They mentioned memory and focus for elderly learners, and language games such as charades, simulations, and role-plays for vocabulary, real-life communication, and cultural adaptation. Their central point was that games make learning active, social, emotional, and easier to connect with real experience.',
+      ],
+    },
     flipCards: [
       { front: 'Game Frame', frontHint: 'A temporary world where players can try, fail, and talk safely.', back: 'A safe frame needs a clear start, clear limits, and permission to experiment. In youth work, this protects the group while still allowing emotion and discovery.', prompt: 'What is the temporary world of your prototype? What are its safety limits?' },
       { front: 'Meaningful Action', frontHint: 'The player action that makes the learning visible on the table.', back: 'A meaningful action changes something players can see or feel: a token moves, trust changes, a card appears, or a new choice opens. This is where the message lives.', prompt: 'What changes after a player acts? Is the learning inside that change?' },
@@ -285,6 +331,18 @@ const baseLessons: CourseLessonBase[] = [
     antiPattern: 'Do not add components because they look nice. Every component should create a decision, feedback, or reflection.',
     example: 'A migration dialogue game may use a route board for the journey, event cards for barriers, and dignity tokens to show social cost.',
     tryIt: 'Choose one component for your prototype and explain what learning job it does.',
+    podcastEpisode: {
+      moduleNumber: 4,
+      participants: ['Andrea', 'Stefan', 'Elena'],
+      title: '🎲 Why Board Games Work in Youth Work | Games Are No Joke Arcade Podcast',
+      youtubeUrl: 'https://youtu.be/h0C05R2r-eI',
+      youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/h0C05R2r-eI',
+      discussionSummary: [
+        'The team focused on how board games can support youth workers when they need to explain complex or abstract topics. They described core game elements such as cards, boards, tokens, and facilitator-led debriefing, explaining that these elements help participants make choices, see consequences, and understand social processes through visual representation.',
+        'Elena emphasized that cards can put players into situations where they feel they have power to decide, while visual materials help them rationalize and understand the action they are taking. Stefan added that simplicity is important: if a board game becomes too complex, participants may lose sight of the learning purpose.',
+        'Andrea brought in the role of intentional design. He argued that even a balanced board game is not enough if the facilitator has a clear educational goal. The group discussed how colors, boundaries, resources, and visual signals can guide players toward reflection without pretending the facilitator is fully neutral. Their conclusion was that board games work in youth work because they help participants experience, discuss, and make sense of social systems together.',
+      ],
+    },
     flipCards: [
       { front: 'Cards', frontHint: 'Cards are small containers for choices, roles, events, and questions.', back: 'Cards let a youth worker add variety without making the board complex. They are easy to rewrite after a playtest and easy for participants to co-create.', prompt: 'What 8 cards would make your prototype playable today?' },
       { front: 'Tokens', frontHint: 'Tokens make abstract things touchable.', back: 'Trust, stress, voice, budget, time, safety, or inclusion can become tokens. When players move them, the social system becomes visible.', prompt: 'Which invisible value should become a token in your game?' },
@@ -326,6 +384,18 @@ const baseLessons: CourseLessonBase[] = [
     antiPattern: 'Bad gamification adds points to boring tasks. Good game design changes the task into a meaningful system.',
     example: 'A team challenge is fun because players choose roles, discover better tactics, and need each other to finish.',
     tryIt: 'Add one choice, one feedback signal, and one cooperation moment to your prototype idea.',
+    podcastEpisode: {
+      moduleNumber: 5,
+      participants: ['Gjoko', 'Andrea', 'Loredana'],
+      title: '✨ Fun, Motivation, and Learning Through Games | Games Are No Joke Arcade Podcast',
+      youtubeUrl: 'https://youtu.be/KMURX-OC_8U',
+      youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/KMURX-OC_8U',
+      discussionSummary: [
+        'The team opened with the question of what fun means, linking it to emotion, relaxation, confidence, excitement, and welcoming environments. They discussed how people often remember learning experiences more strongly when those experiences create deep emotions. In youth work, they argued, it is better to focus on positive emotions rather than difficult or traumatic ones.',
+        'The group debated whether people learn better inside or outside their comfort zone. They agreed that challenge can be useful, but distinguished challenge from difficult emotional pressure. For them, a good game can create a relaxed and inclusive environment while still offering meaningful goals and choices.',
+        'They connected motivation to fun, satisfaction, social connection, autonomy, competence, and the desire to keep participating. The discussion also referenced the Magic Circle as a way to help people feel included and safe enough to join the group. Their conclusion was that games become powerful for learning when players feel involved, have some control, connect with others, and discover something about themselves.',
+      ],
+    },
     flipCards: [
       { front: 'Autonomy', frontHint: 'Players feel they have a real choice, not only one correct answer.', back: 'Autonomy grows when different strategies can work. In board games this can be role choice, route choice, resource choice, or deciding how much risk to take.', prompt: 'Name two strategies in your game. Why could both be valid?' },
       { front: 'Competence', frontHint: 'Players can see progress and understand why they improved.', back: 'Competence needs readable feedback. Players should see what changed because of their action and learn how to do better next round.', prompt: 'What feedback shows improvement: tokens, cards, levels, meters, or group reactions?' },
@@ -366,6 +436,18 @@ const baseLessons: CourseLessonBase[] = [
     antiPattern: 'Do not pick a mechanic only because it is popular. Pick it because it creates the experience you need.',
     example: 'A hidden-role mechanic can create suspicion. A shared-goal mechanic can create cooperation. The same topic can feel very different.',
     tryIt: 'Pick one mechanic. Predict one player behavior and one feeling it may create.',
+    podcastEpisode: {
+      moduleNumber: 6,
+      participants: ['Cristina', 'Rasim', 'Claudia'],
+      title: '🧩 MDA in Game Design: Mechanics, Dynamics, and Aesthetics | Games Are No Joke Arcade Podcast',
+      youtubeUrl: 'https://youtu.be/IK-bXMgyvic',
+      youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/IK-bXMgyvic',
+      discussionSummary: [
+        'The team discussed game design through the MDA framework. They explained mechanics as the rules, materials, roles, timers, and limits that structure a game. Dynamics were described as what happens when players interact with those mechanics, including the ways players interpret, change, or respond to the rules. Aesthetics were presented as the look, atmosphere, characters, world, and overall appeal that attract the right audience.',
+        'They used Pac-Man as a simple example: the mechanics include movement, dots, enemies, and progression; the dynamics involve navigating danger and making decisions in the maze; the aesthetics include the recognizable yellow character and ghost enemies.',
+        'The group connected MDA to youth work by saying that facilitators and designers should be clear about the experience and learning goal they want young people to reach. They mentioned teamwork, time management, negotiation, and real-life lessons as possible outcomes. Their main point was that games should not be senseless: good design connects mechanics, dynamics, and aesthetics to a specific learning purpose.',
+      ],
+    },
     flipCards: [
       { front: 'Mechanic', frontHint: 'The rule, object, limit, or action the designer can change.', back: 'Mechanics are concrete: draw a card, trade a token, vote, move, hide information, lose energy, gain trust. They are your design levers.', prompt: 'What one rule can you change to change the whole experience?' },
       { front: 'Dynamic', frontHint: 'The behavior that appears when real players use the rules.', back: 'Dynamics are not fully controlled. Players may cooperate, rush, negotiate, dominate, avoid, laugh, or create shortcuts. Playtesting reveals dynamics.', prompt: 'What behavior do you expect? What behavior would be a warning sign?' },
@@ -448,6 +530,18 @@ const baseLessons: CourseLessonBase[] = [
     antiPattern: 'Do not make players act out trauma or stereotypes. Use fictional distance and respectful roles.',
     example: 'Players with different community needs must choose a project plan without letting the trust meter collapse.',
     tryIt: 'Write one debrief question that connects your game to real youth work without blaming players.',
+    podcastEpisode: {
+      moduleNumber: 8,
+      participants: ['Kiril', 'Ognjen', 'Ethan'],
+      title: '🗣️ Games for Dialogue and Polarization | Games Are No Joke Arcade Podcast',
+      youtubeUrl: 'https://youtu.be/riaVnSLByHI',
+      youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/riaVnSLByHI',
+      discussionSummary: [
+        'The team started from the idea that polarization is increasing and that dialogue can sometimes feel impossible. They asked whether a board game could help with this problem and argued that games can be useful because they slow down judgement. In a real argument, people often react too quickly, while a game introduces rules and steps that make people follow a process before judging each other.',
+        'They discussed how games can model real-world problems through trade-offs. A good game can show that gaining one thing may mean losing another, which helps participants understand that social conflicts are not only about asking "why did you do that?" but also about figuring out how people can work together within constraints.',
+        'The group also said that role-play and simulation can lower defensiveness. When players enter a character or game situation, they may put their ego aside and stop seeing disagreement as enemy behavior. The episode ends with the importance of reflection: if the game is only play, little changes, but if participants debrief afterwards, the experience can lead to visible progress in dialogue.',
+      ],
+    },
     flipCards: [
       { front: 'Fictional Distance', frontHint: 'A story frame that explores a real issue indirectly and safely.', back: 'Fictional distance lets players discuss difficult topics without exposing personal stories. Use villages, islands, councils, teams, missions, or future worlds.', prompt: 'What fictional frame protects the group while keeping the topic meaningful?' },
       { front: 'Tradeoff', frontHint: 'A choice where every option has a cost.', back: 'Tradeoffs make social systems visible. For example, speed may reduce inclusion, budget may reduce comfort, and silence may protect peace for a moment but hurt trust later.', prompt: 'What must players sacrifice, and why does it matter?' },
