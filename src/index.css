@@ -137,6 +137,23 @@
   .castle-meter-panel {}
   .castle-tool-status {}
   .castle-control-button {}
+  .youthpass-screen {
+    overflow-anchor: none;
+  }
+  .youthpass-playfield-size {
+    height: 620px;
+    min-height: 620px;
+    max-height: none;
+    contain: layout paint;
+    flex: 0 0 auto;
+    transform: translateZ(0);
+  }
+  @media (max-width: 640px) {
+    .youthpass-playfield-size {
+      height: clamp(520px, 158.974vw, 620px);
+      min-height: clamp(520px, 158.974vw, 620px);
+    }
+  }
   .youthpass-info-panel {
     min-height: 7.25rem;
   }

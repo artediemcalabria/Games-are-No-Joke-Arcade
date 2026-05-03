@@ -344,7 +344,7 @@ export default function YouthPassDropGame() {
 
       <section className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(280px,430px)_1fr]">
         <div className="arcade-border-pink glass-panel-pink min-w-0 rounded-xl p-3 md:p-4">
-          <div className="youthpass-playfield relative mx-auto h-[620px] max-h-[72vh] min-h-[520px] w-full max-w-[390px] overflow-hidden rounded-[1.6rem] border-4 border-cyan-400/50 bg-[radial-gradient(circle_at_top,rgba(34,211,238,.20),transparent_34%),linear-gradient(180deg,#05111f,#16051a_70%,#050507)] shadow-[0_0_28px_rgba(0,242,255,.24)]">
+          <div className="youthpass-playfield youthpass-playfield-size relative mx-auto w-full max-w-[390px] overflow-hidden rounded-[1.6rem] border-4 border-cyan-400/50 bg-[radial-gradient(circle_at_top,rgba(34,211,238,.20),transparent_34%),linear-gradient(180deg,#05111f,#16051a_70%,#050507)] shadow-[0_0_28px_rgba(0,242,255,.24)]">
             <div className="youthpass-playfield-grid absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:34px_34px] opacity-50" />
             <div className="youthpass-hud absolute left-3 right-3 top-3 z-20 rounded-xl border border-white/10 bg-black/65 p-3">
               <div className="flex items-center justify-between text-[10px] font-bold uppercase text-gray-400">
