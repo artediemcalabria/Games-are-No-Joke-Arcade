@@ -145,12 +145,7 @@
     box-shadow: inset 0 0 28px rgba(255, 255, 255, 0.04);
   }
   .game-symbol-preview::before {
-    content: "";
-    position: absolute;
-    inset: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 1rem;
-    pointer-events: none;
+    content: none;
   }
   .game-symbol-icon,
   .game-symbol-small-icon {
@@ -1129,10 +1124,6 @@
     border-color: rgba(88, 72, 47, 0.28) !important;
     box-shadow: 0 14px 28px rgba(68, 52, 31, 0.1) !important;
     color: var(--notebook-blue) !important;
-  }
-
-  .theme-notebook .game-symbol-preview::before {
-    border-color: rgba(88, 72, 47, 0.16) !important;
   }
 
   .theme-notebook .game-symbol-icon,

@@ -149,7 +149,7 @@ function GamePreview({ id }: { id: string }) {
   const Secondary = preview.secondary;
 
   return (
-    <div className={`game-symbol-preview game-symbol-${preview.tone} min-h-[260px] rounded-xl border p-5 relative overflow-hidden`}>
+    <div className={`game-symbol-preview game-symbol-${preview.tone} min-h-[260px] rounded-xl p-5 relative overflow-hidden`}>
       <div className="relative z-10 flex h-full min-h-[220px] flex-col justify-between gap-5">
         <div className="flex items-start justify-between gap-4">
           <div className="game-symbol-icon">
