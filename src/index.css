@@ -24,6 +24,7 @@
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -136,6 +137,21 @@
   .castle-meter-panel {}
   .castle-tool-status {}
   .castle-control-button {}
+  .youthpass-info-panel {
+    min-height: 7.25rem;
+  }
+  .youthpass-info-panel p:last-child {
+    min-height: 2.75rem;
+  }
+  .youthpass-meter {
+    min-height: 6.5rem;
+  }
+  .youthpass-pieces-panel {
+    min-height: 10.25rem;
+  }
+  .youthpass-item-card {
+    min-height: 5.25rem;
+  }
   .game-symbol-preview {
     background:
       radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.12), transparent 8rem),
