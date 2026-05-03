@@ -586,17 +586,29 @@ function FlagFace({ flag }: { flag: FlagId }) {
     );
   }
 
+  return <MacedoniaFlag />;
+}
+
+function MacedoniaFlag() {
+  const rayPoints = [
+    '50,50 42,0 58,0',
+    '50,50 88,0 100,12',
+    '50,50 100,42 100,58',
+    '50,50 100,88 88,100',
+    '50,50 58,100 42,100',
+    '50,50 12,100 0,88',
+    '50,50 0,58 0,42',
+    '50,50 0,12 12,0',
+  ];
+
   return (
-    <div className="relative h-full w-full bg-[#d82126]">
-      <span className="absolute left-1/2 top-1/2 h-[34%] w-[34%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f8d616]" />
-      {Array.from({ length: 8 }).map((_, index) => (
-        <span
-          key={index}
-          className="absolute left-1/2 top-1/2 h-[7%] w-[58%] origin-left bg-[#f8d616]"
-          style={{ transform: `rotate(${index * 22.5}deg)` }}
-        />
+    <svg className="h-full w-full" viewBox="0 0 100 100" aria-hidden="true">
+      <rect width="100" height="100" fill="#d82126" />
+      {rayPoints.map((points) => (
+        <polygon key={points} points={points} fill="#ffe600" />
       ))}
-    </div>
+      <circle cx="50" cy="50" r="18.5" fill="#ffe600" />
+    </svg>
   );
 }
 

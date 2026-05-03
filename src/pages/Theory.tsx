@@ -29,6 +29,7 @@ import { useStore } from '../store/useStore';
 
 const courseLogoPath = `${import.meta.env.BASE_URL}arte-diem-course-logos.png`;
 const erasmusLogoPath = `${import.meta.env.BASE_URL}erasmus-plus-small.png`;
+const boardGameProcessPdfPath = `${import.meta.env.BASE_URL}educational-board-game-process.pdf`;
 
 type Lesson = typeof lessons[number];
 type TheoryCard = Lesson['cardDeck'][number];
@@ -64,6 +65,7 @@ export default function Theory() {
   const activeCardKey = `${activeLesson.id}-${activeCardIndex}`;
   const isCardBack = Boolean(flippedCards[activeCardKey]);
   const LessonIcon = activeLesson.icon;
+  const isHandoutLesson = isHandoutAvailableForLesson(activeLesson.id);
 
   useEffect(() => {
     setActiveCardIndex(0);
@@ -91,7 +93,7 @@ export default function Theory() {
 
       <main className="lg:col-span-8 space-y-4">
         <section className="arcade-border-pink glass-panel-pink rounded-xl p-4 md:p-5">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_12rem]">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_13.5rem]">
             <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-widest text-pink-300">{activeLesson.modelTag}</p>
               <h1 className="mt-3 text-2xl font-arcade leading-tight text-white md:text-3xl">{activeLesson.title}</h1>
@@ -100,12 +102,22 @@ export default function Theory() {
             <div className="rounded-xl border border-white/10 bg-black/40 p-4">
               <div className="flex items-start justify-between gap-3">
                 <LessonIcon className="h-8 w-8 shrink-0 text-pink-300" />
-                <button
-                  onClick={() => void downloadLessonModule(activeLesson)}
-                  className="theory-action-button min-h-9 shrink-0 px-3 py-2 text-[10px]"
-                >
-                  <Download className="h-3.5 w-3.5" /> Download
-                </button>
+                <div className="grid shrink-0 gap-2">
+                  <button
+                    onClick={() => void downloadLessonModule(activeLesson)}
+                    className="theory-action-button min-h-9 px-3 py-2 text-[10px]"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Lesson PDF
+                  </button>
+                  {isHandoutLesson && (
+                    <button
+                      onClick={() => downloadStaticAsset(boardGameProcessPdfPath, 'educational-board-game-process.pdf')}
+                      className="theory-action-button min-h-9 px-3 py-2 text-[10px]"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Process PDF
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Learning model</p>
               <p className="mt-2 text-sm font-black leading-snug text-white">{formatModelArrows(activeLesson.model)}</p>
@@ -124,7 +136,7 @@ export default function Theory() {
 
         <ModelDeck lesson={activeLesson} />
 
-        <TheoryInteractiveLab lesson={activeLesson} />
+        {activeLesson.interactiveLab && <TheoryInteractiveLab lesson={activeLesson} />}
 
         <section className="rounded-xl border border-white/10 bg-black/45 p-4 md:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -214,12 +226,14 @@ function TheorySidebar({
   progressPercent: number;
   onSelect: (id: string) => void;
 }) {
+  const isHandoutLesson = isHandoutAvailableForLesson(activeLessonId);
+
   return (
     <aside className="theory-sidebar notebook-sidebar-frame notebook-surface arcade-border glass-panel rounded-xl p-4 lg:col-span-4 lg:sticky lg:top-0 lg:self-start">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-arcade text-cyan-400">Theory Path</h2>
-          <p className="mt-2 text-xs leading-relaxed text-gray-400">Learn models. Flip cards. Use prompts during group work.</p>
+          <h2 className="text-lg font-arcade text-cyan-400">Theory Modules</h2>
+          <p className="mt-2 text-xs leading-relaxed text-gray-400">Open one module at a time, teach the model clearly, and keep the classroom handout close by.</p>
         </div>
         <span className="notebook-chip rounded-lg border border-cyan-300/30 bg-black/50 px-3 py-2 text-xs font-black text-white">
           {completedLessons.length}/{lessons.length}
@@ -235,6 +249,16 @@ function TheorySidebar({
           <div className="h-full bg-cyan-300 transition-all" style={{ width: `${progressPercent}%` }} />
         </div>
       </div>
+
+      {isHandoutLesson && (
+        <div className="notebook-muted-card mt-3 rounded-xl border border-white/10 bg-black/40 p-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Educational Board Game Process</p>
+          <p className="mt-2 text-xs leading-relaxed text-gray-300">Download the class process steps used for idea, prototype, playtest, and improvement.</p>
+          <button onClick={() => downloadStaticAsset(boardGameProcessPdfPath, 'educational-board-game-process.pdf')} className="theory-action-button mt-3 w-full justify-center">
+            <Download className="h-3.5 w-3.5" /> Download Process PDF
+          </button>
+        </div>
+      )}
 
       <nav className="mt-4 space-y-2" aria-label="Theory modules">
         {lessons.map((lesson, index) => {
@@ -254,6 +278,8 @@ function TheorySidebar({
                 <div className="min-w-0">
                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Module {index + 1}/{lessons.length}</p>
                   <p className="mt-1 text-sm font-black leading-snug text-white">{lesson.title}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-gray-400">{summarizeModuleFocus(lesson.focus)}</p>
+                  <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-cyan-200/80">{formatModelArrows(lesson.model)}</p>
                   {done && <p className="mt-1 text-[10px] font-black uppercase text-green-300">{lesson.rewardBadge}</p>}
                 </div>
               </div>
@@ -276,6 +302,15 @@ function InfoBlock({ label, text }: { label: string; text: string }) {
 
 function formatModelArrows(model: string) {
   return model.replaceAll('->', '→');
+}
+
+function summarizeModuleFocus(focus: string) {
+  return focus.length <= 100 ? focus : `${focus.slice(0, 97).trimEnd()}...`;
+}
+
+function isHandoutAvailableForLesson(lessonId: string) {
+  const lessonIndex = lessons.findIndex((lesson) => lesson.id === lessonId);
+  return lessonIndex >= lessons.length - 2;
 }
 
 function ModelDeck({ lesson }: { lesson: Lesson }) {
@@ -374,12 +409,14 @@ function TheoryCardFace({ card, index, total, isBack }: { card: TheoryCard; inde
 }
 
 function TheoryInteractiveLab({ lesson }: { lesson: Lesson }) {
-  const lab = useMemo<InteractiveLab>(() => (lesson.interactiveLab as InteractiveLab | undefined) ?? buildDefaultLab(lesson), [lesson]);
+  const lab = useMemo<InteractiveLab | null>(() => (lesson.interactiveLab as InteractiveLab | undefined) ?? null, [lesson]);
   const [values, setValues] = useState<Record<string, InteractiveValue>>(() => initialLabValues(lab));
 
   useEffect(() => {
     setValues(initialLabValues(lab));
   }, [lab]);
+
+  if (!lab) return null;
 
   const setValue = (id: string, value: InteractiveValue) => {
     setValues((current) => ({ ...current, [id]: value }));
@@ -527,7 +564,8 @@ function SwitchControl({ control, value, onChange }: { control: TheoryControl; v
   );
 }
 
-function initialLabValues(lab: InteractiveLab) {
+function initialLabValues(lab: InteractiveLab | null) {
+  if (!lab) return {};
   return Object.fromEntries(lab.controls.map((control) => [control.id, control.defaultValue])) as Record<string, InteractiveValue>;
 }
 
@@ -932,6 +970,15 @@ async function imageToDataUrl(url: string) {
     reader.onerror = () => reject(new Error(`Could not read image: ${url}`));
     reader.readAsDataURL(blob);
   });
+}
+
+function downloadStaticAsset(url: string, filename: string) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
 }
 
 function drawPdfHeader(pdf: PdfDocument, lesson: Lesson, erasmusLogo: string, courseLogo: string) {

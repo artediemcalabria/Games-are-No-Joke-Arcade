@@ -389,7 +389,7 @@ export default function FutureExchangeGame() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen mx-auto w-full max-w-full min-w-0 overflow-hidden pb-10">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="theme-game-screen future-exchange-screen mx-auto w-full max-w-full min-w-0 overflow-hidden pb-10">
       <section className="glass-panel mb-4 rounded-xl border border-cyan-300/25 p-4 md:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
@@ -453,7 +453,7 @@ export default function FutureExchangeGame() {
 
 function CompactHud({ meters, stage, builtCount, discoveredCount }: { meters: Meters; stage: TutorialStage; builtCount: number; discoveredCount: number }) {
   return (
-    <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/70 p-2 md:grid-cols-6">
+    <div className="future-panel grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/70 p-2 md:grid-cols-6">
       <HudChip label="Stage" value={`${stage}/7`} tone="text-yellow-200" />
       <HudChip label="Discovered" value={discoveredCount} tone="text-cyan-200" />
       <HudChip label="Modules" value={`${builtCount}/7`} tone="text-green-200" />
@@ -466,7 +466,7 @@ function CompactHud({ meters, stage, builtCount, discoveredCount }: { meters: Me
 
 function HudChip({ label, value, tone }: { label: string; value: string | number; tone: string }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[.04] p-2 text-center">
+    <div className="future-card rounded-lg border border-white/10 bg-white/[.04] p-2 text-center">
       <p className={`text-sm font-black ${tone}`}>{value}</p>
       <p className="mt-1 text-[8px] font-bold uppercase text-gray-500">{label}</p>
     </div>
@@ -475,7 +475,7 @@ function HudChip({ label, value, tone }: { label: string; value: string | number
 
 function StageObjective({ objective, recipe }: { objective: string; recipe: Recipe | null }) {
   return (
-    <div className="rounded-xl border border-yellow-300/35 bg-yellow-300/10 p-4">
+    <div className="future-panel rounded-xl border border-yellow-300/35 bg-yellow-300/10 p-4">
       <p className="text-[10px] font-black uppercase tracking-widest text-yellow-200">Current goal</p>
       <h2 className="mt-1 text-xl font-black text-white">{objective}</h2>
       {recipe && (
@@ -512,7 +512,7 @@ function CombinationWorkbench({
 }) {
   const selectedSingle = selectedPair[0] && !selectedPair[1] ? selectedPair[0] : selectedPair[1] && !selectedPair[0] ? selectedPair[1] : null;
   return (
-    <div className="rounded-2xl border border-pink-300/30 bg-black/60 p-4">
+    <div className="future-panel rounded-2xl border border-pink-300/30 bg-black/60 p-4">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <SelectedSlot id={selectedPair[0]} label="First element" onClear={() => onClear('left')} />
         <button onClick={onCombine} disabled={!selectedPair[0] || !selectedPair[1]} className="rounded-xl border border-pink-300 bg-pink-300/20 px-4 py-4 text-xs font-black uppercase tracking-widest text-pink-50 hover:bg-pink-300 hover:text-black disabled:border-white/10 disabled:bg-white/[.04] disabled:text-gray-500">
@@ -520,12 +520,12 @@ function CombinationWorkbench({
         </button>
         <SelectedSlot id={selectedPair[1]} label="Second element" onClear={() => onClear('right')} />
       </div>
-      <div className="mt-4 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-3">
+      <div className="future-card mt-4 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-3">
         <p className="text-[10px] font-black uppercase tracking-widest text-cyan-200">{selectedRecipe ? `Ready: ${label(selectedRecipe.output)}` : 'Feedback'}</p>
         <p className="mt-1 text-sm font-bold leading-relaxed text-cyan-50">{selectedRecipe ? selectedRecipe.learning : feedback}</p>
       </div>
       {selectedSingle && (
-        <div className="mt-3 rounded-xl border border-green-300/20 bg-green-300/10 p-3">
+        <div className="future-card mt-3 rounded-xl border border-green-300/20 bg-green-300/10 p-3">
           <p className="text-[10px] font-black uppercase tracking-widest text-green-200">Possible connections</p>
           <p className="mt-1 text-xs font-bold leading-relaxed text-green-50">
             {possiblePartners.length
@@ -535,11 +535,11 @@ function CombinationWorkbench({
         </div>
       )}
       {suggestions.length > 0 && (
-        <div className="mt-3 rounded-xl border border-yellow-300/20 bg-yellow-300/10 p-3">
+        <div className="future-card mt-3 rounded-xl border border-yellow-300/20 bg-yellow-300/10 p-3">
           <p className="text-[10px] font-black uppercase tracking-widest text-yellow-200">Next experiments</p>
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
             {suggestions.map((recipe) => (
-              <button key={recipe.id} onClick={() => onTryExperiment(recipe)} className="rounded-lg border border-yellow-300/20 bg-black/35 p-2 text-left hover:border-yellow-300">
+              <button key={recipe.id} onClick={() => onTryExperiment(recipe)} className="future-card rounded-lg border border-yellow-300/20 bg-black/35 p-2 text-left hover:border-yellow-300">
                 <p className="text-[9px] font-black uppercase text-yellow-100">{recipe.category}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-1">
                   <MiniResource id={recipe.inputs[0]} />
@@ -557,7 +557,7 @@ function CombinationWorkbench({
 
 function SelectedSlot({ id, label: slotLabel, onClear }: { id: ResourceId | null; label: string; onClear: () => void }) {
   return (
-    <button onClick={id ? onClear : undefined} className={`min-h-32 rounded-xl border p-3 text-center ${id ? resources[id].color : 'border-white/10 bg-white/[.03] text-gray-500'}`}>
+    <button onClick={id ? onClear : undefined} className={`future-card min-h-32 rounded-xl border p-3 text-center ${id ? resources[id].color : 'border-white/10 bg-white/[.03] text-gray-500'}`}>
       {id ? <ResourceFace id={id} large /> : <span className="text-xs font-black uppercase">{slotLabel}<br />Tap a card below</span>}
     </button>
   );
@@ -582,7 +582,7 @@ function ElementGroupPanel({
   const visibleGroups = compact ? ['materials', 'people'] as GroupId[] : groupOrder;
   const selectedSingle = selectedPair[0] && !selectedPair[1] ? selectedPair[0] : selectedPair[1] && !selectedPair[0] ? selectedPair[1] : null;
   return (
-    <div className="rounded-xl border border-white/10 bg-black/55 p-3">
+    <div className="future-panel rounded-xl border border-white/10 bg-black/55 p-3">
       <p className="mb-3 text-xs font-bold uppercase tracking-widest text-green-300">Elements</p>
       <div className="space-y-3">
         {visibleGroups.map((group) => {
@@ -635,7 +635,7 @@ function ResourceCard({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`relative min-h-28 rounded-xl border p-3 transition ${resources[id].color} ${selected ? 'ring-2 ring-white' : ''} ${possiblePartner ? 'shadow-[0_0_18px_rgba(34,197,94,.45)] ring-2 ring-green-300' : ''} ${tried ? 'opacity-70 grayscale-[.35]' : ''} ${muted ? 'opacity-45' : ''} disabled:opacity-35`}
+      className={`future-resource-card relative min-h-28 rounded-xl border p-3 transition ${resources[id].color} ${selected ? 'ring-2 ring-white' : ''} ${possiblePartner ? 'shadow-[0_0_18px_rgba(34,197,94,.45)] ring-2 ring-green-300' : ''} ${tried ? 'opacity-70 grayscale-[.35]' : ''} ${muted ? 'opacity-45' : ''} disabled:opacity-35`}
     >
       {possiblePartner && <span className="absolute right-1 top-1 rounded bg-green-300 px-1.5 py-0.5 text-[7px] font-black uppercase text-black">links</span>}
       {tried && !possiblePartner && <span className="absolute right-1 top-1 rounded bg-yellow-300 px-1.5 py-0.5 text-[7px] font-black uppercase text-black">tried</span>}
@@ -655,7 +655,7 @@ function BottomActionBar({ activeView, unlockedViews, onChangeView, onHelp }: { 
     { id: 'board', label: 'Board' },
   ];
   return (
-    <div className="sticky bottom-2 z-20 grid grid-cols-4 gap-2 rounded-xl border border-white/10 bg-black/85 p-2 backdrop-blur sm:grid-cols-7">
+    <div className="future-panel sticky bottom-2 z-20 grid grid-cols-4 gap-2 rounded-xl border border-white/10 bg-black/85 p-2 backdrop-blur sm:grid-cols-7">
       {items.map((item) => (
         <button key={item.id} onClick={() => onChangeView(item.id)} disabled={!unlockedViews.includes(item.id)} className={`rounded-lg border px-2 py-3 text-[9px] font-black uppercase ${activeView === item.id ? 'border-yellow-300 bg-yellow-300/20 text-yellow-50' : 'border-white/10 bg-white/[.03] text-gray-300'} disabled:opacity-30`}>
           {item.label}
@@ -671,11 +671,11 @@ function BottomActionBar({ activeView, unlockedViews, onChangeView, onHelp }: { 
 function DiscoveryBook({ discoveredRecipeIds, theories }: { discoveredRecipeIds: string[]; theories: Theory[] }) {
   const discovered = recipes.filter((recipe) => discoveredRecipeIds.includes(recipe.id));
   return (
-    <div className="rounded-xl border border-pink-300/25 bg-pink-300/10 p-4">
+    <div className="future-panel rounded-xl border border-pink-300/25 bg-pink-300/10 p-4">
       <p className="text-xs font-bold uppercase tracking-widest text-pink-200">Discovery Book</p>
       <div className="mt-3 space-y-3">
         {discovered.map((recipe) => (
-          <div key={recipe.id} className="rounded-lg border border-white/10 bg-black/35 p-3">
+          <div key={recipe.id} className="future-card rounded-lg border border-white/10 bg-black/35 p-3">
             <div className="flex flex-wrap items-center gap-2">
               <MiniResource id={recipe.inputs[0]} />
               <span className="text-pink-100">+</span>
@@ -696,14 +696,14 @@ function DiscoveryBook({ discoveredRecipeIds, theories }: { discoveredRecipeIds:
 
 function BoardProgressStrip({ modules, discoveredSet, builtModules, onInstall }: { modules: Module[]; discoveredSet: Set<ResourceId>; builtModules: string[]; onInstall: (module: Module) => void }) {
   return (
-    <div className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 p-4">
+    <div className="future-panel rounded-xl border border-cyan-300/25 bg-cyan-300/10 p-4">
       <p className="text-xs font-bold uppercase tracking-widest text-cyan-200">KA152 Board</p>
       <div className="mt-3 space-y-2">
         {modules.map((module) => {
           const ready = isModuleReady(module, discoveredSet);
           const built = builtModules.includes(module.id);
           return (
-            <button key={module.id} onClick={() => onInstall(module)} disabled={built} className={`w-full rounded-lg border p-3 text-left ${built ? 'border-green-300 bg-green-300/15' : ready ? 'border-cyan-300 bg-cyan-300/15' : 'border-white/10 bg-black/40'}`}>
+            <button key={module.id} onClick={() => onInstall(module)} disabled={built} className={`future-card w-full rounded-lg border p-3 text-left ${built ? 'border-green-300 bg-green-300/15' : ready ? 'border-cyan-300 bg-cyan-300/15' : 'border-white/10 bg-black/40'}`}>
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-black text-white">{module.name}</p>
                 {built && <CheckCircle2 className="h-5 w-5 text-green-300" />}
@@ -727,11 +727,11 @@ function BoardProgressStrip({ modules, discoveredSet, builtModules, onInstall }:
 
 function CollectPanel({ spots, onCollect }: { spots: CollectSpot[]; onCollect: (spot: CollectSpot) => void }) {
   return (
-    <div className="rounded-xl border border-yellow-300/25 bg-yellow-300/10 p-4">
+    <div className="future-panel rounded-xl border border-yellow-300/25 bg-yellow-300/10 p-4">
       <p className="text-xs font-bold uppercase tracking-widest text-yellow-200">Collect Elements</p>
       <div className="mt-3 space-y-2">
         {spots.map((spot) => (
-          <button key={spot.id} onClick={() => onCollect(spot)} className="w-full rounded-lg border border-white/10 bg-black/45 p-3 text-left hover:border-yellow-300">
+          <button key={spot.id} onClick={() => onCollect(spot)} className="future-card w-full rounded-lg border border-white/10 bg-black/45 p-3 text-left hover:border-yellow-300">
             <p className="text-sm font-black text-white">{spot.name}</p>
             <p className="mt-1 text-[10px] font-bold uppercase text-gray-500">{costLabel(spot.cost)}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">{spot.gives.map((id) => <MiniResource key={id} id={id} />)}</div>
@@ -744,11 +744,11 @@ function CollectPanel({ spots, onCollect }: { spots: CollectSpot[]; onCollect: (
 
 function TradePanel({ traders, discoveredSet, onTrade }: { traders: Trader[]; discoveredSet: Set<ResourceId>; onTrade: (trader: Trader) => void }) {
   return (
-    <div className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 p-4">
+    <div className="future-panel rounded-xl border border-cyan-300/25 bg-cyan-300/10 p-4">
       <p className="text-xs font-bold uppercase tracking-widest text-cyan-200">Participant Trades</p>
       <div className="mt-3 space-y-2">
         {traders.map((trader) => (
-          <button key={trader.id} onClick={() => onTrade(trader)} disabled={!discoveredSet.has(trader.give)} className="w-full rounded-lg border border-white/10 bg-black/45 p-3 text-left hover:border-cyan-300 disabled:opacity-40">
+          <button key={trader.id} onClick={() => onTrade(trader)} disabled={!discoveredSet.has(trader.give)} className="future-card w-full rounded-lg border border-white/10 bg-black/45 p-3 text-left hover:border-cyan-300 disabled:opacity-40">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-black text-white">{trader.name}</p>
@@ -831,7 +831,7 @@ function MiniResource({ id }: { key?: ResourceId; id: ResourceId }) {
   const resource = resources[id];
   const Icon = resource.Icon;
   return (
-    <span title={resource.name} className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[9px] font-black uppercase ${resource.color}`}>
+    <span title={resource.name} className={`future-mini-resource inline-flex items-center gap-1 rounded border px-2 py-1 text-[9px] font-black uppercase ${resource.color}`}>
       <Icon className="h-3.5 w-3.5" />
       {resource.short}
     </span>
@@ -840,7 +840,7 @@ function MiniResource({ id }: { key?: ResourceId; id: ResourceId }) {
 
 function NeedChip({ id, ok }: { key?: ResourceId; id: ResourceId; ok: boolean }) {
   return (
-    <span className={`rounded border px-2 py-1 text-[9px] font-black uppercase ${ok ? 'border-green-300 bg-green-300/15 text-green-100' : 'border-red-300/30 bg-red-300/10 text-red-100'}`}>
+    <span className={`future-mini-resource rounded border px-2 py-1 text-[9px] font-black uppercase ${ok ? 'border-green-300 bg-green-300/15 text-green-100' : 'border-red-300/30 bg-red-300/10 text-red-100'}`}>
       {resources[id].short}
     </span>
   );
@@ -848,7 +848,7 @@ function NeedChip({ id, ok }: { key?: ResourceId; id: ResourceId; ok: boolean })
 
 function OutcomeCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-black/45 p-3">
+    <div className="future-card rounded-lg border border-white/10 bg-black/45 p-3">
       <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">{title}</p>
       <p className="mt-2 text-sm font-bold leading-relaxed text-white">{text}</p>
     </div>
