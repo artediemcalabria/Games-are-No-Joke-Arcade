@@ -777,42 +777,45 @@ function PodcastEpisodePanel({ lesson }: { lesson: Lesson }) {
 
   return (
     <section className="rounded-xl border border-pink-300/25 bg-black/45 p-4 md:p-5">
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,.8fr)]">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-pink-300/30 bg-pink-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-pink-200">
-              Podcast Episode
-            </span>
-            <span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-cyan-200">
-              Module {episode.moduleNumber}
-            </span>
-          </div>
-          <h2 className="mt-4 flex items-start gap-2 text-base font-arcade leading-relaxed text-white md:text-lg">
-            <PlayCircle className="mt-0.5 h-5 w-5 shrink-0 text-pink-300" /> {episode.title}
-          </h2>
-          <p className="mt-3 text-xs font-black uppercase tracking-widest text-gray-500">Participants</p>
-          <p className="mt-1 text-sm font-bold leading-relaxed text-gray-200">{episode.participants.join(', ')}</p>
-          <a
-            href={episode.youtubeUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border border-pink-300/40 bg-pink-300/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-pink-100 transition-colors hover:bg-pink-300 hover:text-black"
-          >
-            <ExternalLink className="h-4 w-4" /> Watch on YouTube
-          </a>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-pink-300/30 bg-pink-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-pink-200">
+            Podcast Episode
+          </span>
+          <span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-cyan-200">
+            Module {episode.moduleNumber}
+          </span>
         </div>
+        <h2 className="mt-4 flex max-w-5xl items-start gap-3 text-xl font-arcade leading-relaxed text-white md:text-2xl">
+          <PlayCircle className="mt-1 h-6 w-6 shrink-0 text-pink-300 md:h-7 md:w-7" /> {episode.title}
+        </h2>
+      </div>
 
-        <div className="aspect-video w-full self-start overflow-hidden rounded-xl border border-white/10 bg-black/60">
-          <iframe
-            className="h-full w-full"
-            src={episode.youtubeEmbedUrl}
-            title={episode.title}
-            loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
+      <div className="mt-5 aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-[0_0_24px_rgba(0,242,255,.12)]">
+        <iframe
+          className="h-full w-full"
+          src={episode.youtubeEmbedUrl}
+          title={episode.title}
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        />
+      </div>
+
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-widest text-gray-500">Participants</p>
+          <p className="mt-1 text-sm font-bold leading-relaxed text-gray-200">{episode.participants.join(', ')}</p>
         </div>
+        <a
+          href={episode.youtubeUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-pink-300/40 bg-pink-300/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-pink-100 transition-colors hover:bg-pink-300 hover:text-black"
+        >
+          <ExternalLink className="h-4 w-4" /> Watch on YouTube
+        </a>
       </div>
 
       <div className="mt-5 rounded-xl border border-white/10 bg-white/[.04] p-4">
