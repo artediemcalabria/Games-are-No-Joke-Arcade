@@ -308,7 +308,7 @@ export default function CastleRushGame() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setAudioEnabled((value) => !value)}
-              className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-cyan-400"
+              className="castle-control-button rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-cyan-400"
             >
               {audioEnabled ? <Volume2 className="w-4 h-4 inline mr-2" /> : <VolumeX className="w-4 h-4 inline mr-2" />}
               Sound
@@ -316,12 +316,12 @@ export default function CastleRushGame() {
             <button
               onClick={() => setGameState((state) => state === 'playing' ? 'paused' : state === 'paused' ? 'playing' : state)}
               disabled={gameState !== 'playing' && gameState !== 'paused'}
-              className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-green-400 disabled:opacity-40"
+              className="castle-control-button rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-green-400 disabled:opacity-40"
             >
               {gameState === 'paused' ? <Play className="w-4 h-4 inline mr-2" /> : <Pause className="w-4 h-4 inline mr-2" />}
               {gameState === 'paused' ? 'Resume' : 'Pause'}
             </button>
-            <button onClick={restart} className="rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-pink-400">
+            <button onClick={restart} className="castle-control-button rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold uppercase text-gray-200 hover:border-pink-400">
               <RotateCcw className="w-4 h-4 inline mr-2" /> Restart
             </button>
           </div>
@@ -396,14 +396,14 @@ export default function CastleRushGame() {
         </div>
 
         <aside className="space-y-4">
-          <div className="arcade-border-green glass-panel-green rounded-xl p-4">
+          <div className="castle-side-panel arcade-border-green glass-panel-green rounded-xl p-4">
             <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Rocco says</p>
             <p className="text-sm text-white font-bold leading-relaxed mt-3">
               The clocks are pressure, not random punishment. Read the route and use your tools.
             </p>
           </div>
 
-          <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+          <div className="castle-side-panel bg-black/60 border border-white/10 rounded-xl p-4">
             <p className="text-xs text-cyan-300 font-bold uppercase tracking-widest">Tools Active</p>
             <div className="mt-3 grid grid-cols-3 gap-2">
               <ToolStatus active={activeCoffee} icon={<Coffee className="w-4 h-4" />} label="Rhythm" />
@@ -413,7 +413,7 @@ export default function CastleRushGame() {
             <p className="text-sm text-gray-300 leading-relaxed mt-3">{lastEvent}</p>
           </div>
 
-          <div className="bg-black/60 border border-white/10 rounded-xl p-4">
+          <div className="castle-side-panel bg-black/60 border border-white/10 rounded-xl p-4">
             <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Design Note</p>
             <p className="text-sm text-gray-300 leading-relaxed mt-3">{designNotes[level - 1]}</p>
           </div>
@@ -678,7 +678,7 @@ function ActivityRoomLayer({ room, tileCount, tick, visible }: { room: ActivityR
 function AngerBar({ anger, timeLeft, clockCount, latePasses }: { anger: number; timeLeft: number; clockCount: number; latePasses: number }) {
   const color = anger > 78 ? 'bg-red-500' : anger > 48 ? 'bg-yellow-300' : 'bg-green-400';
   return (
-    <div className="w-full md:w-80 bg-black/70 border border-white/10 rounded-xl p-3">
+    <div className="castle-meter-panel w-full md:w-80 bg-black/70 border border-white/10 rounded-xl p-3">
       <div className="flex items-center justify-between text-[10px] font-bold uppercase mb-2">
         <span className="text-gray-400">Emanuel Barometer</span>
         <span className={anger > 78 ? 'text-red-300' : 'text-white'}>{timeLeft}s</span>
@@ -697,7 +697,7 @@ function AngerBar({ anger, timeLeft, clockCount, latePasses }: { anger: number; 
 
 function ToolStatus({ active, icon, label }: { active: boolean; icon: ReactNode; label: string }) {
   return (
-    <div className={`rounded-lg border p-2 text-center ${active ? 'border-green-300 bg-green-300/15 text-green-100' : 'border-white/10 bg-black/50 text-gray-500'}`}>
+    <div className={`castle-tool-status rounded-lg border p-2 text-center ${active ? 'border-green-300 bg-green-300/15 text-green-100' : 'border-white/10 bg-black/50 text-gray-500'}`}>
       <div className="flex justify-center">{icon}</div>
       <p className="mt-1 text-[9px] font-black uppercase">{label}</p>
     </div>

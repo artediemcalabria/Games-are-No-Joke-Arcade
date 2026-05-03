@@ -126,6 +126,10 @@
   .future-card {}
   .future-resource-card {}
   .future-mini-resource {}
+  .castle-side-panel {}
+  .castle-meter-panel {}
+  .castle-tool-status {}
+  .castle-control-button {}
 
   .theory-surface,
   .theory-flip-face {
@@ -875,6 +879,75 @@
   .theme-notebook .future-exchange-screen .future-panel button,
   .theme-notebook .future-exchange-screen .future-card button {
     color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-side-panel,
+  .theme-notebook .theme-game-screen .castle-meter-panel {
+    background: rgba(255, 250, 240, 0.9) !important;
+    border-color: rgba(88, 72, 47, 0.34) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: 0 12px 26px rgba(68, 52, 31, 0.1) !important;
+    backdrop-filter: blur(1px) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-side-panel p,
+  .theme-notebook .theme-game-screen .castle-meter-panel p,
+  .theme-notebook .theme-game-screen .castle-side-panel span,
+  .theme-notebook .theme-game-screen .castle-meter-panel span {
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-side-panel [class*="text-cyan"],
+  .theme-notebook .theme-game-screen .castle-meter-panel [class*="text-cyan"] {
+    color: var(--notebook-blue) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-side-panel [class*="text-green"],
+  .theme-notebook .theme-game-screen .castle-meter-panel [class*="text-green"] {
+    color: var(--notebook-green) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-side-panel [class*="text-pink"],
+  .theme-notebook .theme-game-screen .castle-side-panel [class*="text-red"],
+  .theme-notebook .theme-game-screen .castle-side-panel [class*="text-yellow"],
+  .theme-notebook .theme-game-screen .castle-meter-panel [class*="text-pink"],
+  .theme-notebook .theme-game-screen .castle-meter-panel [class*="text-red"],
+  .theme-notebook .theme-game-screen .castle-meter-panel [class*="text-yellow"] {
+    color: var(--notebook-accent) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-tool-status {
+    background: rgba(255, 252, 244, 0.92) !important;
+    border-color: rgba(88, 72, 47, 0.36) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: none !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-tool-status[class*="bg-green"] {
+    background: rgba(66, 107, 61, 0.12) !important;
+    color: var(--notebook-green) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-control-button {
+    background: rgba(255, 250, 240, 0.94) !important;
+    border-color: rgba(88, 72, 47, 0.42) !important;
+    color: var(--notebook-ink) !important;
+    box-shadow: 0 1px 0 rgba(255,255,255,.72), 0 8px 18px rgba(68, 52, 31, 0.08) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-control-button:hover {
+    background: rgba(124, 79, 36, 0.1) !important;
+    border-color: rgba(124, 79, 36, 0.44) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-control-button:disabled {
+    background: rgba(224, 213, 194, 0.55) !important;
+    color: rgba(76, 66, 52, 0.5) !important;
+  }
+
+  .theme-notebook .theme-game-screen .castle-meter-panel .bg-gray-900 {
+    background: rgba(37, 32, 24, 0.14) !important;
+    border-color: rgba(88, 72, 47, 0.22) !important;
   }
 
 	  .theme-notebook .text-shadow-arcade {
