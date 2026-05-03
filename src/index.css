@@ -130,6 +130,72 @@
   .castle-meter-panel {}
   .castle-tool-status {}
   .castle-control-button {}
+  .game-symbol-preview {
+    background:
+      radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.12), transparent 8rem),
+      radial-gradient(circle at 82% 12%, rgba(0, 242, 255, 0.14), transparent 10rem),
+      linear-gradient(145deg, rgba(2, 6, 23, 0.96), rgba(8, 13, 28, 0.96));
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 0 28px rgba(255, 255, 255, 0.04);
+  }
+  .game-symbol-preview::before {
+    content: "";
+    position: absolute;
+    inset: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    pointer-events: none;
+  }
+  .game-symbol-orbit {
+    position: absolute;
+    right: -3rem;
+    top: -3rem;
+    width: 11rem;
+    height: 11rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    opacity: 0.14;
+  }
+  .game-symbol-icon,
+  .game-symbol-small-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid currentColor;
+    background: color-mix(in srgb, currentColor 16%, transparent);
+    color: var(--game-symbol-color, #00f2ff);
+    box-shadow: 0 0 24px color-mix(in srgb, currentColor 24%, transparent);
+  }
+  .game-symbol-icon {
+    width: 5.25rem;
+    height: 5.25rem;
+    border-radius: 1.25rem;
+  }
+  .game-symbol-small-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 999px;
+  }
+  .game-symbol-kicker,
+  .game-symbol-question,
+  .game-symbol-pill {
+    color: var(--game-symbol-color, #00f2ff);
+  }
+  .game-symbol-question {
+    background: rgba(255, 255, 255, 0.055);
+    border-color: color-mix(in srgb, var(--game-symbol-color, #00f2ff) 35%, transparent);
+  }
+  .game-symbol-question p:last-child {
+    color: rgba(255, 255, 255, 0.86);
+  }
+  .game-symbol-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: color-mix(in srgb, var(--game-symbol-color, #00f2ff) 36%, transparent);
+  }
+  .game-symbol-cyan { --game-symbol-color: #22d3ee; }
+  .game-symbol-blue { --game-symbol-color: #60a5fa; }
+  .game-symbol-green { --game-symbol-color: #86efac; }
+  .game-symbol-yellow { --game-symbol-color: #fde047; }
 
   .theory-surface,
   .theory-flip-face {
@@ -949,6 +1015,52 @@
     background: rgba(37, 32, 24, 0.14) !important;
     border-color: rgba(88, 72, 47, 0.22) !important;
   }
+
+  .theme-notebook .game-symbol-preview {
+    background:
+      radial-gradient(circle at 16% 10%, rgba(255, 255, 255, 0.55), transparent 11rem),
+      linear-gradient(145deg, rgba(255, 250, 240, 0.9), rgba(238, 229, 210, 0.88)) !important;
+    border-color: rgba(88, 72, 47, 0.28) !important;
+    box-shadow: 0 14px 28px rgba(68, 52, 31, 0.1) !important;
+    color: var(--notebook-blue) !important;
+  }
+
+  .theme-notebook .game-symbol-preview::before {
+    border-color: rgba(88, 72, 47, 0.16) !important;
+  }
+
+  .theme-notebook .game-symbol-icon,
+  .theme-notebook .game-symbol-small-icon {
+    background: rgba(255, 250, 240, 0.62) !important;
+    border-color: color-mix(in srgb, var(--game-symbol-color, var(--notebook-blue)) 58%, rgba(88, 72, 47, 0.28)) !important;
+    box-shadow: 0 10px 22px rgba(68, 52, 31, 0.09) !important;
+    color: var(--game-symbol-color, var(--notebook-blue)) !important;
+  }
+
+  .theme-notebook .game-symbol-preview .text-white {
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .game-symbol-question {
+    background: rgba(255, 250, 240, 0.54) !important;
+    border-color: rgba(88, 72, 47, 0.28) !important;
+    color: var(--game-symbol-color, var(--notebook-blue)) !important;
+  }
+
+  .theme-notebook .game-symbol-question p:last-child {
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .game-symbol-pill {
+    background: rgba(255, 250, 240, 0.58) !important;
+    border-color: rgba(88, 72, 47, 0.26) !important;
+    color: var(--notebook-muted) !important;
+  }
+
+  .theme-notebook .game-symbol-cyan { --game-symbol-color: var(--notebook-blue); }
+  .theme-notebook .game-symbol-blue { --game-symbol-color: #3f6679; }
+  .theme-notebook .game-symbol-green { --game-symbol-color: var(--notebook-green); }
+  .theme-notebook .game-symbol-yellow { --game-symbol-color: var(--notebook-accent); }
 
 	  .theme-notebook .text-shadow-arcade {
 	    text-shadow: none !important;
