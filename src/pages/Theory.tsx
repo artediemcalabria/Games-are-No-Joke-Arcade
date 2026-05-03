@@ -777,7 +777,7 @@ function PodcastEpisodePanel({ lesson }: { lesson: Lesson }) {
 
   return (
     <section className="rounded-xl border border-pink-300/25 bg-black/45 p-4 md:p-5">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,.8fr)]">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,.8fr)]">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-pink-300/30 bg-pink-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-pink-200">
@@ -802,9 +802,9 @@ function PodcastEpisodePanel({ lesson }: { lesson: Lesson }) {
           </a>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-black/60">
+        <div className="aspect-video w-full self-start overflow-hidden rounded-xl border border-white/10 bg-black/60">
           <iframe
-            className="aspect-video w-full"
+            className="h-full w-full"
             src={episode.youtubeEmbedUrl}
             title={episode.title}
             loading="lazy"
