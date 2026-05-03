@@ -152,16 +152,6 @@
     border-radius: 1rem;
     pointer-events: none;
   }
-  .game-symbol-orbit {
-    position: absolute;
-    right: -3rem;
-    top: -3rem;
-    width: 11rem;
-    height: 11rem;
-    border: 1px solid currentColor;
-    border-radius: 999px;
-    opacity: 0.14;
-  }
   .game-symbol-icon,
   .game-symbol-small-icon {
     display: inline-flex;

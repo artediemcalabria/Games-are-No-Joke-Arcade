@@ -3,9 +3,9 @@ import { motion } from 'motion/react';
 import type { ComponentType } from 'react';
 import {
   Clock,
+  BookOpenText,
   Droplets,
   Gamepad2,
-  GitBranch,
   Globe2,
   MessageCircle,
   PackageCheck,
@@ -108,8 +108,8 @@ function GamePreview({ id }: { id: string }) {
   }> = {
     'castle-rush': {
       title: 'Arrive on time',
-      story: 'Rocco reminds the participants to cross the castle and reach Emanuel in the Activity Room.',
-      question: 'Can pressure stay fair when the route is readable?',
+      story: 'Participants hurry through the castle. Rocco guides them so they reach Emanuel and the group on time.',
+      question: 'How can a maze create urgency without becoming unfair?',
       Icon: Route,
       secondary: Clock,
       tone: 'cyan',
@@ -117,8 +117,8 @@ function GamePreview({ id }: { id: string }) {
     },
     'youthpass-drop': {
       title: 'Balance the week',
-      story: 'A participant protects energy and health while collecting YouthPass pieces.',
-      question: 'Can meters show consequences without lecturing?',
+      story: 'Keep your participant hydrated and focused during a busy training week.',
+      question: 'How can resources show healthy choices through feedback?',
       Icon: Droplets,
       secondary: Trophy,
       tone: 'blue',
@@ -126,17 +126,17 @@ function GamePreview({ id }: { id: string }) {
     },
     'filadelfia-story': {
       title: 'One journey, many endings',
-      story: 'Andrea, Slave, or Ivalina try to build a board game with the group.',
-      question: 'Can choices reveal trust, inclusion, and ownership?',
-      Icon: GitBranch,
+      story: 'Follow one participant from arrival to showcase as the team tries to finish a board game.',
+      question: 'How do choices shape trust, inclusion, and the final prototype?',
+      Icon: BookOpenText,
       secondary: MessageCircle,
       tone: 'green',
-      tags: ['Dialogue', 'Team', 'Debrief'],
+      tags: ['Story', 'Team', 'Debrief'],
     },
     'future-exchange': {
       title: 'Craft a KA152 project',
-      story: 'Resources, relationships, care, and logistics become a Youth Exchange board game.',
-      question: 'Can crafting make project tradeoffs visible?',
+      story: 'Combine tools, trust, care, and logistics to build a KA152 Youth Exchange.',
+      question: 'How can crafting make project tradeoffs visible?',
       Icon: Globe2,
       secondary: PackageCheck,
       tone: 'yellow',
@@ -150,7 +150,6 @@ function GamePreview({ id }: { id: string }) {
 
   return (
     <div className={`game-symbol-preview game-symbol-${preview.tone} min-h-[260px] rounded-xl border p-5 relative overflow-hidden`}>
-      <div className="game-symbol-orbit" />
       <div className="relative z-10 flex h-full min-h-[220px] flex-col justify-between gap-5">
         <div className="flex items-start justify-between gap-4">
           <div className="game-symbol-icon">
