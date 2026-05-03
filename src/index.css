@@ -24,11 +24,13 @@
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    scrollbar-gutter: stable;
+    overflow-y: scroll;
+    scrollbar-gutter: stable both-edges;
   }
 
   body {
     @apply bg-arcade-bg text-white font-sans m-0 overflow-x-hidden;
+    scrollbar-gutter: stable both-edges;
     overscroll-behavior-y: none;
   }
 
@@ -138,7 +140,16 @@
   .castle-tool-status {}
   .castle-control-button {}
   .youthpass-screen {
+    inline-size: 100%;
+    min-block-size: calc(100vh + 1px);
     overflow-anchor: none;
+  }
+  .youthpass-game-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .youthpass-playfield-shell {
+    align-self: start;
+    contain: layout paint;
   }
   .youthpass-playfield-size {
     height: 620px;
@@ -153,6 +164,15 @@
       height: clamp(520px, 158.974vw, 620px);
       min-height: clamp(520px, 158.974vw, 620px);
     }
+  }
+  @media (min-width: 1024px) {
+    .youthpass-game-grid {
+      grid-template-columns: 430px minmax(0, 1fr);
+    }
+  }
+  .youthpass-sidebar {
+    min-height: 620px;
+    overflow-anchor: none;
   }
   .youthpass-info-panel {
     min-height: 7.25rem;
