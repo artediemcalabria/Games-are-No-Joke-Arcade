@@ -131,6 +131,7 @@
   .future-discovery-resource {}
   .future-discovery-lesson {}
   .future-discovery-button {}
+  .future-combine-button {}
   .castle-side-panel {}
   .castle-meter-panel {}
   .castle-tool-status {}
@@ -950,6 +951,37 @@
   .theme-notebook .future-exchange-screen .future-panel button,
   .theme-notebook .future-exchange-screen .future-card button {
     color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .future-exchange-screen .future-combine-button:not(:disabled) {
+    background: rgba(124, 79, 36, 0.14) !important;
+    border: 2px solid rgba(124, 79, 36, 0.68) !important;
+    color: var(--notebook-accent) !important;
+    box-shadow:
+      0 0 0 3px rgba(124, 79, 36, 0.08),
+      0 10px 22px rgba(68, 52, 31, 0.12) !important;
+  }
+
+  .theme-notebook .future-exchange-screen .future-combine-button:not(:disabled)::after {
+    content: "READY";
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    color: var(--notebook-green);
+  }
+
+  .theme-notebook .future-exchange-screen .future-combine-button:not(:disabled):hover {
+    background: rgba(124, 79, 36, 0.22) !important;
+    border-color: rgba(124, 79, 36, 0.86) !important;
+    color: var(--notebook-ink) !important;
+  }
+
+  .theme-notebook .future-exchange-screen .future-combine-button:disabled {
+    border: 1px solid rgba(88, 72, 47, 0.24) !important;
+    background: rgba(224, 213, 194, 0.45) !important;
+    color: rgba(76, 66, 52, 0.52) !important;
+    box-shadow: none !important;
   }
 
   .theme-notebook .future-discovery-overlay {

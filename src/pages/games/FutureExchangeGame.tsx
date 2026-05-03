@@ -515,7 +515,7 @@ function CombinationWorkbench({
     <div className="future-panel rounded-2xl border border-pink-300/30 bg-black/60 p-4">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <SelectedSlot id={selectedPair[0]} label="First element" onClear={() => onClear('left')} />
-        <button onClick={onCombine} disabled={!selectedPair[0] || !selectedPair[1]} className="rounded-xl border border-pink-300 bg-pink-300/20 px-4 py-4 text-xs font-black uppercase tracking-widest text-pink-50 hover:bg-pink-300 hover:text-black disabled:border-white/10 disabled:bg-white/[.04] disabled:text-gray-500">
+        <button onClick={onCombine} disabled={!selectedPair[0] || !selectedPair[1]} className="future-combine-button rounded-xl border border-pink-300 bg-pink-300/20 px-4 py-4 text-xs font-black uppercase tracking-widest text-pink-50 hover:bg-pink-300 hover:text-black disabled:border-white/10 disabled:bg-white/[.04] disabled:text-gray-500">
           Combine
         </button>
         <SelectedSlot id={selectedPair[1]} label="Second element" onClear={() => onClear('right')} />
