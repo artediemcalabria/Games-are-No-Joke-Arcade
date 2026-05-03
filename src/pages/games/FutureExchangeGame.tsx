@@ -773,17 +773,17 @@ function DiscoveryCard({ recipe, onClose }: { recipe: Recipe | null; onClose: ()
   const output = resources[recipe.output];
   const Icon = output.Icon;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm rounded-2xl border border-pink-300 bg-slate-950 p-5 text-center shadow-[0_0_40px_rgba(255,0,200,.25)]">
+    <div className="future-discovery-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="future-discovery-panel w-full max-w-sm rounded-2xl border border-pink-300 bg-slate-950 p-5 text-center shadow-[0_0_40px_rgba(255,0,200,.25)]">
         <p className="text-xs font-black uppercase tracking-widest text-pink-200">New Discovery</p>
-        <div className={`mx-auto mt-4 flex h-28 w-28 flex-col items-center justify-center rounded-2xl border ${output.color}`}>
+        <div className={`future-discovery-resource mx-auto mt-4 flex h-28 w-28 flex-col items-center justify-center rounded-2xl border ${output.color}`}>
           <Icon className="h-10 w-10" />
           <p className="mt-2 text-sm font-black">{output.short}</p>
         </div>
         <h3 className="mt-4 text-xl font-black text-white">{output.name}</h3>
         <p className="mt-2 text-sm font-bold leading-relaxed text-gray-300">{output.meaning}</p>
-        <p className="mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-50">{recipe.learning}</p>
-        <button onClick={onClose} className="mt-5 rounded-lg border border-pink-300 bg-pink-300/20 px-5 py-3 text-xs font-black uppercase tracking-widest text-pink-50 hover:bg-pink-300 hover:text-black">
+        <p className="future-discovery-lesson mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-50">{recipe.learning}</p>
+        <button onClick={onClose} className="future-discovery-button mt-5 rounded-lg border border-pink-300 bg-pink-300/20 px-5 py-3 text-xs font-black uppercase tracking-widest text-pink-50 hover:bg-pink-300 hover:text-black">
           Continue
         </button>
       </motion.div>
