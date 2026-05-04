@@ -69,6 +69,13 @@ type StoryMoment = {
   tone: string;
 };
 
+type DecisionPhase = 'morning' | 'evening';
+
+type StoryMomentVariant = StoryMoment & {
+  afterChoiceId?: string;
+  profileFocus?: MeterKey[];
+};
+
 type Choice = {
   id: string;
   label: string;
@@ -79,6 +86,18 @@ type Choice = {
   feedback: string;
 };
 
+type StoryChoice = Choice & {
+  phase: DecisionPhase;
+  revealMomentId?: string;
+};
+
+type StoryDecisionSet = {
+  id: string;
+  phase: DecisionPhase;
+  prompt: string;
+  choices: StoryChoice[];
+};
+
 type StoryNode = {
   id: StoryNodeId;
   chapter: string;
@@ -87,9 +106,9 @@ type StoryNode = {
   location: string;
   speaker: string;
   text: string;
-  moments: StoryMoment[];
+  moments: StoryMomentVariant[];
   cast: string[];
-  choices: Choice[];
+  decisionSets: [StoryDecisionSet, StoryDecisionSet];
 };
 
 type StoryLogEntry = {
@@ -97,7 +116,9 @@ type StoryLogEntry = {
   nodeTitle: string;
   dayLabel: string;
   location: string;
-  moments: StoryMoment[];
+  moments: StoryMomentVariant[];
+  morningChoice: StoryChoice;
+  eveningChoice: StoryChoice;
   chosenAction: string;
   feedback: string;
   meterChanges: Partial<Meters>;
@@ -175,6 +196,247 @@ const participants: Participant[] = [
   { country: 'Serbia', name: 'Ognjen' },
 ];
 
+type MorningContext = 'arrival' | 'design' | 'prototype' | 'conflict' | 'night' | 'showcase';
+
+const nodeMorningContext: Record<StoryNodeId, MorningContext> = {
+  arrival: 'arrival',
+  'circle-connect': 'design',
+  'circle-distance': 'design',
+  'circle-familiar': 'arrival',
+  'team-shared': 'design',
+  'team-solo': 'design',
+  'team-fun': 'design',
+  'prototype-playtest': 'prototype',
+  'prototype-polish': 'prototype',
+  'prototype-alone': 'night',
+  'conflict-listen': 'conflict',
+  'conflict-control': 'conflict',
+  'conflict-avoid': 'conflict',
+  'night-repair': 'night',
+  'night-solo': 'night',
+  'night-honest': 'night',
+  showcase: 'showcase',
+};
+
+const morningPrompts: Record<MorningContext, string> = {
+  arrival: 'How does the morning start?',
+  design: 'How does the team enter the work today?',
+  prototype: 'How does the team handle the first pressure of the day?',
+  conflict: 'How does the group face tension before it grows?',
+  night: 'How does the evening work begin?',
+  showcase: 'How does the team prepare the final moment?',
+};
+
+type MorningChoiceTemplate = Omit<StoryChoice, 'phase' | 'next'>;
+
+const morningChoiceTemplates: Record<MorningContext, MorningChoiceTemplate[]> = {
+  arrival: [
+    {
+      id: 'logistics-help',
+      label: 'Help with the room',
+      intention: 'Carry chairs, find materials, and start conversations while helping Rocco.',
+      effects: { trust: 6, energy: -2, clarity: 2 },
+      flags: ['logisticsHelp', 'informalBridge'],
+      revealMomentId: 'logistics-followup',
+      feedback: 'Helping with practical things made the room feel less strange.',
+    },
+    {
+      id: 'informal-bridge',
+      label: 'Start a small chat',
+      intention: 'Use a simple question to connect with someone who looks unsure.',
+      effects: { trust: 6, inclusion: 6, energy: -2 },
+      flags: ['informalBridge', 'includedQuietVoice'],
+      revealMomentId: 'informal-followup',
+      feedback: 'A small informal talk made the next group moment easier.',
+    },
+    {
+      id: 'profile-overuse',
+      label: 'Lead with your habit',
+      intention: 'Use your strongest style immediately, even if the room needs something else.',
+      effects: { clarity: 3, energy: 3, trust: -4, inclusion: -4 },
+      flags: ['profileOverused'],
+      revealMomentId: 'profile-followup',
+      feedback: 'Your strongest habit helped you move, but it made the room narrower.',
+    },
+  ],
+  design: [
+    {
+      id: 'trainer-checkin',
+      label: 'Ask Emanuel for a concrete check',
+      intention: 'Ask for one practical question that can guide the team.',
+      effects: { clarity: 6, learning: 5, energy: -2 },
+      flags: ['trainerCheckIn'],
+      revealMomentId: 'trainer-followup',
+      feedback: 'A concrete trainer check gave the team a useful handle.',
+    },
+    {
+      id: 'informal-bridge',
+      label: 'Use the break well',
+      intention: 'Talk during coffee or lunch before asking for a formal decision.',
+      effects: { trust: 6, inclusion: 5, clarity: -1 },
+      flags: ['informalBridge'],
+      revealMomentId: 'informal-followup',
+      feedback: 'The informal moment made the workshop table less tense.',
+    },
+    {
+      id: 'profile-overuse',
+      label: 'Push your strongest style',
+      intention: 'Bring your main strength hard because the team seems slow.',
+      effects: { clarity: 3, energy: 3, trust: -3, inclusion: -3 },
+      flags: ['profileOverused'],
+      revealMomentId: 'profile-followup',
+      feedback: 'Your strength moved the work, but some people adapted to you instead of joining fully.',
+    },
+  ],
+  prototype: [
+    {
+      id: 'morning-repair',
+      label: 'Test the weak part first',
+      intention: 'Use the roughest rule before decorating or explaining more.',
+      effects: { clarity: 6, learning: 6, energy: -3 },
+      flags: ['morningRepair', 'usedPlaytest'],
+      revealMomentId: 'repair-followup',
+      feedback: 'Testing the weak part early made the problem easier to discuss.',
+    },
+    {
+      id: 'logistics-help',
+      label: 'Fix materials and roles',
+      intention: 'Make sure pieces, markers, time, and roles are clear before playtesting.',
+      effects: { clarity: 5, trust: 3, energy: -2 },
+      flags: ['logisticsHelp'],
+      revealMomentId: 'logistics-followup',
+      feedback: 'The practical setup lowered stress before the test.',
+    },
+    {
+      id: 'team-fatigue',
+      label: 'Ignore the tired signals',
+      intention: 'Keep pushing because the deadline feels close.',
+      effects: { clarity: 4, energy: -6, trust: -5, inclusion: -4 },
+      flags: ['teamFatigue'],
+      revealMomentId: 'fatigue-followup',
+      feedback: 'The work moved, but tired people started to disappear from the process.',
+    },
+  ],
+  conflict: [
+    {
+      id: 'morning-repair',
+      label: 'Name the tension early',
+      intention: 'Say the uncomfortable part clearly before people protect themselves.',
+      effects: { trust: 5, inclusion: 6, learning: 4, energy: -3 },
+      flags: ['morningRepair'],
+      revealMomentId: 'repair-followup',
+      feedback: 'Naming the tension early made repair possible.',
+    },
+    {
+      id: 'trainer-checkin',
+      label: 'Ask for a short trainer reset',
+      intention: 'Ask Emanuel for a practical reset question, not a long speech.',
+      effects: { clarity: 6, learning: 5, trust: 2 },
+      flags: ['trainerCheckIn'],
+      revealMomentId: 'trainer-followup',
+      feedback: 'The trainer reset helped the group speak more concretely.',
+    },
+    {
+      id: 'team-fatigue',
+      label: 'Keep the peace for now',
+      intention: 'Avoid the hard conversation because everyone looks tired.',
+      effects: { energy: 2, trust: -6, inclusion: -5, learning: -3 },
+      flags: ['teamFatigue', 'avoidedConflict'],
+      revealMomentId: 'fatigue-followup',
+      feedback: 'The quiet moment felt easier, but the tension stayed in the room.',
+    },
+  ],
+  night: [
+    {
+      id: 'informal-bridge',
+      label: 'Make tea and invite people back',
+      intention: 'Use a gentle informal moment before asking for more work.',
+      effects: { trust: 7, inclusion: 5, energy: -2 },
+      flags: ['informalBridge'],
+      revealMomentId: 'informal-followup',
+      feedback: 'The team returned more easily when the invitation felt human.',
+    },
+    {
+      id: 'clear-reflection',
+      label: 'Write the reflection question first',
+      intention: 'Clarify what players should discuss after the game.',
+      effects: { learning: 7, clarity: 4, energy: -2 },
+      flags: ['clearDebrief', 'trainerCheckIn'],
+      revealMomentId: 'trainer-followup',
+      feedback: 'A clear reflection question helped the team choose what to cut.',
+    },
+    {
+      id: 'team-fatigue',
+      label: 'Work through tiredness',
+      intention: 'Keep going because tomorrow is too close.',
+      effects: { clarity: 4, energy: -8, trust: -4, inclusion: -4 },
+      flags: ['teamFatigue', 'profileOverused'],
+      revealMomentId: 'fatigue-followup',
+      feedback: 'The deadline got closer, and so did the risk of losing people.',
+    },
+  ],
+  showcase: [
+    {
+      id: 'logistics-help',
+      label: 'Prepare the room calmly',
+      intention: 'Check chairs, timing, pieces, and where players will stand.',
+      effects: { clarity: 5, trust: 4, energy: -2 },
+      flags: ['logisticsHelp'],
+      revealMomentId: 'logistics-followup',
+      feedback: 'A calm setup helped the presentation feel less fragile.',
+    },
+    {
+      id: 'informal-bridge',
+      label: 'Check on the team',
+      intention: 'Ask people what they need before the first players arrive.',
+      effects: { trust: 6, inclusion: 5, learning: 2 },
+      flags: ['informalBridge'],
+      revealMomentId: 'informal-followup',
+      feedback: 'The team entered the showcase feeling seen, not only prepared.',
+    },
+    {
+      id: 'profile-overuse',
+      label: 'Take the spotlight',
+      intention: 'Use your strongest style to make the presentation feel safe.',
+      effects: { clarity: 4, energy: 4, trust: -5, inclusion: -5 },
+      flags: ['profileOverused', 'soloDesigner'],
+      revealMomentId: 'profile-followup',
+      feedback: 'The presentation looked safer, but the team had less room inside it.',
+    },
+  ],
+};
+
+function createDecisionSets(nodeId: StoryNodeId, eveningChoices: Choice[]): [StoryDecisionSet, StoryDecisionSet] {
+  const context = nodeMorningContext[nodeId];
+  return [
+    {
+      id: `${nodeId}-morning`,
+      phase: 'morning',
+      prompt: morningPrompts[context],
+      choices: morningChoiceTemplates[context].map((choice) => ({
+        ...choice,
+        id: `${nodeId}-${choice.id}`,
+        phase: 'morning',
+        next: nodeId,
+        effects: normalizeMorningEffects(choice.effects),
+      })),
+    },
+    {
+      id: `${nodeId}-evening`,
+      phase: 'evening',
+      prompt: 'What does the player do next?',
+      choices: eveningChoices.map((choice) => ({
+        ...choice,
+        phase: 'evening',
+      })),
+    },
+  ];
+}
+
+function normalizeMorningEffects(effects: Partial<Meters>) {
+  return effects;
+}
+
 const storyNodes: Record<StoryNodeId, StoryNode> = {
   arrival: {
     id: 'arrival',
@@ -207,14 +469,14 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Informal start',
         text: 'After dinner, Emanuel asks everyone to say their name and one thing they hope will happen this week.',
         dialogue: [
-          { speaker: 'Emanuel', text: 'Before board games, we need a room where people can try, fail, and laugh safely.' },
+          { speaker: 'Emanuel', text: 'Before board games, let us make a room where trying things feels normal. Mistakes are allowed. Awkward first laughs too.' },
           { speaker: 'Giuseppe', text: 'My hope is simple: I want to understand the rules before I lose.' },
           { speaker: 'Buse Naz', text: 'I hope we do not sit all week. A game should make us move at least sometimes.' },
           { speaker: 'Narrator', text: '{you} notices who speaks fast, who waits, and who needs a softer invitation.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('arrival', [
       {
         id: 'connect-courtyard',
         label: 'Enter the circle',
@@ -242,7 +504,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'circle-familiar',
         feedback: 'Comfort helped your energy, but narrowed the first bridge to the group.',
       },
-    ],
+    ]),
   },
   'circle-connect': {
     id: 'circle-connect',
@@ -275,13 +537,13 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Focused',
         text: 'Emanuel asks the group to choose a real need, not just a nice title for a poster.',
         dialogue: [
-          { speaker: 'Emanuel', text: 'Do not choose the loudest topic. Choose a need that your players can feel through a rule.' },
+          { speaker: 'Emanuel', text: 'Do not chase the loudest topic. Pick one real need, then show it with one player action.' },
           { speaker: 'Cristina', text: 'Inclusion and misinformation can meet. A wrong signal can make the group ignore someone.' },
           { speaker: 'Gjoko', text: 'Then it can become an action in the game, not only a speech after the game.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('circle-connect', [
       {
         id: 'map-needs',
         label: 'Map the needs',
@@ -309,7 +571,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'team-fun',
         feedback: 'The room got louder. The learning target got thinner.',
       },
-    ],
+    ]),
   },
   'circle-distance': {
     id: 'circle-distance',
@@ -348,7 +610,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('circle-distance', [
       {
         id: 'invite-elena',
         label: 'Invite Elena in',
@@ -376,7 +638,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'team-fun',
         feedback: 'Momentum replaced shared intention.',
       },
-    ],
+    ]),
   },
   'circle-familiar': {
     id: 'circle-familiar',
@@ -398,7 +660,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         dialogue: [
           { speaker: 'Claudia', text: 'I already forgot three names. I may need name tags for the name tags.' },
           { speaker: 'Giuseppe', text: 'Stay here. We have biscuits and no decisions.' },
-          { speaker: 'Rocco', text: 'Biscuits are useful, but the mixed team is filling up without you.' },
+          { speaker: 'Rocco', text: 'Biscuits help morale, I agree. But your mixed team is filling up, and I cannot put your name on a chair forever.' },
         ],
       },
       {
@@ -411,11 +673,11 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         dialogue: [
           { speaker: 'Buse Naz', text: 'I want the game to be funny first. If people laugh, they relax.' },
           { speaker: 'Ognjen', text: 'Yes, but someone must hold the structure, or we will only have funny fragments.' },
-          { speaker: 'Rocco', text: 'You can enter with a question. That is less heavy than entering with a full plan.' },
+          { speaker: 'Rocco', text: 'Enter with a question. It is lighter than arriving with a full plan and a serious face.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('circle-familiar', [
       {
         id: 'repair-entry',
         label: 'Repair the entry',
@@ -443,7 +705,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'team-fun',
         feedback: 'Everyone could imagine the fun. Nobody could yet name the learning.',
       },
-    ],
+    ]),
   },
   'team-shared': {
     id: 'team-shared',
@@ -482,7 +744,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('team-shared', [
       {
         id: 'test-ugly-loop',
         label: 'Playtest the ugly loop',
@@ -510,7 +772,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'prototype-polish',
         feedback: 'The table looked better, but nobody knew if the main rule worked.',
       },
-    ],
+    ]),
   },
   'team-solo': {
     id: 'team-solo',
@@ -549,7 +811,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('team-solo', [
       {
         id: 'open-notebook',
         label: 'Open the notebook',
@@ -577,7 +839,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'prototype-polish',
         feedback: 'The board looked official before players had tested if it worked.',
       },
-    ],
+    ]),
   },
   'team-fun': {
     id: 'team-fun',
@@ -611,12 +873,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'The jokes still work, but Loredana watches the paper cards and asks what players will remember tomorrow.',
         dialogue: [
           { speaker: 'Loredana', text: 'I like the energy. I just cannot see the learning yet.' },
-          { speaker: 'Emanuel', text: 'Do not remove the fun. Give the fun a job inside the rule.' },
+          { speaker: 'Emanuel', text: 'Keep the fun. Just give it a job. What should the laughter help players understand?' },
           { speaker: 'Narrator', text: '{you} can protect the laughter or help it carry a clearer message.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('team-fun', [
       {
         id: 'add-learning-rule',
         label: 'Put learning inside one rule',
@@ -644,7 +906,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'prototype-polish',
         feedback: 'Players understood the structure, but the topic did not change how the game worked.',
       },
-    ],
+    ]),
   },
   'prototype-playtest': {
     id: 'prototype-playtest',
@@ -678,12 +940,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'The team eats leftover pizza and talks about the test. The unfair rule is still annoying, but now everyone can see it.',
         dialogue: [
           { speaker: 'Cristina', text: 'I was frustrated during the test, but that frustration gave us information.' },
-          { speaker: 'Emanuel', text: 'Good feedback is not always polite. Ask what the discomfort is showing you.' },
+          { speaker: 'Emanuel', text: 'Good feedback is not always nicely wrapped. Ask what the uncomfortable part is showing you.' },
           { speaker: 'Narrator', text: '{you} can treat the conflict as data, defend the rule, or postpone the tension.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('prototype-playtest', [
       {
         id: 'turn-feedback-data',
         label: 'Turn feedback into data',
@@ -711,7 +973,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'conflict-avoid',
         feedback: 'The room felt calmer, but the problem did not leave.',
       },
-    ],
+    ]),
   },
   'prototype-polish': {
     id: 'prototype-polish',
@@ -745,12 +1007,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'Someone finds better markers and a small box for the cards. The prototype suddenly looks more official than it feels.',
         dialogue: [
           { speaker: 'Stefan', text: 'If the box looks professional, maybe people will trust the rules.' },
-          { speaker: 'Emanuel', text: 'A nice box can help later. First, make the player action clear.' },
+          { speaker: 'Emanuel', text: 'The nice box can wait five minutes. First, make sure a player knows what to do on their turn.' },
           { speaker: 'Narrator', text: '{you} can cut the game back, hide the weak part, or invite players to fix it.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('prototype-polish', [
       {
         id: 'cut-to-core',
         label: 'Cut to the core loop',
@@ -778,7 +1040,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'conflict-listen',
         feedback: 'Players became co-designers, not judges.',
       },
-    ],
+    ]),
   },
   'prototype-alone': {
     id: 'prototype-alone',
@@ -798,7 +1060,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Quiet pressure',
         text: '{you} keeps working after the others leave. The board becomes clearer, but the chairs around the table stay empty.',
         dialogue: [
-          { speaker: 'Rocco', text: 'Still working? I admire the effort. But this week is not only about having an object tomorrow.' },
+          { speaker: 'Rocco', text: 'Still working? I admire the energy. I also recommend sleep, water, and remembering this is a team project.' },
           { speaker: 'Liviu', text: 'I can test one round if you want. I just do not know what your team agreed on.' },
           { speaker: 'Claudia', text: 'The rules are clear when you explain them. Can the team explain them without you?' },
         ],
@@ -816,7 +1078,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('prototype-alone', [
       {
         id: 'invite-late-test',
         label: 'Invite a late test',
@@ -844,7 +1106,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'night-repair',
         feedback: 'Vulnerability reopened collaboration.',
       },
-    ],
+    ]),
   },
   'conflict-listen': {
     id: 'conflict-listen',
@@ -878,12 +1140,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'The team tries the new repair move. The game is still rough, but the blocked player can act again.',
         dialogue: [
           { speaker: 'Mihaela', text: 'Now the hard feeling has a door out. That changes everything.' },
-          { speaker: 'Emanuel', text: 'Exactly. The rule carries the message: exclusion is visible, and repair is possible.' },
+          { speaker: 'Emanuel', text: 'Yes. Now the rule does the talking: players can feel exclusion, and they can also repair it.' },
           { speaker: 'Narrator', text: '{you} can strengthen the repair move or keep the painful rule as a lesson.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('conflict-listen', [
       {
         id: 'design-repair-move',
         label: 'Design a repair move',
@@ -902,7 +1164,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'night-honest',
         feedback: 'The reflection may work, but the play experience still hurts.',
       },
-    ],
+    ]),
   },
   'conflict-control': {
     id: 'conflict-control',
@@ -940,7 +1202,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('conflict-control', [
       {
         id: 'return-ownership',
         label: 'Return the game to the team',
@@ -959,7 +1221,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'night-solo',
         feedback: 'The prototype became stable. The team became distant.',
       },
-    ],
+    ]),
   },
   'conflict-avoid': {
     id: 'conflict-avoid',
@@ -992,12 +1254,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'The same problem returns during dinner. The plates are still full when Loredana says she may not present tomorrow.',
         dialogue: [
           { speaker: 'Loredana', text: 'I do not want to stand tomorrow and explain a game I do not believe in.' },
-          { speaker: 'Rocco', text: 'You still have tonight. Use it for honesty, not panic.' },
+          { speaker: 'Rocco', text: 'You still have tonight. Use it for honesty, not panic. Panic is terrible at writing rules.' },
           { speaker: 'Narrator', text: '{you} can host a real conversation or smooth things over again.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('conflict-avoid', [
       {
         id: 'host-honest-circle',
         label: 'Host an honest circle',
@@ -1016,7 +1278,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'night-solo',
         feedback: 'Calm without repair became a countdown.',
       },
-    ],
+    ]),
   },
   'night-repair': {
     id: 'night-repair',
@@ -1055,7 +1317,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('night-repair', [
       {
         id: 'present-as-team',
         label: 'Present as a team',
@@ -1074,7 +1336,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'showcase',
         feedback: 'Leadership supported the team instead of replacing it.',
       },
-    ],
+    ]),
   },
   'night-solo': {
     id: 'night-solo',
@@ -1107,12 +1369,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Heavy choice',
         text: 'The room is quiet. It would be easy to present the prototype as a group success. It would also be false.',
         dialogue: [
-          { speaker: 'Rocco', text: 'A complete board is not always a complete project. Honest reflection can still save the lesson.' },
+          { speaker: 'Rocco', text: 'A complete board is not always a complete project. Say the truth clearly, and the lesson can still stand.' },
           { speaker: 'Narrator', text: '{you} can name the solo process or hide it behind a clean presentation.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('night-solo', [
       {
         id: 'own-solo-choice',
         label: 'Present it honestly',
@@ -1131,7 +1393,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'showcase',
         feedback: 'The presentation looked easier, but the hidden story got heavier.',
       },
-    ],
+    ]),
   },
   'night-honest': {
     id: 'night-honest',
@@ -1151,7 +1413,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Brave and nervous',
         text: 'The team admits the game may not work tomorrow. Nobody celebrates, but nobody pretends either.',
         dialogue: [
-          { speaker: 'Emanuel', text: 'If the prototype is weak, do not pretend it is strong. Ask what the weakness teaches.' },
+          { speaker: 'Emanuel', text: 'If the prototype is weak, do not dress it up. Show the weak part and ask what it teaches.' },
           { speaker: 'Elena', text: 'Then our reflection can ask: where did the system fail the players?' },
           { speaker: 'Loredana', text: 'That feels risky, but more honest than selling a game we do not trust.' },
         ],
@@ -1165,12 +1427,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'The team makes tea and writes one sentence on the box: "Help us fix this rule."',
         dialogue: [
           { speaker: 'Ognjen', text: 'We can show one broken round, then ask players to redesign the rule with us.' },
-          { speaker: 'Rocco', text: 'That is not a perfect game. It can still be a strong learning moment.' },
+          { speaker: 'Rocco', text: 'That is not a perfect game. Fine. Perfect games are rare. Honest learning is already worth the table.' },
           { speaker: 'Narrator', text: '{you} can show the failure openly or hide it and speak more than players play.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('night-honest', [
       {
         id: 'show-failure-openly',
         label: 'Show failure openly',
@@ -1189,7 +1451,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'showcase',
         feedback: 'The game avoided risk and lost its strongest lesson.',
       },
-    ],
+    ]),
   },
   showcase: {
     id: 'showcase',
@@ -1209,8 +1471,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Anticipation',
         text: 'All teams prepare their tables. Someone fixes tape. Someone practices the first sentence. Everyone looks at the door when new players arrive.',
         dialogue: [
-          { speaker: 'Emanuel', text: 'When you present, show the rule, the player choice, and the feeling it creates.' },
-          { speaker: 'Rocco', text: 'Do not perform perfection. Let people see the learning inside the game.' },
+          { speaker: 'Emanuel', text: 'When you present, keep it simple: show the rule, the choice, and what players feel.' },
+          { speaker: 'Rocco', text: 'Do not act like a museum guide for a perfect object. Let people see the learning inside the game.' },
           { speaker: 'Narrator', text: '{you} places the board on the table and remembers the path behind it.' },
         ],
       },
@@ -1222,13 +1484,13 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Reflective',
         text: 'The last players stand up. Chairs move into a circle again. The board is still on the table, but now the process is visible too.',
         dialogue: [
-          { speaker: 'Emanuel', text: 'Now tell us what the players could feel, not only what they could win.' },
-          { speaker: 'Rocco', text: 'After this, we move to YouthPass reflection. Let the last play tell the truth.' },
+          { speaker: 'Emanuel', text: 'Now tell us what players could feel, not only what they could win.' },
+          { speaker: 'Rocco', text: 'After this, YouthPass reflection. Before that, let the last play tell the truth for you.' },
           { speaker: 'Narrator', text: '{you} has one final choice: present, sell the fun, or invite others to co-design the last rule.' },
         ],
       },
     ],
-    choices: [
+    decisionSets: createDecisionSets('showcase', [
       {
         id: 'invite-play-reflect',
         label: 'Play, observe, reflect',
@@ -1256,7 +1518,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         next: 'ending',
         feedback: 'The final showcase became participation, not performance.',
       },
-    ],
+    ]),
   },
 };
 
@@ -1324,12 +1586,13 @@ export default function FiladelfiaStoryGame() {
   const [meters, setMeters] = useState<Meters>(initialMeters);
   const [flags, setFlags] = useState<string[]>([]);
   const [storyLog, setStoryLog] = useState<StoryLogEntry[]>([]);
+  const [selectedMorningChoice, setSelectedMorningChoice] = useState<StoryChoice | null>(null);
   const [endingId, setEndingId] = useState<EndingId | null>(null);
   const [lastFeedback, setLastFeedback] = useState('Choose a participant to begin the journey.');
 
   const node = storyNodes[nodeId];
   const ending = endingId ? endings[endingId] : null;
-  const chosenChoiceIds = useMemo(() => new Set(storyLog.map((entry) => entry.chosenAction)), [storyLog]);
+  const chosenChoiceIds = useMemo(() => new Set(storyLog.flatMap((entry) => [entry.morningChoice.id, entry.eveningChoice.id])), [storyLog]);
 
   const startStory = (selected: PlayerProfile) => {
     setProtagonist(selected);
@@ -1337,13 +1600,26 @@ export default function FiladelfiaStoryGame() {
     setMeters(applyProfilePoints(initialMeters, selected.points));
     setFlags([`perspective:${selected.id}`, `strength:${selected.strongestMeter}`, `risk:${selected.riskMeter}`]);
     setStoryLog([]);
+    setSelectedMorningChoice(null);
     setEndingId(null);
     setLastFeedback(selected.opening);
     saveGameNote(game.id, `Story started as ${selected.name} from ${selected.country}`);
   };
 
-  const choose = (choice: Choice) => {
+  const chooseMorning = (choice: StoryChoice) => {
+    if (!protagonist || selectedMorningChoice) return;
+    const profiledChoice = applyProfileChoiceInfluence(choice, protagonist);
+    const nextMeters = clampMeters(meters, profiledChoice.effects);
+    const nextFlags = Array.from(new Set([...flags, ...(profiledChoice.flags ?? [])]));
+    setMeters(nextMeters);
+    setFlags(nextFlags);
+    setSelectedMorningChoice(profiledChoice);
+    setLastFeedback(profiledChoice.feedback);
+  };
+
+  const chooseEvening = (choice: StoryChoice) => {
     if (!protagonist) return;
+    const morningChoice = selectedMorningChoice ?? node.decisionSets[0].choices[0];
     const nextMeters = clampMeters(meters, choice.effects);
     const nextFlags = Array.from(new Set([...flags, ...(choice.flags ?? [])]));
     const nextLog = [...storyLog, {
@@ -1351,11 +1627,13 @@ export default function FiladelfiaStoryGame() {
       nodeTitle: node.title,
       dayLabel: node.dayLabel,
       location: node.location,
-      moments: node.moments,
+      moments: visibleMomentsForNode(node, morningChoice, protagonist, flags),
+      morningChoice,
+      eveningChoice: choice,
       chosenAction: choice.id,
-      feedback: choice.feedback,
-      meterChanges: choice.effects,
-      flags: choice.flags ?? [],
+      feedback: `${morningChoice.feedback} ${choice.feedback}`,
+      meterChanges: mergeEffects(morningChoice.effects, choice.effects),
+      flags: [...(morningChoice.flags ?? []), ...(choice.flags ?? [])],
     }];
 
     setMeters(nextMeters);
@@ -1372,6 +1650,7 @@ export default function FiladelfiaStoryGame() {
     }
 
     setNodeId(choice.next);
+    setSelectedMorningChoice(null);
     saveGameNote(game.id, `${protagonist.name}: ${storyNodes[choice.next].title}`);
   };
 
@@ -1381,6 +1660,7 @@ export default function FiladelfiaStoryGame() {
     setMeters(initialMeters);
     setFlags([]);
     setStoryLog([]);
+    setSelectedMorningChoice(null);
     setEndingId(null);
     setLastFeedback('Choose a participant to begin the journey.');
     saveGameNote(game.id, 'Story restarted');
@@ -1413,8 +1693,11 @@ export default function FiladelfiaStoryGame() {
                 node={node}
                 protagonist={protagonist}
                 meters={meters}
+                flags={flags}
+                selectedMorningChoice={selectedMorningChoice}
                 lastFeedback={lastFeedback}
-                onChoose={choose}
+                onChooseMorning={chooseMorning}
+                onChooseEvening={chooseEvening}
               />
             ) : (
               <EndingPanel
@@ -1597,15 +1880,24 @@ function StoryStage({
   node,
   protagonist,
   meters,
+  flags,
+  selectedMorningChoice,
   lastFeedback,
-  onChoose,
+  onChooseMorning,
+  onChooseEvening,
 }: {
   node: StoryNode;
   protagonist: PlayerProfile;
   meters: Meters;
+  flags: string[];
+  selectedMorningChoice: StoryChoice | null;
   lastFeedback: string;
-  onChoose: (choice: Choice) => void;
+  onChooseMorning: (choice: StoryChoice) => void;
+  onChooseEvening: (choice: StoryChoice) => void;
 }) {
+  const morningDecision = node.decisionSets[0];
+  const eveningDecision = node.decisionSets[1];
+  const visibleMoments = visibleMomentsForNode(node, selectedMorningChoice, protagonist, flags);
   return (
     <div className="filadelfia-stage rounded-xl border border-green-400/30 bg-slate-950 overflow-hidden">
       <LocationPanel node={node} protagonist={protagonist} />
@@ -1630,7 +1922,7 @@ function StoryStage({
           </div>
 
           <div className="mt-4 space-y-3">
-            {node.moments.map((moment) => (
+            {visibleMoments.map((moment) => (
               <div key={moment.id} className="filadelfia-story-moment rounded-lg border border-white/10 bg-black/45 p-3">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -1663,24 +1955,44 @@ function StoryStage({
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3">
-          {node.choices.map((choice) => (
-            <button
-              key={choice.id}
-              onClick={() => onChoose(choice)}
-              className="filadelfia-choice-card group rounded-lg border border-white/10 bg-white/[.04] p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-black text-white">{choice.label}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-gray-300">{choice.intention}</p>
-                  <MeterDelta effects={choice.effects} />
-                </div>
-                <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-green-300 opacity-70 group-hover:opacity-100" />
+          {!selectedMorningChoice ? (
+            <DecisionSetPanel decision={morningDecision} onChoose={onChooseMorning} />
+          ) : (
+            <>
+              <div className="filadelfia-consequence-card rounded-lg border border-green-300/20 bg-green-300/10 p-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-green-300">Morning choice</p>
+                <p className="mt-1 text-sm font-bold text-gray-100">{selectedMorningChoice.label}</p>
+                <p className="mt-1 text-xs leading-relaxed text-gray-300">{selectedMorningChoice.feedback}</p>
               </div>
-            </button>
-          ))}
+              <DecisionSetPanel decision={eveningDecision} onChoose={onChooseEvening} />
+            </>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function DecisionSetPanel({ decision, onChoose }: { decision: StoryDecisionSet; onChoose: (choice: StoryChoice) => void }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-black uppercase tracking-widest text-green-300">{decision.prompt}</p>
+      {decision.choices.map((choice) => (
+        <button
+          key={choice.id}
+          onClick={() => onChoose(choice)}
+          className="filadelfia-choice-card group w-full rounded-lg border border-white/10 bg-white/[.04] p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-black text-white">{choice.label}</p>
+              <p className="mt-1 text-xs leading-relaxed text-gray-300">{choice.intention}</p>
+              <MeterDelta effects={choice.effects} />
+            </div>
+            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-green-300 opacity-70 group-hover:opacity-100" />
+          </div>
+        </button>
+      ))}
     </div>
   );
 }
@@ -1808,7 +2120,16 @@ function StoryLogPanel({ storyLog, protagonist, compact = false }: { storyLog: S
               </div>
             ))}
           </div>
-          <p className="mt-2 text-sm font-bold text-white">Choice: {choiceLabel(entry.chosenAction)}</p>
+          <div className="mt-2 rounded border border-white/10 bg-black/25 p-2">
+            <p className="text-[10px] font-black uppercase text-green-300">Morning choice</p>
+            <p className="text-xs font-bold text-white">{entry.morningChoice.label}</p>
+            <p className="mt-1 text-[10px] leading-relaxed text-gray-400">{entry.morningChoice.feedback}</p>
+          </div>
+          <div className="mt-2 rounded border border-white/10 bg-black/25 p-2">
+            <p className="text-[10px] font-black uppercase text-cyan-300">Evening choice</p>
+            <p className="text-xs font-bold text-white">{entry.eveningChoice.label}</p>
+            <p className="mt-1 text-[10px] leading-relaxed text-gray-400">{entry.eveningChoice.feedback}</p>
+          </div>
           <p className="mt-1 text-xs leading-relaxed text-green-200">{entry.feedback}</p>
         </div>
       ))}
@@ -1848,15 +2169,22 @@ function LogicDiagram({ chosenChoiceIds, endingId }: { chosenChoiceIds: Set<stri
             <div key={id} className="filadelfia-logic-card rounded-lg border border-white/10 bg-black/45 p-3">
               <p className="text-[10px] font-bold uppercase text-gray-500">{node.chapter}: {node.title}</p>
               <div className="mt-3 space-y-2">
-                {node.choices.map((choice) => {
-                  const chosen = chosenChoiceIds.has(choice.id);
-                  return (
-                    <div key={choice.id} className={`filadelfia-logic-choice rounded border p-2 ${chosen ? 'border-green-300 bg-green-300/10' : 'border-white/10 bg-black/40'}`}>
-                      <p className={`text-xs font-bold ${chosen ? 'text-green-200' : 'text-gray-300'}`}>{choice.label}</p>
-                      <p className="text-[10px] text-gray-500 mt-1">Next: {choice.next === 'ending' ? 'Ending logic' : storyNodes[choice.next].title}</p>
+                {node.decisionSets.map((decision) => (
+                  <div key={decision.id} className="rounded border border-white/10 bg-black/25 p-2">
+                    <p className="text-[10px] font-black uppercase text-cyan-300">{decision.phase}</p>
+                    <div className="mt-2 space-y-2">
+                      {decision.choices.map((choice) => {
+                        const chosen = chosenChoiceIds.has(choice.id);
+                        return (
+                          <div key={choice.id} className={`filadelfia-logic-choice rounded border p-2 ${chosen ? 'border-green-300 bg-green-300/10' : 'border-white/10 bg-black/40'}`}>
+                            <p className={`text-xs font-bold ${chosen ? 'text-green-200' : 'text-gray-300'}`}>{choice.label}</p>
+                            <p className="text-[10px] text-gray-500 mt-1">Next: {choice.phase === 'morning' ? 'Later situation' : choice.next === 'ending' ? 'Ending logic' : storyNodes[choice.next].title}</p>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           );
@@ -1962,6 +2290,12 @@ function humanFlag(flag: string) {
     avoidedConflict: 'Avoided conflict',
     hidFailure: 'Hid a weak point',
     reskinnedGame: 'Copied a known game',
+    morningRepair: 'Repaired early',
+    informalBridge: 'Built an informal bridge',
+    trainerCheckIn: 'Asked for trainer check-in',
+    logisticsHelp: 'Helped with logistics',
+    teamFatigue: 'Ignored team fatigue',
+    profileOverused: 'Overused strongest style',
   };
   if (flag.startsWith('perspective:')) return `Perspective: ${formatProfileFlag(flag.split(':')[1])}`;
   if (flag.startsWith('strength:')) {
@@ -1973,6 +2307,150 @@ function humanFlag(flag: string) {
     return isMeterKey(key) ? `Risk: ${meterLabel(key)}` : 'Risk set';
   }
   return labels[flag] ?? flag.replace(/([A-Z])/g, ' $1').toLowerCase();
+}
+
+const speakerPools: Record<MorningContext, string[]> = {
+  arrival: ['Rocco', 'Claudia', 'Giuseppe', 'Buse Naz', 'Sophie', 'Mihaela'],
+  design: ['Emanuel', 'Kaotar', 'Rasim Hamza', 'Cristina', 'Gjoko', 'Elena', 'Stefan'],
+  prototype: ['Giuseppe', 'Stasa', 'Liviu', 'Hatche', 'Mehmet Emin', 'Emanuel'],
+  conflict: ['Loredana', 'Kiril', 'Elena', 'Ognjen', 'Cristina', 'Rocco'],
+  night: ['Rocco', 'Claudia', 'Kiril', 'Mihaela', 'Ognjen', 'Emanuel'],
+  showcase: ['Emanuel', 'Rocco', 'Sophie', 'Buse Naz', 'Stefan', 'Cristina'],
+};
+
+function visibleMomentsForNode(node: StoryNode, morningChoice: StoryChoice | null, protagonist: PlayerProfile, flags: string[]) {
+  const firstMoment = personalizeMomentSpeakers(node.moments[0], node, protagonist, flags, 0);
+  if (!morningChoice) return [firstMoment];
+  return [firstMoment, buildFollowUpMoment(node, morningChoice, protagonist, flags)];
+}
+
+function buildFollowUpMoment(node: StoryNode, choice: StoryChoice, protagonist: PlayerProfile, flags: string[]): StoryMomentVariant {
+  const base = node.moments[1] ?? node.moments[0];
+  const context = nodeMorningContext[node.id];
+  const speakerA = pickSpeaker(context, node.id, protagonist, flags, 1);
+  const speakerB = pickSpeaker(context, node.id, protagonist, flags, 2);
+  const facilitator = choice.id.includes('trainer') ? 'Emanuel' : choice.id.includes('logistics') ? 'Rocco' : speakerB;
+  const variant = followUpCopy(choice, protagonist);
+  return {
+    ...base,
+    id: `${base.id}-${choice.id}`,
+    afterChoiceId: choice.id,
+    profileFocus: [protagonist.strongestMeter],
+    title: variant.title,
+    text: variant.text,
+    tone: variant.tone,
+    dialogue: [
+      { speaker: speakerA, text: variant.firstLine },
+      { speaker: facilitator, text: variant.secondLine },
+      { speaker: 'Narrator', text: variant.narratorLine },
+    ],
+  };
+}
+
+function personalizeMomentSpeakers(moment: StoryMomentVariant, node: StoryNode, protagonist: PlayerProfile, flags: string[], offset: number): StoryMomentVariant {
+  const context = nodeMorningContext[node.id];
+  const dialogue = moment.dialogue.map((line, index) => {
+    if (line.speaker === 'Narrator' || line.speaker === 'Rocco' || line.speaker === 'Emanuel') return line;
+    if (index > 1) return line;
+    return {
+      ...line,
+      speaker: pickSpeaker(context, node.id, protagonist, flags, index + offset),
+    };
+  });
+  return { ...moment, dialogue };
+}
+
+function followUpCopy(choice: StoryChoice, protagonist: PlayerProfile) {
+  if (choice.id.includes('logistics')) {
+    return {
+      title: 'A practical problem becomes a human moment',
+      tone: 'Warm and practical',
+      text: 'A room change, missing markers, and a late participant could slow the group down. Instead, the practical problem gives people a reason to help each other.',
+      firstLine: 'I thought this was just moving chairs, but now people are actually talking.',
+      secondLine: 'Good. Logistics is not glamorous, but it can save the mood of a room. Also, please do not lose the blue tape.',
+      narratorLine: `${protagonist.name} sees that practical care can build trust before the formal work starts.`,
+    };
+  }
+  if (choice.id.includes('trainer')) {
+    return {
+      title: 'A short trainer check',
+      tone: 'Clear and grounded',
+      text: 'The team pauses for one practical question. It is not a lecture. It is a handle the group can use.',
+      firstLine: 'One question is enough. If we get five questions, we will hide inside them.',
+      secondLine: 'Fair. Try this: what should the player be able to do on a difficult turn?',
+      narratorLine: `${protagonist.name} notices that a concrete question helps more than a perfect explanation.`,
+    };
+  }
+  if (choice.id.includes('fatigue')) {
+    return {
+      title: 'Tired people, smaller voices',
+      tone: 'Tense and tired',
+      text: 'The work continues, but the tired people become quieter. The deadline is close, and the room starts to lose patience.',
+      firstLine: 'I am still here, but my brain left ten minutes ago.',
+      secondLine: 'Then we need a smaller next step, not a louder push.',
+      narratorLine: `${protagonist.name} can feel the cost of speed: the project moves, but some people move away from it.`,
+    };
+  }
+  if (choice.id.includes('profile-overuse')) {
+    return {
+      title: 'A strength used too hard',
+      tone: 'Productive but narrow',
+      text: `${protagonist.name}'s strongest habit helps the group move, but it also starts to decide the shape of the room.`,
+      firstLine: 'This is clearer now, but I am not sure I helped make it.',
+      secondLine: 'A strength is useful. Just leave enough space for other people to bring theirs too.',
+      narratorLine: `${protagonist.name} gets momentum, but the team needs more than one style.`,
+    };
+  }
+  if (choice.id.includes('repair') || choice.id.includes('clear-reflection')) {
+    return {
+      title: 'Repair before the problem grows',
+      tone: 'Honest and calmer',
+      text: 'The team names one weak point before it becomes a bigger conflict. The conversation is not easy, but it is usable.',
+      firstLine: 'I can say it if we promise not to treat it like an attack.',
+      secondLine: 'Say it. We are fixing a prototype, not judging a person.',
+      narratorLine: `${protagonist.name} sees that early repair keeps the story open.`,
+    };
+  }
+  return {
+    title: 'A small bridge during the break',
+    tone: 'Informal and human',
+    text: 'The important conversation happens away from the main table, between cups, bags, and people looking for chargers.',
+    firstLine: 'It is easier to say this here than in front of everyone.',
+    secondLine: 'Then let us carry it gently back to the team.',
+    narratorLine: `${protagonist.name} learns that informal time can change the formal work.`,
+  };
+}
+
+function pickSpeaker(context: MorningContext, nodeId: StoryNodeId, protagonist: PlayerProfile, flags: string[], offset: number) {
+  const pool = speakerPools[context].filter((name) => name !== protagonist.name);
+  const seed = `${nodeId}:${protagonist.id}:${protagonist.strongestMeter}:${flags.join(',')}:${offset}`;
+  return pool[deterministicIndex(seed, pool.length)] ?? 'Narrator';
+}
+
+function deterministicIndex(seed: string, length: number) {
+  if (length <= 0) return 0;
+  let total = 0;
+  for (let index = 0; index < seed.length; index += 1) total = (total + seed.charCodeAt(index) * (index + 1)) % 9973;
+  return total % length;
+}
+
+function applyProfileChoiceInfluence(choice: StoryChoice, protagonist: PlayerProfile): StoryChoice {
+  if (!choice.flags?.includes('profileOverused')) return choice;
+  const effects = mergeEffects(choice.effects, { [protagonist.strongestMeter]: 5 });
+  return {
+    ...choice,
+    effects,
+    feedback: `${choice.feedback} Because ${meterLabel(protagonist.strongestMeter).toLowerCase()} is your strongest meter, this choice also pushes that side of the participant.`,
+  };
+}
+
+function mergeEffects(...effectsList: Array<Partial<Meters>>) {
+  return effectsList.reduce((merged, effects) => {
+    (Object.entries(effects) as Array<[MeterKey, number]>).forEach(([key, value]) => {
+      merged[key] = (merged[key] ?? 0) + value;
+    });
+    return merged;
+  }, {} as Partial<Meters>);
 }
 
 function isMeterKey(key: string): key is MeterKey {
@@ -2012,10 +2490,15 @@ function storyBeat(nodeId: StoryNodeId) {
 
 function resolveEnding(meters: Meters, flags: string[]): EndingId {
   const has = (flag: string) => flags.includes(flag);
+  if (has('teamFatigue') && has('profileOverused') && (meters.trust < 55 || meters.inclusion < 55)) return 'conflict-breaks-team';
   if ((has('hidFailure') || has('polishedBeforeTesting')) && meters.clarity < 58) return 'beautiful-board-broken-rules';
   if ((has('avoidedConflict') || has('ignoredFeedback')) && (meters.trust < 48 || meters.inclusion < 45)) return 'conflict-breaks-team';
   if (has('soloDesigner') && meters.clarity >= 62 && meters.inclusion < 58) return 'solo-prototype-success';
   if (has('funFirst') && meters.energy >= 68 && meters.learning < 58) return 'fun-game-weak-message';
+  if (has('morningRepair') && has('clearDebrief') && meters.learning >= 64 && meters.trust >= 55) return 'failed-prototype-strong-learning';
+  if (has('informalBridge') && has('sharedRoles') && meters.trust >= 62 && meters.inclusion >= 58) return 'shared-board-game-success';
+  if (has('logisticsHelp') && has('usedPlaytest') && has('learningInsideMechanic') && meters.clarity >= 62) return 'shared-board-game-success';
+  if (has('trainerCheckIn') && has('hidFailure') && meters.learning >= 62) return 'failed-prototype-strong-learning';
   if (has('clearDebrief') && meters.learning >= 68 && (meters.clarity < 58 || has('hidFailure'))) return 'failed-prototype-strong-learning';
   if (has('sharedRoles') && has('usedPlaytest') && has('learningInsideMechanic') && meters.trust >= 62 && meters.inclusion >= 62) return 'shared-board-game-success';
   if (meters.learning >= 70 && has('clearDebrief')) return 'failed-prototype-strong-learning';
@@ -2135,7 +2618,7 @@ function formatText(text: string, protagonist: PlayerProfile) {
 
 function choiceLabel(choiceId: string) {
   for (const node of Object.values(storyNodes)) {
-    const choice = node.choices.find((item) => item.id === choiceId);
+    const choice = node.decisionSets.flatMap((decision) => decision.choices).find((item) => item.id === choiceId);
     if (choice) return choice.label;
   }
   return choiceId;
