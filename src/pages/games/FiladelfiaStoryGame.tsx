@@ -251,12 +251,12 @@ const morningChoiceTemplates: Record<MorningContext, MorningChoiceTemplate[]> = 
     },
     {
       id: 'profile-overuse',
-      label: 'Lead with your habit',
-      intention: 'Use the strongest habit of the selected participant immediately, even if the room may need something softer first.',
+      label: 'Step in fast',
+      intention: 'Act quickly in the way that feels most natural, even if the room may need a softer start.',
       effects: { clarity: 3, energy: 3, trust: -4, inclusion: -4 },
       flags: ['profileOverused'],
       revealMomentId: 'profile-followup',
-      feedback: 'The strongest habit gave {you} a quick way in, but the room became shaped around one style too early.',
+      feedback: '{you} found a quick way into the room, but some people started to follow instead of joining fully.',
     },
   ],
   design: [
@@ -280,8 +280,8 @@ const morningChoiceTemplates: Record<MorningContext, MorningChoiceTemplate[]> = 
     },
     {
       id: 'profile-overuse',
-      label: 'Push your strongest style',
-      intention: 'Use the main strength of the selected participant hard because the team feels slow and the deadline feels close.',
+      label: 'Push the work forward',
+      intention: 'Take a direct step because the team feels slow and the deadline feels close.',
       effects: { clarity: 3, energy: 3, trust: -3, inclusion: -3 },
       flags: ['profileOverused'],
       revealMomentId: 'profile-followup',
@@ -396,8 +396,8 @@ const morningChoiceTemplates: Record<MorningContext, MorningChoiceTemplate[]> = 
     },
     {
       id: 'profile-overuse',
-      label: 'Take the spotlight',
-      intention: 'Use the strongest style of the selected participant to make the presentation feel safe and controlled.',
+      label: 'Take the lead in front',
+      intention: 'Hold the presentation together by stepping forward before the team has agreed who says what.',
       effects: { clarity: 4, energy: 4, trust: -5, inclusion: -5 },
       flags: ['profileOverused', 'soloDesigner'],
       revealMomentId: 'profile-followup',
@@ -1823,7 +1823,7 @@ function ProtagonistSelect({ onStart }: { onStart: (profile: PlayerProfile) => v
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.8fr)]">
         <div className="rounded-xl border border-white/10 bg-black/35 p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs font-black uppercase tracking-widest text-green-300">Step 2 - Shape this participant</p>
+            <p className="text-xs font-black uppercase tracking-widest text-green-300">Step 2 - Shape how {profile.name} starts</p>
             <p className={`text-xs font-black uppercase ${pointsLeft === 0 ? 'text-green-300' : 'text-yellow-300'}`}>Points left: {pointsLeft}</p>
           </div>
           <p className="mt-2 text-xs font-bold leading-relaxed text-gray-300">
@@ -1835,7 +1835,7 @@ function ProtagonistSelect({ onStart }: { onStart: (profile: PlayerProfile) => v
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-black uppercase text-white">{meterLabel(key)}</p>
-                    <p className="mt-1 text-[10px] font-bold leading-relaxed text-gray-400">{meterHelp(key)}</p>
+                    <p className="mt-1 text-[10px] font-bold leading-relaxed text-gray-400">{meterHelp(key, profile.name)}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <button onClick={() => adjustPoint(key, -1)} disabled={points[key] <= 0} className="h-8 w-8 rounded border border-white/10 bg-white/[.04] text-sm font-black text-white disabled:opacity-30">-</button>
@@ -1910,7 +1910,7 @@ function StoryStage({
 
         <div className="filadelfia-story-scene rounded-xl border-2 border-green-300/60 bg-black/90 p-4 shadow-[0_0_24px_rgba(34,197,94,.18)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[10px] font-black uppercase tracking-widest text-green-300">{node.speaker}</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-green-300">{node.location}</p>
             <p className="text-[10px] font-bold uppercase text-gray-500">{node.chapter} - {node.dayLabel}</p>
           </div>
           <h2 className="mt-2 text-base sm:text-xl font-arcade mobile-readable-arcade text-white">{node.title}</h2>
@@ -1956,7 +1956,7 @@ function StoryStage({
 
         <div className="mt-4 grid grid-cols-1 gap-3">
           {!selectedMorningChoice ? (
-            <DecisionSetPanel decision={morningDecision} onChoose={onChooseMorning} />
+            <DecisionSetPanel decision={morningDecision} protagonist={protagonist} onChoose={onChooseMorning} />
           ) : (
             <>
               <div className="filadelfia-consequence-card rounded-lg border border-green-300/20 bg-green-300/10 p-3">
@@ -1964,7 +1964,7 @@ function StoryStage({
                 <p className="mt-1 text-sm font-bold text-gray-100">{selectedMorningChoice.label}</p>
                 <p className="mt-1 text-xs leading-relaxed text-gray-300">{formatText(selectedMorningChoice.feedback, protagonist)}</p>
               </div>
-              <DecisionSetPanel decision={eveningDecision} onChoose={onChooseEvening} />
+              <DecisionSetPanel decision={eveningDecision} protagonist={protagonist} onChoose={onChooseEvening} />
             </>
           )}
         </div>
@@ -1973,26 +1973,37 @@ function StoryStage({
   );
 }
 
-function DecisionSetPanel({ decision, onChoose }: { decision: StoryDecisionSet; onChoose: (choice: StoryChoice) => void }) {
+function DecisionSetPanel({
+  decision,
+  protagonist,
+  onChoose,
+}: {
+  decision: StoryDecisionSet;
+  protagonist: PlayerProfile;
+  onChoose: (choice: StoryChoice) => void;
+}) {
   return (
     <div className="space-y-3">
       <p className="text-xs font-black uppercase tracking-widest text-green-300">{decision.prompt}</p>
-      {decision.choices.map((choice) => (
-        <button
-          key={choice.id}
-          onClick={() => onChoose(choice)}
-          className="filadelfia-choice-card group w-full rounded-lg border border-white/10 bg-white/[.04] p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-black text-white">{choice.label}</p>
-              <p className="mt-1 text-xs leading-relaxed text-gray-300">{choice.intention}</p>
-              <MeterDelta effects={choice.effects} />
+      {decision.choices.map((choice) => {
+        const displayChoice = choiceDisplayCopy(choice, protagonist);
+        return (
+          <button
+            key={choice.id}
+            onClick={() => onChoose(choice)}
+            className="filadelfia-choice-card group w-full rounded-lg border border-white/10 bg-white/[.04] p-4 text-left transition-colors hover:border-green-300 hover:bg-green-300/10"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-black text-white">{displayChoice.label}</p>
+                <p className="mt-1 text-xs leading-relaxed text-gray-300">{formatText(displayChoice.intention, protagonist)}</p>
+                <MeterDelta effects={displayChoice.effects} />
+              </div>
+              <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-green-300 opacity-70 group-hover:opacity-100" />
             </div>
-            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-green-300 opacity-70 group-hover:opacity-100" />
-          </div>
-        </button>
-      ))}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -2064,11 +2075,14 @@ function EndingPanel({
         <p className="text-xs text-green-300 font-bold uppercase tracking-widest mt-4">Ending Unlocked</p>
         <h2 className="text-2xl font-arcade mobile-readable-arcade text-white mt-3">{ending.title}</h2>
         <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
-          <OutcomeCard title="Participant" text={formatText(ending.protagonistOutcome, protagonist)} />
+          <OutcomeCard title="Journey" text={formatText(ending.protagonistOutcome, protagonist)} />
           <OutcomeCard title="Board Game" text={formatText(ending.boardGameOutcome, protagonist)} />
           <OutcomeCard title="Team" text={formatText(ending.teamOutcome, protagonist)} />
         </div>
         <p className="text-sm text-cyan-200 leading-relaxed mt-5">{ending.logic}</p>
+        <p className="text-sm text-cyan-100 leading-relaxed mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3">
+          {formatText(profileEndingReflection(protagonist, flags), protagonist)}
+        </p>
         <p className="text-sm text-green-100 leading-relaxed mt-4 rounded-lg border border-green-300/20 bg-green-300/10 p-3">
           Trainer reflection: {formatText(ending.trainerReflection, protagonist)}
         </p>
@@ -2295,7 +2309,7 @@ function humanFlag(flag: string) {
     trainerCheckIn: 'Asked for trainer check-in',
     logisticsHelp: 'Helped with logistics',
     teamFatigue: 'Ignored team fatigue',
-    profileOverused: 'Overused strongest style',
+    profileOverused: 'Pushed one familiar pattern',
   };
   if (flag.startsWith('perspective:')) return `Perspective: ${formatProfileFlag(flag.split(':')[1])}`;
   if (flag.startsWith('strength:')) {
@@ -2347,6 +2361,49 @@ function buildFollowUpMoment(node: StoryNode, choice: StoryChoice, protagonist: 
   };
 }
 
+function choiceDisplayCopy(choice: StoryChoice, protagonist: PlayerProfile): StoryChoice {
+  if (!choice.flags?.includes('profileOverused')) return choice;
+  const copy = profileActionCopy(protagonist);
+  return {
+    ...choice,
+    label: copy.label,
+    intention: copy.intention,
+    feedback: copy.feedback,
+    effects: mergeEffects(choice.effects, { [protagonist.strongestMeter]: 5 }),
+  };
+}
+
+function profileActionCopy(protagonist: PlayerProfile) {
+  const copies: Record<MeterKey, { label: string; intention: string; feedback: string }> = {
+    trust: {
+      label: 'Keep everyone comfortable',
+      intention: 'Check if people feel okay before moving on, even though the team still needs a clear decision.',
+      feedback: '{you} made the room feel safer, but the group also delayed a decision that needed attention.',
+    },
+    clarity: {
+      label: 'Put the plan on paper',
+      intention: 'Write the next steps clearly where everyone can see them, then hope people add to the plan instead of waiting for it.',
+      feedback: 'The plan became easier to follow, but a few people started waiting for {you} to decide the next move.',
+    },
+    inclusion: {
+      label: 'Bring quieter voices in',
+      intention: 'Pause the rush and ask who has not spoken yet, even if it slows the group at a tense moment.',
+      feedback: 'More people entered the conversation, but the team also postponed a harder disagreement.',
+    },
+    energy: {
+      label: 'Lift the energy quickly',
+      intention: 'Bring movement and warmth into the room before the silence grows too heavy.',
+      feedback: 'The group woke up and laughed again, but the next step became less clear for a moment.',
+    },
+    learning: {
+      label: 'Ask what the game should teach',
+      intention: 'Connect the activity to the learning goal now, before the team spends more time on details.',
+      feedback: 'The learning point became clearer, but the group lost some pace while everyone tried to explain it.',
+    },
+  };
+  return copies[protagonist.strongestMeter];
+}
+
 function personalizeMomentSpeakers(moment: StoryMomentVariant, node: StoryNode, protagonist: PlayerProfile, flags: string[], offset: number): StoryMomentVariant {
   const context = nodeMorningContext[node.id];
   const dialogue = moment.dialogue.map((line, index) => {
@@ -2392,14 +2449,7 @@ function followUpCopy(choice: StoryChoice, protagonist: PlayerProfile) {
     };
   }
   if (choice.id.includes('profile-overuse')) {
-    return {
-      title: 'When a strength fills the room',
-      tone: 'Productive but narrow',
-      text: `${protagonist.name}'s strongest habit helps the group move, but it also starts to decide the shape of the room before other people can bring their own style.`,
-      firstLine: 'This is clearer now, but I am not sure I helped make it.',
-      secondLine: 'A strength is useful. Just make sure other people can still add their ideas.',
-      narratorLine: `${protagonist.name} gets momentum, but the team needs more than one style.`,
-    };
+    return profileFollowUpCopy(protagonist);
   }
   if (choice.id.includes('repair') || choice.id.includes('clear-reflection')) {
     return {
@@ -2421,6 +2471,59 @@ function followUpCopy(choice: StoryChoice, protagonist: PlayerProfile) {
   };
 }
 
+function profileFollowUpCopy(protagonist: PlayerProfile) {
+  const copies: Record<MeterKey, {
+    title: string;
+    tone: string;
+    text: string;
+    firstLine: string;
+    secondLine: string;
+    narratorLine: string;
+  }> = {
+    trust: {
+      title: 'A safer room, a slower choice',
+      tone: 'Careful and warm',
+      text: '{you} checks the mood before the group moves on. People relax, but the unfinished decision stays on the table.',
+      firstLine: 'I feel better saying this now, but we still have to choose something.',
+      secondLine: 'Yes. Let us keep the care and still make one clear decision.',
+      narratorLine: '{you} notices that comfort helps people speak, but comfort alone does not finish the work.',
+    },
+    clarity: {
+      title: 'The plan becomes too central',
+      tone: 'Clear but narrow',
+      text: '{you} writes the steps neatly. The confusion drops fast, but the team starts looking at the notebook before looking at each other.',
+      firstLine: 'This helps. I just do not want to wait for the notebook every time.',
+      secondLine: 'Good point. The plan should help the team move, not replace the team.',
+      narratorLine: '{you} sees the danger: order can support people, or it can make them passive.',
+    },
+    inclusion: {
+      title: 'More voices, slower movement',
+      tone: 'Gentle and uncertain',
+      text: '{you} opens space for people who were quiet. New ideas appear, but the group still avoids the sharpest disagreement.',
+      firstLine: 'I am glad you asked me. I was not sure if my idea fitted.',
+      secondLine: 'It fits. Now we need to choose what to do with it.',
+      narratorLine: '{you} notices that inviting people in is only the first step. The team still has to decide together.',
+    },
+    energy: {
+      title: 'The room wakes up',
+      tone: 'Lively but scattered',
+      text: '{you} breaks the silence with movement and humour. The room feels alive again, but a few notes are lost in the noise.',
+      firstLine: 'Okay, now I am awake. What were we deciding again?',
+      secondLine: 'Energy is useful. Let us catch it before it runs away from the task.',
+      narratorLine: '{you} can feel the group coming back to life, and also how quickly focus can slip.',
+    },
+    learning: {
+      title: 'The meaning becomes clearer',
+      tone: 'Reflective and slow',
+      text: '{you} asks what the game should help players understand. The answer matters, but the table gets quiet while people search for the right words.',
+      firstLine: 'I understand the point better now. I am just not sure how to play it.',
+      secondLine: 'Then the next step is simple: turn that idea into one player action.',
+      narratorLine: '{you} notices that a good lesson still needs a playable rule.',
+    },
+  };
+  return copies[protagonist.strongestMeter];
+}
+
 function pickSpeaker(context: MorningContext, nodeId: StoryNodeId, protagonist: PlayerProfile, flags: string[], offset: number) {
   const pool = speakerPools[context].filter((name) => name !== protagonist.name);
   const seed = `${nodeId}:${protagonist.id}:${protagonist.strongestMeter}:${flags.join(',')}:${offset}`;
@@ -2436,11 +2539,10 @@ function deterministicIndex(seed: string, length: number) {
 
 function applyProfileChoiceInfluence(choice: StoryChoice, protagonist: PlayerProfile): StoryChoice {
   if (!choice.flags?.includes('profileOverused')) return choice;
-  const effects = mergeEffects(choice.effects, { [protagonist.strongestMeter]: 5 });
+  const displayChoice = choiceDisplayCopy(choice, protagonist);
   return {
-    ...choice,
-    effects,
-    feedback: `${choice.feedback} Because ${meterLabel(protagonist.strongestMeter).toLowerCase()} is the strongest habit for ${protagonist.name}, this choice pushes that side of the participant even more.`,
+    ...displayChoice,
+    feedback: profileActionCopy(protagonist).feedback,
   };
 }
 
@@ -2485,18 +2587,40 @@ function perspectiveBeat(nodeId: StoryNodeId, protagonist: PlayerProfile) {
     'night-honest': 'The team may not have a perfect game by morning. {you} notices that people are finally honest about the weak part.',
     showcase: 'The table, the chairs, and the players are ready. {you} notices that the final result includes both the board and the way the team built it.',
   };
-  return `${beats[nodeId]} ${profileNotice(protagonist)}`;
+  return `${beats[nodeId]} ${profileLensText(protagonist)}`;
 }
 
-function profileNotice(protagonist: PlayerProfile) {
+function profileLensText(protagonist: PlayerProfile) {
   const notices: Record<MeterKey, string> = {
-    trust: 'Because trust is the strongest part of this participant, safety and tension in the group stand out quickly.',
-    clarity: 'Because clarity is the strongest part of this participant, missing steps and unclear rules are hard to ignore.',
-    inclusion: 'Because inclusion is the strongest part of this participant, quiet faces and people outside the circle are easy to notice.',
-    energy: 'Because energy is the strongest part of this participant, the mood of the room feels as important as the plan.',
-    learning: 'Because learning is the strongest part of this participant, every rule starts to raise the same question: what will players understand through play?',
+    trust: 'Small changes in tone stand out: who feels safe, who is holding back, and where the group may need a bridge.',
+    clarity: 'Unclear steps stand out quickly: missing rules, half-made decisions, and moments when people do not know what happens next.',
+    inclusion: 'Quiet faces are hard to miss: the people at the edge of the table, the late answers, and the ideas that need an invitation.',
+    energy: 'The mood of the room is easy to read: the silence after a joke, the tired shoulders, and the moment when people need movement.',
+    learning: 'The activity keeps raising one practical question: what will players understand through the rules, not only through the explanation?',
   };
   return notices[protagonist.strongestMeter];
+}
+
+function profileEndingReflection(protagonist: PlayerProfile, flags: string[]) {
+  const repeatedPattern = flags.includes('profileOverused');
+  const reflections: Record<MeterKey, string> = {
+    trust: repeatedPattern
+      ? '{you} often tried to keep the room comfortable. That helped people feel safer, but sometimes it delayed the difficult choice.'
+      : '{you} used calm attention to notice tension early and help people stay in the same conversation.',
+    clarity: repeatedPattern
+      ? '{you} often reached for structure first. The team gained order, but at times people waited for {you} before adding their own ideas.'
+      : '{you} helped the team turn confusion into next steps without taking the whole process away from them.',
+    inclusion: repeatedPattern
+      ? '{you} often slowed down to include people. More voices entered, but the group sometimes avoided the hard decision underneath.'
+      : '{you} kept noticing who was outside the work and helped bring those voices back into the design.',
+    energy: repeatedPattern
+      ? '{you} often brought life back into the room. The energy helped, but the group sometimes had to recover the focus afterwards.'
+      : '{you} helped the team use energy as fuel, not as a way to escape the harder parts of the work.',
+    learning: repeatedPattern
+      ? '{you} often looked for the meaning behind the game. The lesson became clearer, but the team sometimes needed more play and fewer words.'
+      : '{you} helped the team connect the prototype to youth-work learning without hiding behind explanations.',
+  };
+  return reflections[protagonist.strongestMeter];
 }
 
 function resolveEnding(meters: Meters, flags: string[]): EndingId {
@@ -2587,7 +2711,18 @@ function riskText(key: MeterKey) {
 }
 
 function openingText(name: string, strength: MeterKey, risk: MeterKey) {
-  return `${name} starts the week with ${meterLabel(strength).toLowerCase()} as the strongest habit. The main risk is personal too: ${riskText(risk)}`;
+  return `${name} enters the week with a natural pull toward ${profilePullText(strength)}. Under pressure, ${riskText(risk).toLowerCase()}`;
+}
+
+function profilePullText(key: MeterKey) {
+  const labels: Record<MeterKey, string> = {
+    trust: 'making people feel safe with each other',
+    clarity: 'turning confusion into clear next steps',
+    inclusion: 'noticing who has not entered the conversation yet',
+    energy: 'bringing movement, humour, and pace into the room',
+    learning: 'asking what the game should help people understand',
+  };
+  return labels[key];
 }
 
 function meterLabel(key: MeterKey) {
@@ -2601,13 +2736,13 @@ function meterLabel(key: MeterKey) {
   return labels[key];
 }
 
-function meterHelp(key: MeterKey) {
+function meterHelp(key: MeterKey, name: string) {
   const labels: Record<MeterKey, string> = {
-    trust: 'This participant helps people feel safe to join and share.',
-    clarity: 'This participant makes rules and next steps easier to understand.',
-    inclusion: 'This participant notices quiet people and invites them into the work.',
-    energy: 'This participant brings movement, fun, and motivation to the group.',
-    learning: 'This participant connects play with a clear youth-work lesson.',
+    trust: `${name} helps people feel safe to join and share.`,
+    clarity: `${name} makes rules and next steps easier to understand.`,
+    inclusion: `${name} notices quiet people and invites them into the work.`,
+    energy: `${name} brings movement, fun, and motivation to the group.`,
+    learning: `${name} connects play with a clear youth-work lesson.`,
   };
   return labels[key];
 }
