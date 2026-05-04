@@ -36,6 +36,7 @@ interface ProgressState {
   quizScores: Record<string, number>;
   totalScore: number;
   prototype: Record<string, string>;
+  prototypeImageDataUrl: string;
   audioEnabled: boolean;
   appTheme: AppTheme;
   unlockTheory: (id: string) => void;
@@ -50,6 +51,7 @@ interface ProgressState {
   saveGddImport: (importItem: GddImport) => void;
   saveQuizScore: (quizId: string, score: number) => void;
   updatePrototypeField: (field: string, value: string) => void;
+  updatePrototypeImage: (imageDataUrl: string) => void;
   setAudioEnabled: (enabled: boolean) => void;
   setAppTheme: (theme: AppTheme) => void;
   resetProgress: () => void;
@@ -70,6 +72,7 @@ export const useStore = create<ProgressState>()(
       quizScores: {},
       totalScore: 0,
       prototype: {},
+      prototypeImageDataUrl: '',
       audioEnabled: true,
       appTheme: 'notebook',
       
@@ -138,6 +141,10 @@ export const useStore = create<ProgressState>()(
         prototype: { ...state.prototype, [field]: value }
       })),
 
+      updatePrototypeImage: (imageDataUrl) => set({
+        prototypeImageDataUrl: imageDataUrl,
+      }),
+
       setAudioEnabled: (enabled) => set({
         audioEnabled: enabled,
       }),
@@ -158,14 +165,16 @@ export const useStore = create<ProgressState>()(
         gddImports: [],
         quizScores: {},
         totalScore: 0,
-        prototype: {}
+        prototype: {},
+        prototypeImageDataUrl: ''
       })
     }),
     {
       name: 'games-are-no-joke-storage',
-      version: 5,
+      version: 6,
       migrate: (persistedState) => ({
         ...(persistedState as ProgressState),
+        prototypeImageDataUrl: (persistedState as Partial<ProgressState>).prototypeImageDataUrl ?? '',
         audioEnabled: (persistedState as Partial<ProgressState>).audioEnabled ?? true,
         appTheme: 'notebook',
         readReports: (persistedState as Partial<ProgressState>).readReports ?? [],

@@ -11,6 +11,7 @@ const erasmusLogoPath = `${import.meta.env.BASE_URL}erasmus-plus-small.png`;
 type PrototypeFieldMap = Record<string, string>;
 type GddAnalysisMode = 'offline' | 'ai';
 type PrototypeStage = { title: string; helper: string; ids: string[] };
+type PdfDocument = InstanceType<typeof import('jspdf').jsPDF>;
 
 const stagedSteps: PrototypeStage[] = [
   { title: 'Core Concept', helper: 'Start from the title, short summary, and experience pillars.', ids: ['gameTitle', 'executiveSummary', 'experiencePillars'] },
@@ -38,7 +39,7 @@ function normalizeAiEndpoint(value: string | undefined, fallback: string) {
 }
 
 export default function PrototypeLab() {
-  const { prototype, gameTakeaways, gameNotes, coachNotes, gddImports, updatePrototypeField, saveGddImport } = useStore();
+  const { prototype, prototypeImageDataUrl, gameTakeaways, gameNotes, coachNotes, gddImports, updatePrototypeField, updatePrototypeImage, saveGddImport } = useStore();
   const [actionMessage, setActionMessage] = useState('');
   const [gddText, setGddText] = useState('');
   const [gddPreview, setGddPreview] = useState<PrototypeFieldMap | null>(null);
@@ -47,7 +48,6 @@ export default function PrototypeLab() {
   const [isAnalyzingGdd, setIsAnalyzingGdd] = useState(false);
   const [isLoadingGddFile, setIsLoadingGddFile] = useState(false);
   const [overwriteExisting, setOverwriteExisting] = useState(false);
-  const [prototypeImage, setPrototypeImage] = useState('');
   const [prototypeImageStatus, setPrototypeImageStatus] = useState('');
   const [isGeneratingPrototypeImage, setIsGeneratingPrototypeImage] = useState(false);
   const readPrototypeField = (id: string) => getPrototypeFieldValue(prototype, id);
@@ -99,9 +99,20 @@ export default function PrototypeLab() {
     setActionMessage('Final GDD downloaded as a Word .docx file.');
   };
 
-  const printPrototypeCard = () => {
-    window.print();
-    setActionMessage('Print view opened. Choose Save as PDF if you want a PDF.');
+  const downloadPrototypePdf = async () => {
+    try {
+      const blob = await buildPrototypePdf(readPrototypeField, prototypeImageDataUrl);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const safeTitle = (readPrototypeField('gameTitle') || 'games-are-no-joke-prototype-sheet').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      link.href = url;
+      link.download = `${safeTitle || 'games-are-no-joke-prototype-sheet'}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setActionMessage(prototypeImageDataUrl ? 'Final PDF downloaded with the generated box image.' : 'Final PDF downloaded. Generate an image first if you want it included.');
+    } catch (error) {
+      setActionMessage(error instanceof Error ? error.message : 'Could not create the final PDF.');
+    }
   };
 
   const generatePrototypeImage = async () => {
@@ -123,8 +134,8 @@ export default function PrototypeLab() {
         throw new Error(data.error || 'Image generation failed.');
       }
       const composited = await composeLogoOnImage(data.imageDataUrl, courseLogoPath);
-      setPrototypeImage(composited);
-      setPrototypeImageStatus('Image ready. The course logo was applied in the top-left corner.');
+      updatePrototypeImage(composited);
+      setPrototypeImageStatus('Image ready. It will stay in the prototype sheet and final PDF until you generate a new image.');
     } catch (error) {
       setPrototypeImageStatus(error instanceof Error ? error.message : 'Image generation failed. Try again later.');
     } finally {
@@ -133,11 +144,12 @@ export default function PrototypeLab() {
   };
 
   const downloadPrototypeImage = () => {
-    if (!prototypeImage) return;
+    if (!prototypeImageDataUrl) return;
     const link = document.createElement('a');
     const safeTitle = (readPrototypeField('gameTitle') || 'games-are-no-joke-boardgame-box').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    link.href = prototypeImage;
-    link.download = `${safeTitle || 'games-are-no-joke-boardgame-box'}.png`;
+    const extension = prototypeImageDataUrl.startsWith('data:image/jpeg') || prototypeImageDataUrl.startsWith('data:image/jpg') ? 'jpg' : 'png';
+    link.href = prototypeImageDataUrl;
+    link.download = `${safeTitle || 'games-are-no-joke-boardgame-box'}.${extension}`;
     link.click();
     setActionMessage('Board game box image downloaded.');
   };
@@ -442,7 +454,7 @@ export default function PrototypeLab() {
             <ClipboardList className="w-8 h-8 text-pink-400" />
           </div>
 
-          <PrototypeSheet readPrototypeField={readPrototypeField} />
+          <PrototypeSheet readPrototypeField={readPrototypeField} prototypeImage={prototypeImageDataUrl} />
 
           <div className="notebook-card mt-5 rounded-xl border border-pink-300/30 bg-black/45 p-4 print:hidden">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -465,10 +477,10 @@ export default function PrototypeLab() {
             </div>
 
             {prototypeImageStatus && <p className="mt-3 text-xs font-bold uppercase tracking-widest text-yellow-200">{prototypeImageStatus}</p>}
-            {prototypeImage && (
+            {prototypeImageDataUrl && (
               <div className="mt-4">
                 <img
-                  src={prototypeImage}
+                  src={prototypeImageDataUrl}
                   alt="Generated board game box prototype with course logo"
                   className="w-full rounded-xl border border-white/15 bg-black object-contain"
                 />
@@ -503,10 +515,10 @@ export default function PrototypeLab() {
               <Download className="w-4 h-4" /> GDD .docx
             </button>
             <button
-              onClick={printPrototypeCard}
+              onClick={() => void downloadPrototypePdf()}
               className="flex items-center justify-center gap-2 rounded-lg border border-cyan-400 bg-cyan-400/10 px-3 py-3 text-xs font-bold uppercase text-cyan-100 hover:bg-cyan-400 hover:text-black transition-colors"
             >
-              <Printer className="w-4 h-4" /> Print
+              <Printer className="w-4 h-4" /> Final PDF
             </button>
 	            <button
 	              onClick={() => [...prototypeSteps.map((step) => step.id), ...Object.values(legacyPrototypeFieldMap).flat()].forEach((id) => updatePrototypeField(id, ''))}
@@ -574,7 +586,7 @@ export default function PrototypeLab() {
   );
 }
 
-function PrototypeSheet({ readPrototypeField }: { readPrototypeField: (id: string) => string }) {
+function PrototypeSheet({ readPrototypeField, prototypeImage }: { readPrototypeField: (id: string) => string; prototypeImage: string }) {
   const title = readPrototypeField('gameTitle').trim() || 'Untitled board game prototype';
   const summary = readPrototypeField('executiveSummary').trim();
   const pillars = readPrototypeField('experiencePillars').trim();
@@ -604,6 +616,20 @@ function PrototypeSheet({ readPrototypeField }: { readPrototypeField: (id: strin
             <PrototypeSheetBlock label="Experience Pillars" value={pillars} />
           </div>
         </div>
+
+        {prototypeImage && (
+          <section className="mt-5 rounded-2xl border border-[#d7cdbb] bg-white/80 p-4">
+            <div className="flex flex-col gap-1 border-b border-[#d7cdbb] pb-3 sm:flex-row sm:items-end sm:justify-between">
+              <h5 className="text-sm font-black uppercase tracking-widest text-[#315f73]">Generated Board Game Box</h5>
+              <p className="text-xs font-semibold leading-relaxed text-[#756c5f]">Latest generated image, included in the final PDF.</p>
+            </div>
+            <img
+              src={prototypeImage}
+              alt="Generated board game box prototype"
+              className="mt-4 w-full rounded-xl border border-[#d8cebd] bg-[#fffdf8] object-contain"
+            />
+          </section>
+        )}
 
         <div className="mt-5 grid gap-4">
           {stagedSteps.map((stage) => (
@@ -644,6 +670,154 @@ function PrototypeSheetBlock({ label, value, large = false }: { label: string; v
       </p>
     </div>
   );
+}
+
+async function buildPrototypePdf(readField: (id: string) => string, prototypeImage: string) {
+  const { jsPDF } = await import('jspdf');
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const [erasmusLogo, courseLogo] = await Promise.all([
+    imageToDataUrl(erasmusLogoPath).catch(() => ''),
+    imageToDataUrl(courseLogoPath).catch(() => ''),
+  ]);
+  const title = readField('gameTitle').trim() || 'Untitled board game prototype';
+  let y = drawPrototypePdfHeader(pdf, title, erasmusLogo, courseLogo);
+
+  if (prototypeImage) {
+    y = ensurePrototypePdfSpace(pdf, y, 102, title, erasmusLogo, courseLogo);
+    y = drawPrototypePdfSectionTitle(pdf, 'Generated Board Game Box', y);
+    y += 3;
+    y = drawPdfImageContain(pdf, prototypeImage, 16, y, 178, 88) + 8;
+  }
+
+  y = drawPrototypePdfSectionTitle(pdf, 'Prototype Sheet', y);
+  y = drawPrototypePdfField(pdf, 'Executive Summary', readField('executiveSummary'), y, title, erasmusLogo, courseLogo);
+  y = drawPrototypePdfField(pdf, 'Experience Pillars', readField('experiencePillars'), y, title, erasmusLogo, courseLogo);
+
+  stagedSteps.forEach((stage) => {
+    const fields = prototypeSteps.filter((step) => stage.ids.includes(step.id) && !['executiveSummary', 'experiencePillars'].includes(step.id));
+    if (!fields.length) return;
+    y = ensurePrototypePdfSpace(pdf, y, 24, title, erasmusLogo, courseLogo);
+    y = drawPrototypePdfSectionTitle(pdf, stage.title, y);
+    fields.forEach((step) => {
+      y = drawPrototypePdfField(pdf, step.label, readField(step.id), y, title, erasmusLogo, courseLogo);
+    });
+  });
+
+  drawPrototypePdfFooter(pdf);
+  return pdf.output('blob');
+}
+
+function drawPrototypePdfHeader(pdf: PdfDocument, prototypeTitle: string, erasmusLogo: string, courseLogo: string) {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  pdf.setFillColor(255, 250, 240);
+  pdf.rect(0, 0, pageWidth, pdf.internal.pageSize.getHeight(), 'F');
+  pdf.setFillColor(244, 237, 223);
+  pdf.rect(0, 0, pageWidth, 46, 'F');
+  if (erasmusLogo) drawPdfImageContain(pdf, erasmusLogo, pageWidth - 62, 9, 46, 14);
+  if (courseLogo) drawPdfImageContain(pdf, courseLogo, pageWidth - 96, 25, 80, 14, 'right');
+
+  pdf.setTextColor(32, 26, 18);
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(20);
+  pdf.text(courseInfo.title, 16, 16, { maxWidth: pageWidth - 122 });
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(9);
+  pdf.setTextColor(49, 95, 115);
+  pdf.text(courseInfo.programme, 16, 25);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(102, 93, 80);
+  pdf.text(`${courseInfo.dates} | ${courseInfo.venue} | Project code ${courseInfo.code}`, 16, 32, { maxWidth: pageWidth - 122 });
+  pdf.setTextColor(124, 75, 31);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.text(prototypeTitle, 16, 41, { maxWidth: pageWidth - 122 });
+  return 58;
+}
+
+function drawPrototypePdfSectionTitle(pdf: PdfDocument, title: string, y: number) {
+  pdf.setFillColor(248, 239, 216);
+  pdf.setDrawColor(207, 197, 179);
+  pdf.roundedRect(16, y, 178, 12, 2.5, 2.5, 'FD');
+  pdf.setTextColor(124, 75, 31);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(9);
+  pdf.text(title.toUpperCase(), 20, y + 8);
+  return y + 16;
+}
+
+function drawPrototypePdfField(
+  pdf: PdfDocument,
+  label: string,
+  value: string,
+  y: number,
+  prototypeTitle: string,
+  erasmusLogo: string,
+  courseLogo: string,
+) {
+  const text = value.trim() || 'To complete';
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const maxWidth = pageWidth - 40;
+  const lines = pdf.splitTextToSize(text, maxWidth);
+  const blockHeight = Math.max(20, 13 + lines.length * 5);
+  y = ensurePrototypePdfSpace(pdf, y, blockHeight + 5, prototypeTitle, erasmusLogo, courseLogo);
+
+  pdf.setDrawColor(216, 206, 189);
+  pdf.setFillColor(255, 253, 248);
+  pdf.roundedRect(16, y, 178, blockHeight, 2.5, 2.5, 'FD');
+  pdf.setTextColor(123, 113, 100);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(7.5);
+  pdf.text(label.toUpperCase(), 20, y + 7);
+  pdf.setTextColor(32, 26, 18);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(9.5);
+  pdf.text(lines, 20, y + 14, { maxWidth });
+  return y + blockHeight + 5;
+}
+
+function ensurePrototypePdfSpace(pdf: PdfDocument, y: number, needed: number, prototypeTitle: string, erasmusLogo: string, courseLogo: string) {
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  if (y + needed <= pageHeight - 18) return y;
+  drawPrototypePdfFooter(pdf);
+  pdf.addPage();
+  return drawPrototypePdfHeader(pdf, prototypeTitle, erasmusLogo, courseLogo);
+}
+
+function drawPrototypePdfFooter(pdf: PdfDocument) {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  pdf.setDrawColor(215, 205, 187);
+  pdf.line(16, pageHeight - 13, pageWidth - 16, pageHeight - 13);
+  pdf.setTextColor(102, 93, 80);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(7.5);
+  pdf.text('Generated inside the Games Are No Joke Companion App.', 16, pageHeight - 7);
+  pdf.text(`Hosted by ${courseInfo.host}`, pageWidth - 16, pageHeight - 7, { align: 'right' });
+}
+
+function drawPdfImageContain(pdf: PdfDocument, imageDataUrl: string, x: number, y: number, maxWidth: number, maxHeight: number, align: 'center' | 'right' = 'center') {
+  const properties = pdf.getImageProperties(imageDataUrl);
+  const imageWidth = properties.width || maxWidth;
+  const imageHeight = properties.height || maxHeight;
+  const scale = Math.min(maxWidth / imageWidth, maxHeight / imageHeight);
+  const width = imageWidth * scale;
+  const height = imageHeight * scale;
+  const offsetX = align === 'right' ? maxWidth - width : align === 'center' ? (maxWidth - width) / 2 : 0;
+  const format = imageDataUrl.startsWith('data:image/jpeg') || imageDataUrl.startsWith('data:image/jpg') ? 'JPEG' : 'PNG';
+  pdf.addImage(imageDataUrl, format, x + offsetX, y + (maxHeight - height) / 2, width, height);
+  return y + maxHeight;
+}
+
+async function imageToDataUrl(url: string) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Could not load image: ${url}`);
+  const blob = await response.blob();
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error(`Could not read image: ${url}`));
+    reader.readAsDataURL(blob);
+  });
 }
 
 async function extractGddFileText(file: File) {
@@ -877,6 +1051,8 @@ async function composeLogoOnImage(imageDataUrl: string, logoUrl: string) {
 
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = 'high';
+  context.fillStyle = '#fffaf0';
+  context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
   const padding = Math.round(canvas.width * 0.018);
@@ -897,7 +1073,7 @@ async function composeLogoOnImage(imageDataUrl: string, logoUrl: string) {
 
   drawProjectSignature(context, canvas.width, canvas.height);
 
-  return canvas.toDataURL('image/png');
+  return canvas.toDataURL('image/jpeg', 0.9);
 }
 
 function drawProjectSignature(context: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number) {

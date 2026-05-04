@@ -276,7 +276,7 @@ const morningChoiceTemplates: Record<MorningContext, MorningChoiceTemplate[]> = 
       effects: { trust: 6, inclusion: 5, clarity: -1 },
       flags: ['informalBridge'],
       revealMomentId: 'informal-followup',
-      feedback: 'The informal moment brought a quiet truth back to the workshop table.',
+      feedback: 'The informal moment helped someone say clearly what they could not say at the full table.',
     },
     {
       id: 'profile-overuse',
@@ -445,7 +445,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'Arrival at the Borgo',
     location: 'Residenza Antico Borgo, Filadelfia',
     speaker: 'Rocco',
-    text: '{you} arrives at the old borgo with a backpack, travel tiredness, and the strange feeling of being both welcome and new. People are laughing, looking for rooms, and trying to pronounce names correctly. The week has not become a board game yet. It is only a courtyard full of possible teammates.',
+    text: '{you} arrives at the old borgo after a long trip. People are looking for rooms, checking their phones, and trying to remember new names. It is the first afternoon of the project, and everything still feels new.',
     cast: ['Rocco', 'Emanuel', 'Sophie', 'Mihaela', 'Giuseppe', 'Buse Naz'],
     moments: [
       {
@@ -454,11 +454,11 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'Suitcases in the courtyard',
         location: 'Stone Courtyard',
         tone: 'Nervous and warm',
-        text: 'The courtyard is noisy in a soft way. Suitcases roll over stone, someone asks for Wi-Fi, and someone else is already offering help with bags. {you} hears Italian, Turkish, French, Serbian, Bulgarian, Macedonian, Romanian, and the shared English that everyone is still warming up.',
+        text: 'The courtyard is busy. Suitcases roll over the stone floor, someone asks for Wi-Fi, and someone else helps carry bags. {you} hears many languages and the simple English everyone uses to understand each other.',
         dialogue: [
-          { speaker: 'Rocco', text: 'Welcome. Put your bag near the desk, take water, and give yourself two minutes. The project starts today, but we do not need heroic faces before dinner.' },
-          { speaker: 'Sophie', text: 'I know nobody yet, so I am smiling like I work at reception.' },
-          { speaker: 'Mihaela', text: 'Good. I am nervous too. We can be the reception team for lost participants.' },
+          { speaker: 'Rocco', text: 'Welcome. You can leave your bag near the desk. Take some water first, then I will show you the rooms.' },
+          { speaker: 'Sophie', text: 'I do not know anyone yet. I am a bit nervous.' },
+          { speaker: 'Mihaela', text: 'Me too. We can sit together for the first meeting if you want.' },
         ],
       },
       {
@@ -467,12 +467,12 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'Names, mistakes, and first laughs',
         location: 'Common Room',
         tone: 'Informal start',
-        text: 'After dinner the common room feels warmer. Chairs scrape into a circle, people compare travel stories, and Emanuel waits until the last cups stop moving before he starts.',
+        text: 'After dinner, everyone meets in the common room. People move chairs into a circle and talk about their trips while Emanuel waits for the group to settle.',
         dialogue: [
-          { speaker: 'Emanuel', text: 'Tonight we only need names, faces, and one hope for the week. Tomorrow we can make complicated things. Please do not start with complicated things.' },
+          { speaker: 'Emanuel', text: 'For tonight, let us keep it simple. Say your name, where you come from, and one thing you hope for this week.' },
           { speaker: 'Giuseppe', text: 'My hope is simple: when we play, I want to understand the rules before I lose.' },
           { speaker: 'Buse Naz', text: 'I hope we do not sit all week. A game should move people at least sometimes.' },
-          { speaker: 'Narrator', text: '{you} notices who jokes when nervous, who waits before speaking, and who looks relieved when someone else makes the first mistake.' },
+          { speaker: 'Narrator', text: '{you} notices who speaks easily, who stays quiet, and who seems nervous in the new group.' },
         ],
       },
     ],
@@ -513,7 +513,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'The Mixed Team',
     location: 'Activity Room',
     speaker: 'Emanuel',
-    text: 'The next morning, Emanuel mixes the teams before anyone can hide inside national groups. {you} sits with Sophie, Mihaela, Rasim Hamza, Cristina, and Gjoko. The table has paper, markers, and many different ideas that do not yet know how to live together.',
+    text: 'The next morning, Emanuel creates mixed teams. {you} sits with Sophie, Mihaela, Rasim Hamza, Cristina, and Gjoko. The table has paper, markers, and many different ideas. The team has to choose one direction.',
     cast: ['Emanuel', 'Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Gjoko'],
     moments: [
       {
@@ -522,11 +522,11 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'A table with too many cups',
         location: 'Breakfast Room',
         tone: 'Friendly and unsure',
-        text: 'Before the workshop, the team shares a breakfast table. Sugar spills near the cups, someone translates a word twice, and the first serious idea arrives while people are still looking for spoons.',
+        text: 'Before the workshop, the team shares a breakfast table. Someone spills sugar near the cups, someone translates a word, and the first ideas start to appear.',
         dialogue: [
-          { speaker: 'Sophie', text: 'I can explain better with my hands than with English this morning. Please watch the hands.' },
-          { speaker: 'Mihaela', text: 'Use your hands. We will understand the idea first and fix the words later.' },
-          { speaker: 'Rasim Hamza', text: 'Good. My brain is still loading. Coffee is doing a software update.' },
+          { speaker: 'Sophie', text: 'I can explain better if I draw it. My English is slow this morning.' },
+          { speaker: 'Mihaela', text: 'Draw it. We can understand the idea first and find the words after.' },
+          { speaker: 'Rasim Hamza', text: 'Good. I need coffee before I can make serious decisions.' },
         ],
       },
       {
@@ -535,9 +535,9 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'One topic from many needs',
         location: 'Activity Room',
         tone: 'Focused',
-        text: 'In the activity room, Emanuel gives the task: build a board game from a real need in youth work. The table becomes quiet for a moment because everyone understands that a nice title will not be enough.',
+        text: 'In the activity room, Emanuel explains the task: build a board game from a real need in youth work. The team understands that a nice title is not enough. The game needs a clear player action.',
         dialogue: [
-          { speaker: 'Emanuel', text: 'Start with one real problem. Then ask: what does the player actually do with that problem? If the answer is only talk, it is not a game yet.' },
+          { speaker: 'Emanuel', text: 'Start with one real problem. Then ask what the player can do about it in the game. If players only listen to an explanation, we need to redesign it.' },
           { speaker: 'Cristina', text: 'Inclusion and misinformation can meet. A wrong signal can make the group leave someone outside.' },
           { speaker: 'Gjoko', text: 'Then the player should feel that choice during the game, not only hear about it after.' },
         ],
@@ -560,7 +560,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { clarity: 12, energy: 2, trust: -4, inclusion: -6 },
         flags: ['soloDesigner'],
         next: 'team-solo',
-        feedback: 'The rule draft helped the team breathe, but some people started to answer the notebook instead of each other.',
+        feedback: 'The rule draft helped the team organize the idea, but some people started to follow the notebook instead of talking to each other.',
       },
       {
         id: 'choose-funniest',
@@ -592,7 +592,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: '{you} writes names, topics, and small arrows between them. The notes make sense, but the voices across the table are getting faster.',
         dialogue: [
           { speaker: 'Kaotar', text: 'We need to choose soon. If we open ten ideas, we will build zero games and one headache.' },
-          { speaker: 'Elena', text: 'I have an idea, but I need an example. My English is walking, not running.' },
+          { speaker: 'Elena', text: 'I have an idea, but I need an example. I cannot explain it fast in English.' },
           { speaker: 'Ethan', text: 'Slow is fine. Give us one story, not a perfect sentence.' },
         ],
       },
@@ -606,7 +606,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         dialogue: [
           { speaker: 'Elena', text: 'This is what I meant. One player has information, but another player pays the cost.' },
           { speaker: 'Loredana', text: 'Now I see it. You needed paper, not more pressure.' },
-          { speaker: 'Narrator', text: '{you} can still carry this napkin idea back to the team before the morning silence becomes the whole story.' },
+          { speaker: 'Narrator', text: '{you} can still bring Elena idea back to the team before the group decides without her.' },
         ],
       },
     ],
@@ -656,11 +656,11 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'The easy corner',
         location: 'Coffee Break Table',
         tone: 'Comfortable',
-        text: 'The coffee table is warm and easy. People laugh about travel delays, compare bus routes, and try to remember names without checking badges too obviously.',
+        text: 'The coffee table feels easy. People laugh about travel delays, compare bus routes, and try to remember each other names.',
         dialogue: [
-          { speaker: 'Claudia', text: 'I already forgot three names. I may need name tags for the name tags.' },
+          { speaker: 'Claudia', text: 'I already forgot three names. I need to check the badges again.' },
           { speaker: 'Giuseppe', text: 'Stay here. We have biscuits and no decisions.' },
-          { speaker: 'Rocco', text: 'Biscuits help morale, I agree. But your mixed team is filling up, and I cannot guard your chair forever. I have many important biscuit duties.' },
+          { speaker: 'Rocco', text: 'Biscuits help, yes. But your mixed team is starting now, and there is still a chair for you.' },
         ],
       },
       {
@@ -669,11 +669,11 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'The team starts without you',
         location: 'Activity Room Door',
         tone: 'Gentle pressure',
-        text: 'From the doorway, {you} sees a new group choosing roles. There is still one empty chair, but it no longer feels completely empty. It feels like a question.',
+        text: 'From the doorway, {you} sees a new group choosing roles. There is still one empty chair.',
         dialogue: [
           { speaker: 'Buse Naz', text: 'I want the game to be funny first. If people laugh, they relax.' },
           { speaker: 'Ognjen', text: 'Yes, but someone must hold the structure, or we will only have funny fragments.' },
-          { speaker: 'Rocco', text: 'Enter with a question. It is lighter than arriving with a full plan and a face like a ministry document.' },
+          { speaker: 'Rocco', text: 'Go in with a question. It is easier than arriving late with a full plan.' },
         ],
       },
     ],
@@ -694,7 +694,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         effects: { clarity: 12, trust: -8, inclusion: -10, energy: 2 },
         flags: ['soloDesigner', 'ignoredTeam'],
         next: 'team-solo',
-        feedback: 'The ready plan saved time, but it also made the others feel like they were joining a train already leaving the station.',
+        feedback: 'The ready plan saved time, but the others had less space to shape the idea.',
       },
       {
         id: 'make-party-game',
@@ -714,7 +714,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'A Board With Many Hands',
     location: 'Workshop Table',
     speaker: 'Sophie',
-    text: 'The team chooses a board game about inclusion and misinformation. It is not clean yet, but the heart is clear: players will need to decide whom to trust, who to invite back in, and when to check a source before moving too fast.',
+        text: 'The team chooses a board game about inclusion and misinformation. The idea is still rough, but the direction is clear: players need to decide whom to trust, who to invite back in, and when to check a source before moving.',
     cast: ['Sophie', 'Mihaela', 'Rasim Hamza', 'Cristina', 'Gjoko'],
     moments: [
       {
@@ -739,8 +739,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'The team says they are taking a break, but the game follows them outside. Cristina draws a turn order on a napkin while people pass around snacks and pretend not to work.',
         dialogue: [
           { speaker: 'Cristina', text: 'Maybe the question is simple: do we win faster alone, or better together?' },
-          { speaker: 'Gjoko', text: 'That is a good rule. Also, this napkin is now official project material. Please respect the napkin.' },
-          { speaker: 'Narrator', text: '{you} sees that informal time can carry the project when the table becomes too heavy.' },
+          { speaker: 'Gjoko', text: 'That is a good rule. Keep the napkin. We can copy it into the notebook later.' },
+          { speaker: 'Narrator', text: '{you} sees that some useful project decisions happen during breaks too.' },
         ],
       },
     ],
@@ -803,11 +803,11 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'The quiet walk back',
         location: 'Street Outside the Borgo',
         tone: 'Tired and honest',
-        text: 'After dinner, the group walks back from the small square. Nobody argues. That should feel peaceful, but nobody talks about the game either.',
+        text: 'After dinner, the group walks back from the small square. Nobody argues, but nobody talks about the game either.',
         dialogue: [
           { speaker: 'Liviu', text: 'The board may be ready tomorrow. I am less sure about us.' },
           { speaker: 'Claudia', text: 'Maybe people are silent because they agree. Or maybe they are tired of asking.' },
-          { speaker: 'Narrator', text: '{you} still has time to open the notebook before silence becomes the team habit.' },
+          { speaker: 'Narrator', text: '{you} still has time to ask the team to work directly on the notebook.' },
         ],
       },
     ],
@@ -859,7 +859,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Playful',
         text: 'The table becomes loud quickly. People test silly penalties before the rules are written, and for a while the project feels more alive than organized.',
         dialogue: [
-          { speaker: 'Ethan', text: 'If people run, laugh, and shout, nobody will sleep through our game. This is my scientific theory.' },
+          { speaker: 'Ethan', text: 'If people move and laugh, they will pay attention. I think that can work.' },
           { speaker: 'Buse Naz', text: 'Good. I do not want another serious poster pretending to be a game.' },
           { speaker: 'Stefan', text: 'I volunteer to test any rule that includes dramatic failure.' },
         ],
@@ -873,7 +873,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'The jokes still work in late afternoon. Loredana laughs too, then looks at the paper cards for a long moment and asks what players will remember tomorrow.',
         dialogue: [
           { speaker: 'Loredana', text: 'I like the energy. I just cannot see the learning yet.' },
-          { speaker: 'Emanuel', text: 'Keep the fun. Please keep the fun. Just give it a job. What should the laughter help players understand?' },
+          { speaker: 'Emanuel', text: 'Keep the fun, but connect it to the learning. What should players understand while they are laughing?' },
           { speaker: 'Narrator', text: '{you} can protect the laughter as it is, or help it carry a clearer message.' },
         ],
       },
@@ -915,7 +915,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'The First Test Breaks Something',
     location: 'Activity Room Floor',
     speaker: 'Tester',
-    text: 'The first real test begins on the floor. Mihaela and Sophie play one rough round, and a player gets blocked for three turns. The silence after that turn says more than the rulebook.',
+        text: 'The first real test begins on the floor. Mihaela and Sophie play one rough round, and a player gets blocked for three turns. After that, the team can see that the rule is a problem.',
     cast: ['Mihaela', 'Sophie', 'Gjoko', 'Cristina', 'Emanuel'],
     moments: [
       {
@@ -928,7 +928,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         dialogue: [
           { speaker: 'Sophie', text: 'I understand the topic, but on my turn I do not know what choice I have. I am just waiting to be allowed back.' },
           { speaker: 'Gjoko', text: 'Maybe that is the problem. The blocked player can only wait.' },
-          { speaker: 'Mihaela', text: 'Then we are not showing exclusion. We are making someone sit inside it with no door out.' },
+          { speaker: 'Mihaela', text: 'Then we are not showing exclusion well. We are just making one player wait with no real choice.' },
         ],
       },
       {
@@ -937,10 +937,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'Feedback over cold pizza',
         location: 'Common Room',
         tone: 'Tired but open',
-        text: 'The team eats leftover pizza in the common room and keeps returning to the same turn. The unfair rule is still annoying, but now it has a shape everyone can point to.',
+        text: 'The team eats leftover pizza in the common room and keeps returning to the same turn. The unfair rule is still annoying, but now everyone understands the problem.',
         dialogue: [
           { speaker: 'Cristina', text: 'I was frustrated during the test, but that frustration gave us information.' },
-          { speaker: 'Emanuel', text: 'Feedback is often badly wrapped. That is fine. Open it anyway and ask what the uncomfortable part is showing you.' },
+          { speaker: 'Emanuel', text: 'Feedback can sound uncomfortable. Try to use it anyway. What is this test showing us?' },
           { speaker: 'Narrator', text: '{you} can treat the conflict as design information, defend the rule, or postpone the tension.' },
         ],
       },
@@ -982,7 +982,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'Beautiful Cards, Unclear Turns',
     location: 'Workshop Table',
     speaker: 'Giuseppe',
-    text: 'The board now has colors, icons, and a name. From the doorway it looks like progress. Then Giuseppe sits down for one turn and asks the question nobody wants: what am I allowed to do?',
+        text: 'The board now has colors, icons, and a name. It looks more complete than before. Then Giuseppe tries one turn and asks: what am I allowed to do?',
     cast: ['Giuseppe', 'Kaotar', 'Stasa', 'Stefan', 'Emanuel'],
     moments: [
       {
@@ -993,7 +993,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Proud and uncertain',
         text: 'The board has colors, icons, and a title written with the best marker. It looks ready from far away. Up close, the first turn is still unclear.',
         dialogue: [
-          { speaker: 'Giuseppe', text: 'It looks finished, which is dangerous, because now I feel stupid when I do not understand my first move.' },
+          { speaker: 'Giuseppe', text: 'It looks finished, but I still do not understand my first move.' },
           { speaker: 'Kaotar', text: 'Maybe there are too many cards. The player is reading more than deciding.' },
           { speaker: 'Stasa', text: 'Can we remove half of it and test only one round?' },
         ],
@@ -1007,7 +1007,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'After dinner, someone finds better markers and a small box for the cards. The prototype suddenly looks more official than it feels, and that makes it harder to admit what is weak.',
         dialogue: [
           { speaker: 'Stefan', text: 'If the box looks professional, maybe people will trust the rules.' },
-          { speaker: 'Emanuel', text: 'The nice box can wait five minutes. I respect the box. But first, make sure a player knows what to do on turn one.' },
+          { speaker: 'Emanuel', text: 'The box can wait. First, make sure a player knows what to do on turn one.' },
           { speaker: 'Narrator', text: '{you} can cut the game back, hide the weak part, or invite players to help fix it.' },
         ],
       },
@@ -1060,7 +1060,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Quiet pressure',
         text: '{you} keeps working after the others leave. The board becomes clearer, the rulebook becomes cleaner, and the chairs around the table stay empty.',
         dialogue: [
-          { speaker: 'Rocco', text: 'Still working? I respect the dedication. I also represent the departments of sleep, water, and remembering this is a team project.' },
+          { speaker: 'Rocco', text: 'Still working? I understand, but please drink water and get some sleep. Also, remember that this is a team project.' },
           { speaker: 'Liviu', text: 'I can test one round if you want. I just do not know what your team agreed on.' },
           { speaker: 'Claudia', text: 'The rules are clear when you explain them. Can the team explain them without you?' },
         ],
@@ -1115,7 +1115,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'Repair Through Listening',
     location: 'Courtyard',
     speaker: 'Cristina',
-    text: 'The team finally names the conflict without dressing it up. Some players have power, others wait, and the game is teaching the opposite of what the group wants. Once the problem is spoken aloud, the board can change.',
+        text: 'The team finally says the problem clearly. Some players have power, while others wait. The game is teaching the opposite of what the group wants. Once the team says this, they can change the board.',
     cast: ['Cristina', 'Mihaela', 'Sophie', 'Gjoko', 'Emanuel'],
     moments: [
       {
@@ -1124,7 +1124,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'Naming the unfair part',
         location: 'Courtyard',
         tone: 'Honest',
-        text: 'The team sits outside because the activity room feels too hot and too full of yesterday. In the courtyard, the same conflict sounds less like failure and more like something they can hold.',
+        text: 'The team sits outside because the activity room is too hot. In the courtyard, it is easier to talk about the conflict calmly.',
         dialogue: [
           { speaker: 'Cristina', text: 'The unfair part was uncomfortable, but it showed us the real topic. I hated the turn, and that is useful information.' },
           { speaker: 'Sophie', text: 'I do not want players to only feel stuck. I want them to have a way to respond.' },
@@ -1137,10 +1137,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'Testing the repair move',
         location: 'Activity Room Floor',
         tone: 'Careful hope',
-        text: 'The team tries the new repair move on the activity room floor. The game is still rough, but the blocked player can act again, and everyone notices the room relax.',
+        text: 'The team tries the new repair move on the activity room floor. The game is still rough, but the blocked player can act again. The group looks more relaxed.',
         dialogue: [
-          { speaker: 'Mihaela', text: 'Now the hard feeling has a door out. That changes everything.' },
-          { speaker: 'Emanuel', text: 'Yes. Now the rule does the talking. Players can feel exclusion, and they can also practice repair.' },
+          { speaker: 'Mihaela', text: 'Now the blocked player can do something. That feels much better.' },
+          { speaker: 'Emanuel', text: 'Yes. Now the rule shows both parts: exclusion and repair.' },
           { speaker: 'Narrator', text: '{you} can strengthen the repair move or keep the painful rule and explain it later.' },
         ],
       },
@@ -1182,7 +1182,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'A quiet table',
         location: 'Workshop Table',
         tone: 'Controlled',
-        text: 'The team follows the rulebook. The board moves forward, but nobody suggests changes anymore. Even the marker sounds too loud on the paper.',
+        text: 'The team follows the rulebook. The board moves forward, but nobody suggests changes anymore.',
         dialogue: [
           { speaker: 'Kiril', text: 'I can present the rulebook, but I do not feel this is our game. I feel like I am borrowing it.' },
           { speaker: 'Hatche', text: 'I stopped suggesting changes because every change felt like a problem.' },
@@ -1241,7 +1241,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         tone: 'Uneasy',
         text: 'The team packs materials quickly. The disagreement is not solved, but everyone acts as if tape, scissors, and the next task can cover it.',
         dialogue: [
-          { speaker: 'Elena', text: 'We said we would speak later. Later is becoming very close, and it is looking at us.' },
+          { speaker: 'Elena', text: 'We said we would speak later. I think later is now.' },
           { speaker: 'Ognjen', text: 'If we speak now, maybe we lose time. If we do not speak, maybe we lose the team.' },
         ],
       },
@@ -1251,10 +1251,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'The sentence nobody wanted',
         location: 'Dinner Table',
         tone: 'Direct',
-        text: 'The same problem returns during dinner. The plates are still full when Loredana says she may not present tomorrow, and the table becomes very still.',
+        text: 'The same problem returns during dinner. Loredana says she may not present tomorrow, and the table goes quiet.',
         dialogue: [
           { speaker: 'Loredana', text: 'I do not want to stand tomorrow and explain a game I do not believe in.' },
-          { speaker: 'Rocco', text: 'You still have tonight. Use it for honesty, not panic. Panic is terrible at writing rules, and it also steals dessert time.' },
+          { speaker: 'Rocco', text: 'You still have tonight. Do not panic. Speak honestly, decide what is realistic, and I can help with the room if you need it.' },
           { speaker: 'Narrator', text: '{you} can host a real conversation or smooth things over again.' },
         ],
       },
@@ -1296,7 +1296,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'Cutting the game smaller',
         location: 'Common Room',
         tone: 'Focused relief',
-        text: 'The team removes cards, crosses out rules, and keeps only the strongest player choice. The paper looks wounded, but the game finally breathes.',
+        text: 'The team removes cards, crosses out rules, and keeps only the strongest player choice. The table looks messy, but the game is easier to explain.',
         dialogue: [
           { speaker: 'Sophie', text: 'Now each turn has a real choice: move faster alone, or help someone re-enter the game. I can explain that without hiding behind the rulebook.' },
           { speaker: 'Rasim Hamza', text: 'Checking information costs time, but it protects group trust.' },
@@ -1309,10 +1309,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'Everyone can explain it',
         location: 'Common Room Sofa',
         tone: 'Tired and proud',
-        text: 'The board is simple now. People are tired, but each person can explain one part without looking at {you} for rescue.',
+        text: 'The board is simple now. People are tired, but each person can explain one part without needing {you} to answer for them.',
         dialogue: [
           { speaker: 'Mihaela', text: 'This finally feels like our project, not only our topic.' },
-          { speaker: 'Gjoko', text: 'Also, we should sleep before we improve it into a disaster. This is a real design risk.' },
+          { speaker: 'Gjoko', text: 'Also, we should sleep before we start adding too much again.' },
           { speaker: 'Narrator', text: '{you} can present as a team or lead while clearly giving space and credit to the others.' },
         ],
       },
@@ -1367,9 +1367,9 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'Honesty or easy theatre',
         location: 'Empty Activity Room',
         tone: 'Heavy choice',
-        text: 'The activity room is quiet. It would be easy to present the prototype as a clean group success. It would also be false, and {you} knows the team would feel that false note.',
+        text: 'The activity room is quiet. It would be easy to present the prototype as a group success. It would not be honest, and {you} knows the team would feel that.',
         dialogue: [
-          { speaker: 'Rocco', text: 'A complete board is not always a complete project. Say the truth clearly, and the lesson can still stand. Also, truth usually needs fewer slides.' },
+          { speaker: 'Rocco', text: 'A complete board is not always a complete project. If the process was mostly solo, say it clearly and explain what you learned.' },
           { speaker: 'Narrator', text: '{you} can name the solo process or hide it behind a clean presentation.' },
         ],
       },
@@ -1411,9 +1411,9 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'The honest table',
         location: 'Common Room',
         tone: 'Brave and nervous',
-        text: 'The team admits the game may not work tomorrow. Nobody celebrates that sentence, but nobody pretends either, and the honesty changes the air.',
+        text: 'The team admits the game may not work tomorrow. Nobody is happy about it, but nobody pretends anymore.',
         dialogue: [
-          { speaker: 'Emanuel', text: 'If the prototype is weak, do not dress it up like a festival poster. Show the weak part and ask what it teaches.' },
+          { speaker: 'Emanuel', text: 'If the prototype is weak, do not hide it. Show the weak part and ask what it teaches.' },
           { speaker: 'Elena', text: 'Then our reflection can ask: where did the system fail the players?' },
           { speaker: 'Loredana', text: 'That feels risky, but more honest than selling a game we do not trust.' },
         ],
@@ -1427,7 +1427,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'The team makes tea near the kitchen door and writes one sentence on the box: "Help us fix this rule." The sentence is small, but it changes the plan for tomorrow.',
         dialogue: [
           { speaker: 'Ognjen', text: 'We can show one broken round, then ask players to redesign the rule with us.' },
-          { speaker: 'Rocco', text: 'That is not a perfect game. Fine. Perfect games are rare, especially before midnight. Honest learning is already worth the table.' },
+          { speaker: 'Rocco', text: 'It is not a perfect game, and that is okay. If you are honest about it, the presentation can still be useful.' },
           { speaker: 'Narrator', text: '{you} can show the failure openly or hide it and speak more than players play.' },
         ],
       },
@@ -1460,7 +1460,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
     title: 'The Games Are No Joke Showcase',
     location: 'Activity Room',
     speaker: 'Narrator',
-    text: 'All teams gather for the final showcase. Chairs make a circle, boards cover the tables, and the room has the tired excitement of the last day. The board game is visible now, but so is the path behind it.',
+        text: 'All teams gather for the final showcase. Chairs make a circle, boards cover the tables, and everyone is tired but focused. The board game is ready to be tested by others.',
     cast: ['Emanuel', 'Rocco', 'All Participants'],
     moments: [
       {
@@ -1472,8 +1472,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         text: 'All teams prepare their tables. Someone fixes tape, someone practices the first sentence, and everyone looks at the door when new players arrive. {you} can feel the week inside the small details.',
         dialogue: [
           { speaker: 'Emanuel', text: 'When you present, keep it simple: show the rule, the choice, and what players feel. If you need ten minutes to explain the first turn, the game is asking for help.' },
-          { speaker: 'Rocco', text: 'Do not act like a museum guide for a perfect object. Let people play. The table is stronger than a speech.' },
-          { speaker: 'Narrator', text: '{you} places the board on the table and remembers the moments that shaped it.' },
+          { speaker: 'Rocco', text: 'Let people play before you explain too much. They will understand more from one real turn than from a long speech.' },
+          { speaker: 'Narrator', text: '{you} places the board on the table and thinks about the choices the team made during the week.' },
         ],
       },
       {
@@ -1482,10 +1482,10 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
         title: 'The circle after play',
         location: 'Activity Room Circle',
         tone: 'Reflective',
-        text: 'The last players stand up. Chairs move into a circle again. The board is still on the table, but now the process is visible too: the missed chances, the repairs, the jokes, the tired evening choices.',
+        text: 'The last players stand up. Chairs move into a circle again. The board is still on the table, and the team is ready to talk about how they made it.',
         dialogue: [
           { speaker: 'Emanuel', text: 'Now tell us what players could feel, not only what they could win. That is where the youth-work part becomes visible.' },
-          { speaker: 'Rocco', text: 'After this, YouthPass reflection. Before that, breathe and let the last play tell the truth for you.' },
+          { speaker: 'Rocco', text: 'After this, we do the YouthPass reflection. Before that, give players time to react to the game.' },
           { speaker: 'Narrator', text: '{you} has one final choice: hold the reflection, sell the fun, or invite others to co-design the last rule.' },
         ],
       },
@@ -1548,7 +1548,7 @@ const endings: Record<EndingId, Ending> = {
     teamOutcome: 'The team enjoys the moment, but the reflection is weak.',
     logic: 'The path chose fun many times. Energy stayed high, but learning stayed too low.',
     howToReach: 'Choose fun-first options, protect the party feeling, and skip strong learning rules.',
-    trainerReflection: 'Emanuel says: Keep the fun. Please do not throw it away. Now redesign one rule so the lesson happens while people play.',
+    trainerReflection: 'Emanuel says: Keep the fun, but connect it to the learning. Redesign one rule so the lesson happens while people play.',
   },
   'beautiful-board-broken-rules': {
     title: 'Beautiful Board, Broken Rules',
@@ -2367,7 +2367,7 @@ function followUpCopy(choice: StoryChoice, protagonist: PlayerProfile) {
       tone: 'Warm and practical',
       text: 'A room change, missing markers, and a late participant could slow the group down. Instead, the practical problem gives people a reason to stand up, help, and talk without the pressure of a formal discussion.',
       firstLine: 'I thought this was just moving chairs, but now I know three more names.',
-      secondLine: 'Good. Logistics is not glamorous, but it can save the mood of a room. Also, please protect the blue tape like it is a national treasure.',
+      secondLine: 'Good. Practical help can make people more relaxed. Also, please keep the blue tape where everyone can find it.',
       narratorLine: `${protagonist.name} sees that practical care can build trust before the formal work starts.`,
     };
   }
@@ -2375,8 +2375,8 @@ function followUpCopy(choice: StoryChoice, protagonist: PlayerProfile) {
     return {
       title: 'One question instead of a speech',
       tone: 'Clear and grounded',
-      text: 'The team pauses for one practical question. Emanuel does not take over the work. He gives the group a handle and then lets them use it.',
-      firstLine: 'One question is enough. If we get five questions, we will hide inside them.',
+      text: 'The team pauses for one practical question. Emanuel does not take over the work. He gives the group a clear next step.',
+      firstLine: 'One question is enough. If we ask too many, we will get confused again.',
       secondLine: 'Fair. Try this: what should the player be able to do on a difficult turn?',
       narratorLine: `${protagonist.name} notices that a concrete question helps more than a perfect explanation.`,
     };
@@ -2386,7 +2386,7 @@ function followUpCopy(choice: StoryChoice, protagonist: PlayerProfile) {
       title: 'Tired people become quiet',
       tone: 'Tense and tired',
       text: 'The work continues, but tired people become quieter. The deadline is close, and small problems start to sound bigger than they are.',
-      firstLine: 'I am still here, but my brain left ten minutes ago.',
+      firstLine: 'I am still here, but I am too tired to think clearly.',
       secondLine: 'Then we need a smaller next step, not a louder push.',
       narratorLine: `${protagonist.name} can feel the cost of speed: the project moves, but some people move away from it.`,
     };
@@ -2397,7 +2397,7 @@ function followUpCopy(choice: StoryChoice, protagonist: PlayerProfile) {
       tone: 'Productive but narrow',
       text: `${protagonist.name}'s strongest habit helps the group move, but it also starts to decide the shape of the room before other people can bring their own style.`,
       firstLine: 'This is clearer now, but I am not sure I helped make it.',
-      secondLine: 'A strength is useful. Just leave enough space for other people to bring theirs too.',
+      secondLine: 'A strength is useful. Just make sure other people can still add their ideas.',
       narratorLine: `${protagonist.name} gets momentum, but the team needs more than one style.`,
     };
   }
@@ -2408,15 +2408,15 @@ function followUpCopy(choice: StoryChoice, protagonist: PlayerProfile) {
       text: 'The team names one weak point before it becomes a bigger conflict. The conversation is not easy, but it is specific enough to use.',
       firstLine: 'I can say it if we promise not to treat it like an attack.',
       secondLine: 'Say it. We are fixing a prototype, not judging a person.',
-      narratorLine: `${protagonist.name} sees that early repair keeps the story open.`,
+      narratorLine: `${protagonist.name} sees that early repair gives the team more options.`,
     };
   }
   return {
     title: 'A small bridge during the break',
     tone: 'Informal and human',
-    text: 'The important conversation happens away from the main table, between cups, bags, and people looking for chargers. It is quieter there, so people risk more honest sentences.',
+    text: 'The important conversation happens away from the main table, between cups, bags, and people looking for chargers. It is quieter there, so people speak more openly.',
     firstLine: 'It is easier to say this here than in front of everyone.',
-    secondLine: 'Then let us carry it gently back to the team.',
+    secondLine: 'Then let us bring it back to the team in a clear way.',
     narratorLine: `${protagonist.name} learns that informal time can change the formal work.`,
   };
 }
@@ -2467,23 +2467,23 @@ function formatProfileFlag(value: string) {
 
 function perspectiveBeat(nodeId: StoryNodeId, protagonist: PlayerProfile) {
   const beats: Record<StoryNodeId, string> = {
-    arrival: 'The courtyard is full of luggage, greetings, and names that are still hard to remember. {you} stays with that first small question: step into the circle now, or watch until the room feels safer.',
-    'circle-connect': 'The first conversations have opened a door. {you} can feel that the next challenge is not choosing the loudest topic, but helping different needs become one playable idea.',
+    arrival: 'The courtyard is full of luggage, greetings, and names that are still hard to remember. {you} has to decide whether to join the group now or watch for a while first.',
+    'circle-connect': 'The first conversations helped {you} enter the group. The next challenge is choosing one idea without ignoring quieter voices.',
     'circle-distance': 'The notes are useful, but the table is moving without them. {you} notices the gap between understanding the group and being part of the group.',
-    'circle-familiar': 'The easy corner feels warm, but the mixed team is starting to form somewhere else. {you} can enjoy the comfort or use it as a bridge back into the room.',
-    'team-shared': 'The table is slower because many hands are inside the idea. {you} notices that this mess may be the first sign that the game belongs to more than one person.',
+    'circle-familiar': 'The easy corner feels comfortable, but the mixed team is starting somewhere else. {you} can stay there or join the group before decisions are made.',
+    'team-shared': 'The table is slower because many people are adding ideas. {you} notices that the game feels more shared when more people can change it.',
     'team-solo': 'The notebook brings order, and order feels good under pressure. Still, {you} starts to see the others waiting for permission instead of adding their own marks.',
-    'team-fun': 'The laughter gives the room air. {you} also notices the quiet space after each joke, where the learning goal still needs a place to live.',
+    'team-fun': 'The laughter helps the group relax. {you} also notices that the learning goal is still not clear enough inside the rules.',
     'prototype-playtest': 'The broken first round is uncomfortable, but it is honest. {you} can see exactly where a player loses agency, and that makes the problem easier to repair.',
-    'prototype-polish': 'From across the room, the board looks ready. Up close, {you} notices the fragile part: a player can admire the cards and still not know what to do.',
+    'prototype-polish': 'From across the room, the board looks ready. Up close, {you} notices the problem: a player can like the cards and still not know what to do.',
     'prototype-alone': 'The room is calmer when one person decides everything. {you} notices the cost in the empty chairs around the table.',
     'conflict-listen': 'The disagreement is no longer hidden. {you} hears frustration, but also hears the first clear clue for a better rule.',
     'conflict-control': 'The silence around the table looks efficient at first. {you} notices that people are not fighting, but they are also not offering much of themselves.',
     'conflict-avoid': 'The problem has followed the team from the workshop to dinner. {you} can feel that politeness is no longer enough to hold the group together.',
-    'night-repair': 'The prototype is smaller now, and the room breathes again. {you} notices that people can explain their own part without waiting for one leader.',
-    'night-solo': 'The board is ready, but the story around it is not clean. {you} notices the difference between finishing a thing and finishing it together.',
-    'night-honest': 'The team may not have a perfect game by morning. {you} notices something steadier than perfection: people are finally telling the truth about the weak part.',
-    showcase: 'The table, the chairs, and the players are ready. {you} notices that the final result is not only the board, but the way the team chose to build it.',
+    'night-repair': 'The prototype is smaller now, and the team looks less stressed. {you} notices that people can explain their own part without waiting for one leader.',
+    'night-solo': 'The board is ready, but the process was mostly solo. {you} notices the difference between finishing the game and building it together.',
+    'night-honest': 'The team may not have a perfect game by morning. {you} notices that people are finally honest about the weak part.',
+    showcase: 'The table, the chairs, and the players are ready. {you} notices that the final result includes both the board and the way the team built it.',
   };
   return `${beats[nodeId]} ${profileNotice(protagonist)}`;
 }
