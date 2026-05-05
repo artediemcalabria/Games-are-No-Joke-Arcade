@@ -1,11 +1,9 @@
-const CACHE_NAME = 'games-are-no-joke-v3';
+const CACHE_NAME = 'games-are-no-joke-v4';
 const scope = new URL(self.registration.scope);
 const appUrl = (path = '') => new URL(path, scope).toString();
 const APP_SHELL = [
-  appUrl(),
   appUrl('ganj-logo.png'),
-  appUrl('ganj-cover.jpeg'),
-  appUrl('manifest.webmanifest')
+  appUrl('ganj-cover.jpeg')
 ];
 
 self.addEventListener('install', (event) => {
@@ -30,7 +28,7 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then((response) => {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(appUrl(), copy)).catch(() => undefined);
