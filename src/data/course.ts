@@ -661,6 +661,7 @@ export const prototypeSteps = [
   { id: 'goal', label: 'Goal', prompt: 'What is the main objective of the game?', icon: Target },
   { id: 'coreAction', label: 'Core Action', prompt: 'What repeated action do players perform most often?', icon: IterationCcw },
   { id: 'mainRule', label: 'Main Rule', prompt: 'What rule makes the game meaningful or challenging?', icon: Gamepad2 },
+  { id: 'instructionsManual', label: 'Instructions / Manual', prompt: 'Write the player-facing rules, setup, turn order, scoring, and end condition clearly enough that another group can play.', icon: ClipboardList },
   { id: 'mainTradeoff', label: 'Main Tradeoff', prompt: 'What difficult choice or tension should players feel?', icon: Brain },
   { id: 'executiveSummary', label: 'Executive Summary', prompt: 'Explain the basic idea of the game in a few clear sentences.', icon: MessageSquareText },
   { id: 'experiencePillars', label: 'Experience Pillars', prompt: 'What should players feel, do, or discover during the game?', icon: Sparkles },

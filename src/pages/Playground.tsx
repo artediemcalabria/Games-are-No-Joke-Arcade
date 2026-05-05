@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Download, FileJson, ImageIcon, LibraryBig, Trash2, Upload } from 'lucide-react';
+import { Download, FileJson, FileText, ImageIcon, LibraryBig, Trash2, Upload } from 'lucide-react';
 import { courseInfo } from '../data/course';
-import { useStore, type PlaygroundGame, type PlaygroundGameField, type PlaygroundGameSection, type PrototypeImageSource } from '../store/useStore';
+import { useStore, type GameAttachment, type PlaygroundGame, type PlaygroundGameField, type PlaygroundGameSection, type PrototypeImageSource } from '../store/useStore';
 
 type PlaygroundExportPackage = {
   schemaVersion?: number;
@@ -13,6 +13,7 @@ type PlaygroundExportPackage = {
     summary?: string;
     imageDataUrl?: string;
     imageSource?: PrototypeImageSource;
+    attachments?: GameAttachment[];
     sections?: PlaygroundGameSection[];
     fields?: Record<string, string>;
   };
@@ -196,8 +197,9 @@ function PlaygroundGameCard({ game, onRemove }: { key?: string; game: Playground
           <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest">
             <span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-2.5 py-1 text-cyan-100">{Object.keys(game.fields).length} fields</span>
             <span className="rounded-full border border-pink-300/30 bg-pink-300/10 px-2.5 py-1 text-pink-100">{visibleSections.length} sections</span>
-            {game.disabledFieldIds.length > 0 && <span className="rounded-full border border-gray-300/20 bg-white/[.04] px-2.5 py-1 text-gray-300">{game.disabledFieldIds.length} hidden</span>}
-          </div>
+	            {game.disabledFieldIds.length > 0 && <span className="rounded-full border border-gray-300/20 bg-white/[.04] px-2.5 py-1 text-gray-300">{game.disabledFieldIds.length} hidden</span>}
+            {game.attachments.length > 0 && <span className="rounded-full border border-green-300/30 bg-green-300/10 px-2.5 py-1 text-green-100">{game.attachments.length} attachments</span>}
+	          </div>
         </div>
       </div>
 
@@ -208,6 +210,28 @@ function PlaygroundGameCard({ game, onRemove }: { key?: string; game: Playground
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">{fieldLabelFromId(id)}</p>
               <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-gray-200">{value}</p>
             </div>
+          ))}
+        </div>
+	      )}
+
+      {game.attachments.length > 0 && (
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {game.attachments.map((attachment) => (
+            <a
+              key={attachment.id}
+              href={attachment.dataUrl}
+              download={attachment.name}
+              className="notebook-muted-card flex items-center justify-between gap-3 rounded-lg border border-green-300/20 bg-green-300/10 p-3 text-left transition-colors hover:border-green-300 hover:bg-green-300/20"
+            >
+              <span className="min-w-0">
+                <span className="flex items-center gap-2 break-words text-sm font-bold text-white">
+                  <FileText className="h-4 w-4 shrink-0 text-green-200" />
+                  {attachment.name}
+                </span>
+                <span className="mt-1 block text-[10px] font-bold uppercase tracking-widest text-gray-400">{formatFileSize(attachment.size)} - {attachment.type || 'file'}</span>
+              </span>
+              <Download className="h-4 w-4 shrink-0 text-green-200" />
+            </a>
           ))}
         </div>
       )}
@@ -253,15 +277,36 @@ function normalizePlaygroundGame(source: unknown, sourceFileName: string): Playg
     slug,
     title,
     summary: stringValue(rawGame.summary) || fields.executiveSummary || '',
-    imageDataUrl: stringValue(rawGame.imageDataUrl),
-    imageSource,
-    sections,
+	    imageDataUrl: stringValue(rawGame.imageDataUrl),
+	    imageSource,
+    attachments: normalizeAttachments(rawGame.attachments),
+	    sections,
     fields,
     disabledFieldIds: Array.isArray(pkg.disabledFieldIds) ? pkg.disabledFieldIds.filter((item): item is string => typeof item === 'string') : [],
     sourceFileName: stringValue(pkg.source?.gddFileName) || sourceFileName,
     importedAt: new Date().toISOString(),
     exportedAt: stringValue(pkg.exportedAt),
   };
+}
+
+function normalizeAttachments(value: unknown): GameAttachment[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((attachment) => {
+      if (!isRecord(attachment)) return null;
+      const name = stringValue(attachment.name);
+      const dataUrl = stringValue(attachment.dataUrl);
+      if (!name || !dataUrl) return null;
+      return {
+        id: stringValue(attachment.id) || slugify(name),
+        name,
+        type: stringValue(attachment.type) || 'application/octet-stream',
+        size: typeof attachment.size === 'number' ? attachment.size : 0,
+        dataUrl,
+        uploadedAt: stringValue(attachment.uploadedAt) || new Date().toISOString(),
+      };
+    })
+    .filter((attachment): attachment is GameAttachment => Boolean(attachment));
 }
 
 function normalizeFields(value: unknown) {
@@ -324,6 +369,12 @@ function titleFromFileName(fileName: string) {
 
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `game-${Date.now()}`;
+}
+
+function formatFileSize(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
 }
 
 function stringValue(value: unknown) {

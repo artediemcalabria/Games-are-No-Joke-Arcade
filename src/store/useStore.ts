@@ -24,6 +24,15 @@ export interface GddImport {
 export type AppTheme = 'arcade' | 'notebook';
 export type PrototypeImageSource = 'generated' | 'uploaded' | 'none';
 
+export interface GameAttachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string;
+  uploadedAt: string;
+}
+
 export interface PlaygroundGameField {
   id: string;
   label: string;
@@ -42,6 +51,7 @@ export interface PlaygroundGame {
   summary: string;
   imageDataUrl: string;
   imageSource: PrototypeImageSource;
+  attachments: GameAttachment[];
   sections: PlaygroundGameSection[];
   fields: Record<string, string>;
   disabledFieldIds: string[];
@@ -65,6 +75,7 @@ interface ProgressState {
   prototype: Record<string, string>;
   prototypeImageDataUrl: string;
   prototypeImageSource: PrototypeImageSource;
+  prototypeAttachments: GameAttachment[];
   disabledPrototypeFields: string[];
   playgroundGames: PlaygroundGame[];
   audioEnabled: boolean;
@@ -82,6 +93,8 @@ interface ProgressState {
   saveQuizScore: (quizId: string, score: number) => void;
   updatePrototypeField: (field: string, value: string) => void;
   updatePrototypeImage: (imageDataUrl: string, source?: PrototypeImageSource) => void;
+  savePrototypeAttachments: (attachments: GameAttachment[]) => void;
+  removePrototypeAttachment: (id: string) => void;
   togglePrototypeFieldDisabled: (field: string) => void;
   savePlaygroundGames: (games: PlaygroundGame[]) => void;
   removePlaygroundGame: (id: string) => void;
@@ -108,6 +121,7 @@ export const useStore = create<ProgressState>()(
       prototype: {},
       prototypeImageDataUrl: '',
       prototypeImageSource: 'none',
+      prototypeAttachments: [],
       disabledPrototypeFields: [],
       playgroundGames: [],
       audioEnabled: true,
@@ -183,6 +197,14 @@ export const useStore = create<ProgressState>()(
         prototypeImageSource: source,
       }),
 
+      savePrototypeAttachments: (attachments) => set((state) => ({
+        prototypeAttachments: [...attachments, ...state.prototypeAttachments],
+      })),
+
+      removePrototypeAttachment: (id) => set((state) => ({
+        prototypeAttachments: state.prototypeAttachments.filter((attachment) => attachment.id !== id),
+      })),
+
       togglePrototypeFieldDisabled: (field) => set((state) => ({
         disabledPrototypeFields: state.disabledPrototypeFields.includes(field)
           ? state.disabledPrototypeFields.filter((item) => item !== field)
@@ -226,17 +248,19 @@ export const useStore = create<ProgressState>()(
         prototype: {},
         prototypeImageDataUrl: '',
         prototypeImageSource: 'none',
+        prototypeAttachments: [],
         disabledPrototypeFields: [],
         playgroundGames: []
       })
     }),
     {
       name: 'games-are-no-joke-storage',
-      version: 8,
+      version: 9,
       migrate: (persistedState) => ({
         ...(persistedState as ProgressState),
         prototypeImageDataUrl: (persistedState as Partial<ProgressState>).prototypeImageDataUrl ?? '',
         prototypeImageSource: (persistedState as Partial<ProgressState>).prototypeImageSource ?? ((persistedState as Partial<ProgressState>).prototypeImageDataUrl ? 'generated' : 'none'),
+        prototypeAttachments: (persistedState as Partial<ProgressState>).prototypeAttachments ?? [],
         disabledPrototypeFields: (persistedState as Partial<ProgressState>).disabledPrototypeFields ?? [],
         playgroundGames: (persistedState as Partial<ProgressState>).playgroundGames ?? [],
         audioEnabled: (persistedState as Partial<ProgressState>).audioEnabled ?? true,

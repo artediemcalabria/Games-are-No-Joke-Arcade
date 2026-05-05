@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2, Clipboard, ClipboardList, Download, EyeOff, FileUp, ImagePlus, Loader2, Printer, RotateCcw, Sparkles, Upload, Wand2 } from 'lucide-react';
+import { CheckCircle2, Clipboard, ClipboardList, Download, EyeOff, FileText, FileUp, ImagePlus, Loader2, Paperclip, Printer, RotateCcw, Sparkles, Trash2, Upload, Wand2 } from 'lucide-react';
 import { courseInfo, gameCatalog, prototypeSteps } from '../data/course';
-import { useStore } from '../store/useStore';
+import { useStore, type GameAttachment } from '../store/useStore';
 
 const coachEndpoint = normalizeAiEndpoint(import.meta.env.VITE_AI_COACH_ENDPOINT, '/api/coach');
 const imageEndpoint = normalizeAiEndpoint(import.meta.env.VITE_AI_IMAGE_ENDPOINT, '/api/prototype-image');
@@ -14,7 +14,7 @@ type PrototypeStage = { title: string; helper: string; ids: string[] };
 type PdfDocument = InstanceType<typeof import('jspdf').jsPDF>;
 
 const stagedSteps: PrototypeStage[] = [
-  { title: 'Final Prototype Card', helper: 'Quick presentation fields another group can understand fast.', ids: ['gameTitle', 'players', 'duration', 'materials', 'goal', 'coreAction', 'mainRule', 'mainTradeoff', 'learningGoal', 'debriefQuestion', 'nextThingToTest'] },
+  { title: 'Final Prototype Card', helper: 'Quick presentation fields another group can understand fast.', ids: ['gameTitle', 'players', 'duration', 'materials', 'goal', 'coreAction', 'mainRule', 'instructionsManual', 'mainTradeoff', 'learningGoal', 'debriefQuestion', 'nextThingToTest'] },
   { title: 'Core Game Concept', helper: 'Start from the title, short summary, and experience pillars.', ids: ['executiveSummary', 'experiencePillars'] },
   { title: 'Audience & Platform', helper: 'Name who the game is for and what physical or digital form it uses.', ids: ['targetAudience', 'platforms'] },
   { title: 'Gameplay & Core Loop', helper: 'Make turns, goals, obstacles, feedback, and rounds clear enough to test.', ids: ['gameplayMechanics', 'playerGoals', 'obstacles', 'interface', 'setup', 'repeatedPlayerAction', 'feedback', 'endOfRound'] },
@@ -42,6 +42,7 @@ const longTextFieldIds = new Set([
   'targetAudience',
   'platforms',
   'materials',
+  'instructionsManual',
   'gameplayMechanics',
   'playerGoals',
   'obstacles',
@@ -82,17 +83,20 @@ function normalizeAiEndpoint(value: string | undefined, fallback: string) {
 
 export default function PrototypeLab() {
   const {
-    prototype,
-    prototypeImageDataUrl,
-    prototypeImageSource,
-    disabledPrototypeFields,
+	    prototype,
+	    prototypeImageDataUrl,
+	    prototypeImageSource,
+	    prototypeAttachments,
+	    disabledPrototypeFields,
     gameTakeaways,
     gameNotes,
     coachNotes,
     gddImports,
-    updatePrototypeField,
-    updatePrototypeImage,
-    togglePrototypeFieldDisabled,
+	    updatePrototypeField,
+	    updatePrototypeImage,
+	    savePrototypeAttachments,
+	    removePrototypeAttachment,
+	    togglePrototypeFieldDisabled,
     saveGddImport,
   } = useStore();
   const [actionMessage, setActionMessage] = useState('');
@@ -135,14 +139,15 @@ export default function PrototypeLab() {
     }
   };
 
-  const downloadPlaygroundJson = () => {
-    const payload = buildPlaygroundJsonExport(
-      readPrototypeField,
-      prototypeImageDataUrl,
-      prototypeImageSource,
-      disabledPrototypeFields,
-      gddFileName,
-    );
+	  const downloadPlaygroundJson = () => {
+	    const payload = buildPlaygroundJsonExport(
+	      readPrototypeField,
+	      prototypeImageDataUrl,
+	      prototypeImageSource,
+	      prototypeAttachments,
+	      disabledPrototypeFields,
+	      gddFileName,
+	    );
     const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -154,8 +159,8 @@ export default function PrototypeLab() {
     setActionMessage('Playground JSON downloaded.');
   };
 
-  const downloadGddDocx = () => {
-    const blob = buildGddDocx(readPrototypeField, disabledPrototypeFields);
+	  const downloadGddDocx = () => {
+	    const blob = buildGddDocx(readPrototypeField, disabledPrototypeFields, prototypeAttachments);
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     const safeTitle = (readPrototypeField('gameTitle') || 'games-are-no-joke-gdd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -166,9 +171,9 @@ export default function PrototypeLab() {
     setActionMessage('Final GDD downloaded as a Word .docx file.');
   };
 
-  const downloadPrototypePdf = async () => {
-    try {
-      const blob = await buildPrototypePdf(readPrototypeField, prototypeImageDataUrl, disabledPrototypeFields);
+	  const downloadPrototypePdf = async () => {
+	    try {
+	      const blob = await buildPrototypePdf(readPrototypeField, prototypeImageDataUrl, disabledPrototypeFields, prototypeAttachments);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       const safeTitle = (readPrototypeField('gameTitle') || 'games-are-no-joke-prototype-sheet').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -215,7 +220,7 @@ export default function PrototypeLab() {
     }
   };
 
-  const uploadPrototypeImage = async (file: File | undefined) => {
+	  const uploadPrototypeImage = async (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       setPrototypeImageStatus('Please upload a PNG, JPG, or WebP image of the board game.');
@@ -228,7 +233,41 @@ export default function PrototypeLab() {
     } catch (error) {
       setPrototypeImageStatus(error instanceof Error ? error.message : 'Could not upload this image.');
     }
-  };
+	  };
+
+	  const uploadPrototypeAttachments = async (files: FileList | null) => {
+	    if (!files?.length) return;
+	    const maxFileSize = 5 * 1024 * 1024;
+	    const maxTotalAttachments = 12;
+	    const availableSlots = Math.max(0, maxTotalAttachments - prototypeAttachments.length);
+	    const selectedFiles = Array.from(files).slice(0, availableSlots);
+
+	    if (!availableSlots) {
+	      setActionMessage(`You can keep up to ${maxTotalAttachments} attachments in one game package.`);
+	      return;
+	    }
+
+	    try {
+	      const attachments = await Promise.all(selectedFiles.map(async (file) => {
+	        if (file.size > maxFileSize) {
+	          throw new Error(`${file.name} is too large. Keep each attachment under 5 MB.`);
+	        }
+	        return {
+	          id: createId(),
+	          name: file.name,
+	          type: file.type || 'application/octet-stream',
+	          size: file.size,
+	          dataUrl: await fileToDataUrl(file),
+	          uploadedAt: new Date().toISOString(),
+	        } satisfies GameAttachment;
+	      }));
+	      savePrototypeAttachments(attachments);
+	      const skipped = Array.from(files).length - selectedFiles.length;
+	      setActionMessage(`${attachments.length} attachment${attachments.length === 1 ? '' : 's'} added to the game package.${skipped > 0 ? ` ${skipped} skipped because the limit is ${maxTotalAttachments}.` : ''}`);
+	    } catch (error) {
+	      setActionMessage(error instanceof Error ? error.message : 'Could not upload these attachments.');
+	    }
+	  };
 
   const downloadPrototypeImage = () => {
     if (!prototypeImageDataUrl) return;
@@ -577,7 +616,7 @@ export default function PrototypeLab() {
             <ClipboardList className="w-8 h-8 text-pink-400" />
           </div>
 
-          <PrototypeSheet readPrototypeField={readPrototypeField} prototypeImage={prototypeImageDataUrl} disabledFieldIds={disabledPrototypeFields} />
+	          <PrototypeSheet readPrototypeField={readPrototypeField} prototypeImage={prototypeImageDataUrl} attachments={prototypeAttachments} disabledFieldIds={disabledPrototypeFields} />
 
           <div className="notebook-card mt-5 rounded-xl border border-pink-300/30 bg-black/45 p-4 print:hidden">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -632,9 +671,57 @@ export default function PrototypeLab() {
                 </button>
               </div>
             )}
-          </div>
+	          </div>
 
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 print:hidden">
+	          <div className="notebook-card mt-5 rounded-xl border border-cyan-300/30 bg-black/45 p-4 print:hidden">
+	            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+	              <div>
+	                <p className="text-xs font-bold uppercase tracking-widest text-cyan-200">Game Attachments</p>
+	                <h3 className="mt-2 text-lg font-arcade text-white">Cards, Handbook, Files</h3>
+	                <p className="mt-3 max-w-3xl text-sm leading-relaxed text-gray-300">
+	                  Add printable cards, a handbook, rules PDF, worksheets, board files, or other materials. Attachments are included in the Playground JSON package.
+	                </p>
+	              </div>
+	              <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border border-cyan-300/40 bg-cyan-300/10 px-4 py-3 text-xs font-bold uppercase text-cyan-100 transition-colors hover:bg-cyan-300 hover:text-black">
+	                <Paperclip className="h-4 w-4" />
+	                Add Attachments
+	                <input
+	                  type="file"
+	                  multiple
+	                  accept=".pdf,.doc,.docx,.txt,.json,.csv,.png,.jpg,.jpeg,.webp,.svg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/json,text/csv,image/*"
+	                  className="sr-only"
+	                  onChange={(event) => {
+	                    void uploadPrototypeAttachments(event.target.files);
+	                    event.currentTarget.value = '';
+	                  }}
+	                />
+	              </label>
+	            </div>
+	            <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+	              {prototypeAttachments.length === 0 && <p className="text-sm text-gray-400">No attachments added yet.</p>}
+	              {prototypeAttachments.map((attachment) => (
+	                <div key={attachment.id} className="notebook-muted-card flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/35 p-3">
+	                  <div className="min-w-0">
+	                    <p className="flex items-center gap-2 break-words text-sm font-bold text-white">
+	                      <FileText className="h-4 w-4 shrink-0 text-cyan-200" />
+	                      {attachment.name}
+	                    </p>
+	                    <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">{formatFileSize(attachment.size)} - {attachment.type || 'file'}</p>
+	                  </div>
+	                  <button
+	                    type="button"
+	                    onClick={() => removePrototypeAttachment(attachment.id)}
+	                    className="rounded border border-red-300/30 bg-red-300/10 p-2 text-red-100 transition-colors hover:bg-red-300 hover:text-black"
+	                    title="Remove attachment"
+	                  >
+	                    <Trash2 className="h-4 w-4" />
+	                  </button>
+	                </div>
+	              ))}
+	            </div>
+	          </div>
+
+	          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 print:hidden">
             <button
               onClick={copyPrototypeCard}
               className="flex items-center justify-center gap-2 rounded-lg border border-pink-400 bg-pink-400/10 px-3 py-3 text-xs font-bold uppercase text-pink-100 hover:bg-pink-400 hover:text-black transition-colors"
@@ -729,16 +816,17 @@ function buildPlaygroundJsonExport(
   readField: (id: string) => string,
   imageDataUrl: string,
   imageSource: 'generated' | 'uploaded' | 'none',
+  attachments: GameAttachment[],
   disabledFieldIds: string[],
   gddFileName: string,
 ) {
-	  const isEnabled = (id: string) => !disabledFieldIds.includes(id);
-	  const fields = Object.fromEntries(
-	    prototypeSteps
-	      .filter((step) => isEnabled(step.id))
-	      .map((step) => [step.id, cleanPrototypeText(readField(step.id), 'plain')])
-	      .filter(([, value]) => Boolean(value)),
-	  );
+  const isEnabled = (id: string) => !disabledFieldIds.includes(id);
+  const fields = Object.fromEntries(
+    prototypeSteps
+      .filter((step) => isEnabled(step.id))
+      .map((step) => [step.id, cleanPrototypeText(readField(step.id), 'plain')])
+      .filter(([, value]) => Boolean(value)),
+  );
   const sections = stagedSteps
     .map((stage) => ({
       title: stage.title,
@@ -766,14 +854,15 @@ function buildPlaygroundJsonExport(
       venue: courseInfo.venue,
       host: courseInfo.host,
     },
-	    game: {
-	      slug: slugify(title),
-	      title,
-	      summary: disabledFieldIds.includes('executiveSummary') ? '' : cleanPrototypeText(readField('executiveSummary'), 'plain'),
-	      imageDataUrl,
-      imageSource: imageDataUrl ? imageSource : 'none',
-      sections,
-      fields,
+    game: {
+      slug: slugify(title),
+      title,
+      summary: disabledFieldIds.includes('executiveSummary') ? '' : cleanPrototypeText(readField('executiveSummary'), 'plain'),
+      imageDataUrl,
+	      imageSource: imageDataUrl ? imageSource : 'none',
+      attachments,
+	      sections,
+	      fields,
     },
     disabledFieldIds,
     source: {
@@ -789,10 +878,12 @@ function slugify(value: string) {
 function PrototypeSheet({
   readPrototypeField,
   prototypeImage,
+  attachments,
   disabledFieldIds,
 }: {
   readPrototypeField: (id: string) => string;
   prototypeImage: string;
+  attachments: GameAttachment[];
   disabledFieldIds: string[];
 }) {
   const isEnabled = (id: string) => !disabledFieldIds.includes(id);
@@ -839,6 +930,24 @@ function PrototypeSheet({
 	              alt="Board game box prototype"
 	              className="mt-4 w-full rounded-xl border border-[#d8cebd] bg-[#fffdf8] object-contain"
 	            />
+	          </section>
+	        )}
+
+	        {attachments.length > 0 && (
+	          <section className="mt-5 rounded-2xl border border-[#d7cdbb] bg-white/80 p-4">
+	            <div className="flex flex-col gap-1 border-b border-[#d7cdbb] pb-3 sm:flex-row sm:items-end sm:justify-between">
+	              <h5 className="text-sm font-black uppercase tracking-widest text-[#315f73]">Game Attachments</h5>
+	              <p className="text-xs font-semibold leading-relaxed text-[#756c5f]">Files included in the Playground JSON package.</p>
+	            </div>
+	            <div className="mt-4 grid gap-2 md:grid-cols-2">
+	              {attachments.map((attachment) => (
+	                <PrototypeSheetBlock
+	                  key={attachment.id}
+	                  label={attachment.name}
+	                  value={`${formatFileSize(attachment.size)} - ${attachment.type || 'file'}`}
+	                />
+	              ))}
+	            </div>
 	          </section>
 	        )}
 
@@ -937,6 +1046,12 @@ function softWrapLongWords(value: string, maxLength: number) {
     .join('');
 }
 
+function formatFileSize(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+}
+
 function PrototypeSheetBlock({ label, value, large = false }: { label: string; value: string; large?: boolean; key?: string }) {
   return (
     <div className={large ? 'md:col-span-2' : ''}>
@@ -948,7 +1063,7 @@ function PrototypeSheetBlock({ label, value, large = false }: { label: string; v
   );
 }
 
-async function buildPrototypePdf(readField: (id: string) => string, prototypeImage: string, disabledFieldIds: string[]) {
+async function buildPrototypePdf(readField: (id: string) => string, prototypeImage: string, disabledFieldIds: string[], attachments: GameAttachment[]) {
   const { jsPDF } = await import('jspdf');
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const [erasmusLogo, courseLogo] = await Promise.all([
@@ -959,11 +1074,19 @@ async function buildPrototypePdf(readField: (id: string) => string, prototypeIma
   const isEnabled = (id: string) => !disabledFieldIds.includes(id);
   let y = drawPrototypePdfHeader(pdf, title, erasmusLogo, courseLogo);
 
-  if (prototypeImage) {
-    y = ensurePrototypePdfSpace(pdf, y, 102, title, erasmusLogo, courseLogo);
+	  if (prototypeImage) {
+	    y = ensurePrototypePdfSpace(pdf, y, 102, title, erasmusLogo, courseLogo);
 	    y = drawPrototypePdfSectionTitle(pdf, 'Board Game Image', y);
-    y += 3;
-    y = drawPdfImageContain(pdf, prototypeImage, 16, y, 178, 88) + 8;
+	    y += 3;
+	    y = drawPdfImageContain(pdf, prototypeImage, 16, y, 178, 88) + 8;
+	  }
+
+  if (attachments.length > 0) {
+    y = ensurePrototypePdfSpace(pdf, y, 24, title, erasmusLogo, courseLogo);
+    y = drawPrototypePdfSectionTitle(pdf, 'Game Attachments', y);
+    attachments.forEach((attachment) => {
+      y = drawPrototypePdfField(pdf, attachment.name, `${formatFileSize(attachment.size)} - ${attachment.type || 'file'}`, y, title, erasmusLogo, courseLogo);
+    });
   }
 
   y = drawPrototypePdfSectionTitle(pdf, 'Prototype Sheet', y);
@@ -1193,8 +1316,8 @@ Style:
 High quality board game box mockup, realistic 3D product render, inviting youth-work atmosphere, clear visual storytelling, no violence, no alcohol focus, no photorealistic faces of real participants.`;
 }
 
-function buildGddDocx(readField: (id: string) => string, disabledFieldIds: string[] = []) {
-  const documentXml = buildDocumentXml(readField, disabledFieldIds);
+function buildGddDocx(readField: (id: string) => string, disabledFieldIds: string[] = [], attachments: GameAttachment[] = []) {
+  const documentXml = buildDocumentXml(readField, disabledFieldIds, attachments);
   const files: Record<string, string> = {
     '[Content_Types].xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -1213,7 +1336,7 @@ function buildGddDocx(readField: (id: string) => string, disabledFieldIds: strin
   return createDocxZip(files);
 }
 
-function buildDocumentXml(readField: (id: string) => string, disabledFieldIds: string[] = []) {
+function buildDocumentXml(readField: (id: string) => string, disabledFieldIds: string[] = [], attachments: GameAttachment[] = []) {
   const title = cleanPrototypeText(readField('gameTitle'), 'doc').trim() || 'Untitled board game prototype';
   const isEnabled = (id: string) => !disabledFieldIds.includes(id);
   const bodyParts = [
@@ -1223,7 +1346,7 @@ function buildDocumentXml(readField: (id: string) => string, disabledFieldIds: s
     docParagraph(`Hosted by: ${courseInfo.host}`),
     docParagraph(`Generated GDD: ${new Date().toLocaleDateString()}`),
 	    docParagraph('Final Board Game GDD', 'Heading1'),
-    docParagraph(title, 'Heading2'),
+	    docParagraph(title, 'Heading2'),
     ...stagedSteps.flatMap((stage) => {
       const stageFields = prototypeSteps.filter((step) => isEnabled(step.id) && stage.ids.includes(step.id));
       if (!stageFields.length) return [];
@@ -1234,8 +1357,17 @@ function buildDocumentXml(readField: (id: string) => string, disabledFieldIds: s
           ...docMultilineParagraphs(cleanPrototypeText(readField(step.id), 'doc').trim() || '-'),
         ]),
       ];
-    }),
-    docParagraph('Course identity', 'Heading1'),
+	    }),
+    ...(attachments.length > 0
+      ? [
+        docParagraph('Game Attachments', 'Heading1'),
+        ...attachments.flatMap((attachment) => [
+          docParagraph(attachment.name, 'Heading2'),
+          docParagraph(`${formatFileSize(attachment.size)} - ${attachment.type || 'file'}`),
+        ]),
+      ]
+      : []),
+	    docParagraph('Course identity', 'Heading1'),
     docParagraph('Erasmus+ - Arte Diem Calabria - Agenzia Italiana per la Gioventu'),
   ].join('');
 
@@ -1538,8 +1670,9 @@ function analyzeGddOffline(gddText: string): PrototypeFieldMap {
   const materials = extractInlineField(cleaned, 'Materials', ['Goal', 'Core action', 'Main rule']);
   const goal = extractInlineField(cleaned, 'Goal', ['Core action', 'Main rule', 'Main tradeoff']);
   const coreAction = extractInlineField(cleaned, 'Core action', ['Main rule', 'Main tradeoff', 'Learning goal']);
-  const mainRule = extractInlineField(cleaned, 'Main rule', ['Main tradeoff', 'Learning goal', 'Debrief question']);
-  const mainTradeoff = extractInlineField(cleaned, 'Main tradeoff', ['Learning goal', 'Debrief question', 'Next thing to test']);
+	  const mainRule = extractInlineField(cleaned, 'Main rule', ['Main tradeoff', 'Learning goal', 'Debrief question']);
+  const instructionsManual = extractSection(cleaned, ['Instructions / Manual', 'Instructions', 'Manual', 'Rulebook', 'How to Play'], ['Main tradeoff', 'Learning Goal', 'Debrief Question', 'Core Game Concept']);
+	  const mainTradeoff = extractInlineField(cleaned, 'Main tradeoff', ['Learning goal', 'Debrief question', 'Next thing to test']);
   const inlineLearningGoal = extractInlineField(cleaned, 'Learning goal', ['Debrief question', 'Next thing to test', 'Core Game Concept']);
   const inlineDebriefQuestion = extractInlineField(cleaned, 'Debrief question', ['Next thing to test', 'Core Game Concept']);
   const nextThingToTest = extractInlineField(cleaned, 'Next thing to test', ['Core Game Concept', 'Game Title']);
@@ -1586,9 +1719,10 @@ function analyzeGddOffline(gddText: string): PrototypeFieldMap {
     duration,
     materials,
     goal,
-    coreAction,
-    mainRule,
-    mainTradeoff,
+	    coreAction,
+	    mainRule,
+    instructionsManual,
+	    mainTradeoff,
     nextThingToTest,
     executiveSummary: summary,
     experiencePillars: pillars,

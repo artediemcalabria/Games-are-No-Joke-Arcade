@@ -216,4 +216,253 @@ export const projectReports: ProjectReport[] = [
       },
     ],
   },
+  {
+    id: 'day-3-2026-05-01',
+    title: 'Day 3',
+    date: '01/05/2026',
+    headline: 'From simple rules to game design theory, podcast creation, feedback, and intercultural exchange.',
+    summary:
+      'The third day balanced energetic group activities, practical game experimentation, and theoretical input. Participants explored how simple rules can change a game, learned the MDA framework, recorded podcasts about games and learning, and ended the day with reflection and intercultural evenings from Romania and Bulgaria.',
+    activities: [
+      {
+        title: 'Mix Sound',
+        timeLabel: 'Morning energizer',
+        description:
+          'The Romanian team opened the day with an energizer where each national group created a homemade sound. The sounds were then combined into one shared rhythm.',
+        learningFocus: 'Creativity, listening, collaboration, rhythm, and group cohesion.',
+      },
+      {
+        title: 'Macedonia Jump',
+        timeLabel: 'Reaction game',
+        description:
+          'Participants played a movement game where each fruit represented a different action, such as jumping or turning around. The group had to react quickly and stay focused.',
+        learningFocus: 'Attention, coordination, memory, and fast reaction to rules.',
+      },
+      {
+        title: 'Tic Tac Tor',
+        timeLabel: 'Game mechanics workshop',
+        description:
+          'The group explored a variation of tic-tac-toe in three phases: first learning the rules, then trying the game, and finally changing the rules to create new versions.',
+        learningFocus: 'Game structure, experimentation, rule changes, critical thinking, and iterative design.',
+      },
+      {
+        title: 'Just Dance Energizer',
+        timeLabel: 'After lunch',
+        description:
+          'The Romanian team led a dance-based energizer. One participant guided the movements while the others followed, combining stretching, music, and play.',
+        learningFocus: 'Energy management, body activation, confidence, and shared rhythm.',
+      },
+      {
+        title: 'MDA Framework',
+        timeLabel: 'Design theory',
+        description:
+          'Participants were introduced to Mechanics, Dynamics, and Aesthetics. They discussed how rules create player behavior and how player behavior creates emotions and experience.',
+        learningFocus: 'Mechanics, player interaction, emotional experience, and meaningful game design.',
+      },
+      {
+        title: 'Podcast Recording',
+        timeLabel: 'Group production',
+        description:
+          'Participants worked in seven groups to prepare and record short podcasts on the question: Why do games matter for learning and social development?',
+        learningFocus: 'Public speaking, teamwork, argument building, media production, and youth-work reflection.',
+      },
+      {
+        title: 'Podcast Feedback',
+        timeLabel: 'Communication practice',
+        description:
+          'After recording, the group reflected on the podcasts and received feedback about clarity, structure, confidence, and communication style.',
+        learningFocus: 'Feedback culture, communication skills, self-awareness, and improvement.',
+      },
+      {
+        title: 'Reflection with One Word, UNO, and Number Cards',
+        timeLabel: 'Before dinner',
+        description:
+          'Participants described the day with one word, then used UNO cards and a Turkish board game with numbers from 1 to 10 to evaluate the experience.',
+        learningFocus: 'Reflection, emotional check-in, evaluation, and simple visual feedback tools.',
+      },
+      {
+        title: 'Romanian and Bulgarian Intercultural Evening',
+        timeLabel: 'Evening activity',
+        description:
+          'The evening included cultural presentations, traditional dances, games, quizzes, and informal sharing from Romania and Bulgaria.',
+        learningFocus: 'Intercultural learning, group connection, curiosity, and celebration of different backgrounds.',
+      },
+    ],
+    reflection:
+      'The day connected movement, design theory, production, and reflection. Participants saw how a game can change when its rules change, and how games can support learning, communication, and social development.',
+    outputs: [
+      'New game variations based on tic-tac-toe',
+      'Shared understanding of the MDA framework',
+      'Seven group podcasts about games, learning, and social development',
+      'Communication feedback from the podcast session',
+      'Daily reflection through words, cards, and number-based evaluation',
+      'Intercultural learning from Romania and Bulgaria',
+    ],
+  },
+  {
+    id: 'day-4-2026-05-02',
+    title: 'Day 4',
+    date: '02/05/2026',
+    headline: 'Team formation, educational board game development, communication energizers, and emotional group reflection.',
+    summary:
+      'The fourth day focused on collaborative creation. Participants formed working groups, chose social and educational themes, learned the stages of developing a board game, and moved their ideas from abstract concepts toward concrete prototypes ready for playtesting.',
+    activities: [
+      {
+        title: 'Hi, Ha, Ho and Movement Positions',
+        timeLabel: 'Morning warm-up',
+        description:
+          'The day began with interactive warm-up games, including Hi, Ha, Ho and movement commands such as left, right, up, down, monkey, and penguin variations.',
+        learningFocus: 'Energy, attention, non-verbal coordination, reaction speed, and group synchronization.',
+      },
+      {
+        title: 'Team Formation and Theme Choice',
+        timeLabel: 'Project setup',
+        description:
+          'Participants divided into four working groups. Each group chose its theme, confirmed members, and documented the team with a group photo. The structure stayed flexible so people could still move if needed.',
+        learningFocus: 'Team choice, ownership, flexibility, and collaborative project setup.',
+      },
+      {
+        title: 'Board Game Development Stages',
+        timeLabel: 'Design framework',
+        description:
+          'Participants were introduced to the main stages of board game development: idea, paper concept, playtest prototype, refined prototype, playtested MVP, production files, manufactured product, and teaching-ready launch.',
+        learningFocus: 'Design process, production thinking, prototyping, playtesting, and educational use.',
+      },
+      {
+        title: 'Theme to Mechanics',
+        timeLabel: 'Group work',
+        description:
+          'Teams started transforming themes such as dialogue and empathy, personal development, creativity, inclusion, mental health, decision-making, risk-taking, and climate anxiety into playable ideas.',
+        learningFocus: 'Social-impact design, player goals, mechanics, meaningful interaction, and learning outcomes.',
+      },
+      {
+        title: 'Telephone Game Variation',
+        timeLabel: 'Communication energizer',
+        description:
+          'Participants sat in two rows and passed a Serbian word from person to person. The final version often changed, showing how information can shift as it moves through a group.',
+        learningFocus: 'Communication, distortion, listening, language barriers, and group awareness.',
+      },
+      {
+        title: 'Hand-Signal Squeeze Game',
+        timeLabel: 'Team coordination',
+        description:
+          'Participants held hands and passed a squeeze from one end of the line to the other. Teams worked on speed, accuracy, and quiet coordination.',
+        learningFocus: 'Non-verbal communication, cooperation, focus, and shared timing.',
+      },
+      {
+        title: 'Chair and Music Reaction Game',
+        timeLabel: 'Movement break',
+        description:
+          'A music-based chair activity helped the group reset energy. Participants had to react quickly and find a seat when the music stopped.',
+        learningFocus: 'Alertness, movement, fast decisions, and playful pressure.',
+      },
+      {
+        title: 'Prototype Development and Team Updates',
+        timeLabel: 'Afternoon workshop',
+        description:
+          'Teams continued developing their educational board games, focusing on social issues, core mechanics, player experience, and the first playable version. Each team then shared a short update.',
+        learningFocus: 'Iteration, idea clarification, teamwork, public explanation, and preparation for playtesting.',
+      },
+      {
+        title: 'The Hug Game',
+        timeLabel: 'Closing reflection',
+        description:
+          'The session ended with an emotional group activity. Participants responded to prompts by hugging people they connected with, wanted to know better, or shared something with.',
+        learningFocus: 'Empathy, connection, emotional reflection, care, and trust inside the group.',
+      },
+      {
+        title: 'Macedonian and Serbian Intercultural Evening',
+        timeLabel: 'Evening activity',
+        description:
+          'The evening continued the intercultural programme with presentations and cultural sharing from Macedonia and Serbia.',
+        learningFocus: 'Intercultural exchange, identity, curiosity, and informal group bonding.',
+      },
+    ],
+    reflection:
+      'The day helped participants move from ideas toward playable educational games. It also showed that game design is not only technical: it needs trust, communication, flexibility, and care inside the team.',
+    outputs: [
+      'Four working groups with chosen themes',
+      'Group photos and team composition',
+      'First structured educational board game concepts',
+      'Clearer player goals, mechanics, and learning intentions',
+      'Short team updates before the next playtesting phase',
+      'Emotional reflection through the Hug Game',
+    ],
+  },
+  {
+    id: 'day-5-2026-05-03',
+    title: 'Day 5',
+    date: '03/05/2026',
+    headline: 'Prototype refinement, peer playtesting, feedback, final adjustments, and French cultural night.',
+    summary:
+      'The fifth day moved the teams from concept to playable prototype. The morning built energy and focus, then teams refined their games before the playtesting phase. In the afternoon, participants tested each other\'s board games, presented their design logic, collected feedback, and improved the clarity of rules, mechanics, and learning goals.',
+    activities: [
+      {
+        title: 'The Invisible Bunny',
+        timeLabel: 'Morning energizer',
+        description:
+          'The day started with a creative energizer. Participants first imagined an invisible bunny and acted with it individually, then repeated similar actions with their neighbours, turning a small imagination task into a shared comic moment.',
+        learningFocus: 'Imagination, body expression, playfulness, attention to others, and group bonding.',
+      },
+      {
+        title: 'Toxic Relationship',
+        timeLabel: 'Group dynamics exercise',
+        description:
+          'The second energizer used movement to explore resistance, pressure, and escape. The activity raised the energy in the room and prepared participants for a focused working morning.',
+        learningFocus: 'Physical activation, boundaries, group dynamics, pressure, and quick decision-making.',
+      },
+      {
+        title: 'Prototype Refinement',
+        timeLabel: 'Morning development',
+        description:
+          'Teams returned to the games they had started the previous day. They checked whether the basic rules worked, clarified the main goal, adjusted components, and tried to make the gameplay loop easier to understand.',
+        learningFocus: 'Iteration, rule clarity, core loop design, component testing, and practical teamwork.',
+      },
+      {
+        title: 'Product Conclusion Meeting',
+        timeLabel: 'Before lunch',
+        description:
+          'Before lunch, the group paused to confirm that each team had a functional version ready for peer testing. This helped teams move from discussion to a real playable prototype.',
+        learningFocus: 'Milestone setting, production focus, decision-making, and readiness for playtesting.',
+      },
+      {
+        title: 'Cross-Testing',
+        timeLabel: 'Afternoon playtest',
+        description:
+          'Teams played each other\'s board games. This gave every group a fresh view of how players understood the rules, what felt engaging, and where confusion appeared.',
+        learningFocus: 'User experience, peer review, observation, testing with real players, and feedback collection.',
+      },
+      {
+        title: 'Game Presentations',
+        timeLabel: 'Design explanation',
+        description:
+          'Each group explained the logic of its game, the theme behind it, the intended player experience, and the educational impact it wanted to create.',
+        learningFocus: 'Communication, design reasoning, learning outcomes, and clear presentation of a prototype.',
+      },
+      {
+        title: 'Reflection and Final Adjustments',
+        timeLabel: 'Feedback workshop',
+        description:
+          'After the playtests, teams discussed what worked and what needed to change. They used the feedback to adjust rules, simplify unclear parts, and strengthen the connection between gameplay and learning goals.',
+        learningFocus: 'Constructive feedback, critical reflection, revision, clarity, and educational coherence.',
+      },
+      {
+        title: 'French Cultural Night',
+        timeLabel: 'Evening activity',
+        description:
+          'The day ended with the French cultural night. The French participants shared cultural elements through food, music, presentations, and informal conversation, creating a relaxed space after an intense prototype day.',
+        learningFocus: 'Intercultural learning, informal networking, celebration, and stronger relationships between partners.',
+      },
+    ],
+    reflection:
+      'Day 5 was an important shift from designing in theory to testing with real people. Participants could see where their games were strong and where players needed more support. The feedback helped teams make their games clearer, more playable, and more connected to their educational purpose.',
+    outputs: [
+      'Functional board game prototypes ready for peer testing',
+      'Cross-testing feedback from other teams',
+      'Short presentations of game logic, design choices, and intended impact',
+      'Rule and mechanic adjustments after playtesting',
+      'Clearer links between gameplay and learning goals',
+      'French cultural night moments and informal partner connection',
+    ],
+  },
 ];
