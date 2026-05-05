@@ -700,13 +700,13 @@ export default function PrototypeLab() {
 	            <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
 	              {prototypeAttachments.length === 0 && <p className="text-sm text-gray-400">No attachments added yet.</p>}
 	              {prototypeAttachments.map((attachment) => (
-	                <div key={attachment.id} className="notebook-muted-card flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/35 p-3">
-	                  <div className="min-w-0">
-	                    <p className="flex items-center gap-2 break-words text-sm font-bold text-white">
+	                <div key={attachment.id} className="notebook-muted-card flex min-w-0 items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/35 p-3">
+	                  <div className="min-w-0 flex-1">
+	                    <p className="flex min-w-0 items-start gap-2 text-sm font-bold leading-snug text-white">
 	                      <FileText className="h-4 w-4 shrink-0 text-cyan-200" />
-	                      {attachment.name}
+	                      <span className="min-w-0 break-all [overflow-wrap:anywhere]">{attachment.name}</span>
 	                    </p>
-	                    <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">{formatFileSize(attachment.size)} - {attachment.type || 'file'}</p>
+	                    <p className="mt-1 min-w-0 break-words text-[10px] font-bold uppercase tracking-widest text-gray-500">{formatFileSize(attachment.size)} - {attachment.type || 'file'}</p>
 	                  </div>
 	                  <button
 	                    type="button"

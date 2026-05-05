@@ -593,14 +593,14 @@ function PlaygroundGameCard({
               key={attachment.id}
               href={attachment.dataUrl}
               download={attachment.name}
-              className="notebook-muted-card flex items-center justify-between gap-3 rounded-lg border border-green-300/20 bg-green-300/10 p-3 text-left transition-colors hover:border-green-300 hover:bg-green-300/20"
+              className="notebook-muted-card flex min-w-0 items-center justify-between gap-3 rounded-lg border border-green-300/20 bg-green-300/10 p-3 text-left transition-colors hover:border-green-300 hover:bg-green-300/20"
             >
-              <span className="min-w-0">
-                <span className="flex items-center gap-2 break-words text-sm font-bold text-white">
+              <span className="min-w-0 flex-1">
+                <span className="flex min-w-0 items-start gap-2 text-sm font-bold leading-snug text-white">
                   <FileText className="h-4 w-4 shrink-0 text-green-200" />
-                  {attachment.name}
+                  <span className="min-w-0 break-all [overflow-wrap:anywhere]">{attachment.name}</span>
                 </span>
-                <span className="mt-1 block text-[10px] font-bold uppercase tracking-widest text-gray-400">{formatFileSize(attachment.size)} - {attachment.type || 'file'}</span>
+                <span className="mt-1 block min-w-0 break-words text-[10px] font-bold uppercase tracking-widest text-gray-400">{formatFileSize(attachment.size)} - {attachment.type || 'file'}</span>
               </span>
               <Download className="h-4 w-4 shrink-0 text-green-200" />
             </a>

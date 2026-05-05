@@ -71,6 +71,32 @@ export default function Reports() {
           </button>
         </div>
 
+        {activeReport.videoEmbedUrl && (
+          <section className="mt-6 notebook-card overflow-hidden rounded-xl border border-white/10 bg-black/40">
+            <div className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-sm font-arcade text-pink-200">{activeReport.title} Video Report</h3>
+              {activeReport.videoUrl && (
+                <a
+                  href={activeReport.videoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-cyan-200 hover:text-cyan-100"
+                >
+                  Open on YouTube
+                  <ArrowUpRight className="h-4 w-4" />
+                </a>
+              )}
+            </div>
+            <iframe
+              className="aspect-video w-full"
+              src={activeReport.videoEmbedUrl}
+              title={`${activeReport.title} video report`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </section>
+        )}
+
         <section className="mt-6">
           <h3 className="flex items-center gap-2 text-sm font-arcade text-cyan-300">
             <ClipboardList className="h-5 w-5" /> Activity Timeline

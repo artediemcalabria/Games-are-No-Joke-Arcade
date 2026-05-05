@@ -17,6 +17,8 @@ export interface ProjectReport {
   date: string;
   headline: string;
   summary: string;
+  videoUrl?: string;
+  videoEmbedUrl?: string;
   activities: ProjectReportActivity[];
   reflection: string;
   outputs: string[];
@@ -37,6 +39,8 @@ export const projectReports: ProjectReport[] = [
     headline: 'Opening the group through play, names, roles, hopes, and first teamwork.',
     summary:
       'The first day of Games Are No Joke helped participants become comfortable with each other through energizers, name games, personal badges, reflection tools, debate, and team problem solving.',
+    videoUrl: 'https://www.youtube.com/watch?v=7-8FiSAJ0fg',
+    videoEmbedUrl: 'https://www.youtube-nocookie.com/embed/7-8FiSAJ0fg',
     activities: [
       {
         title: 'Walk Theatre',
@@ -118,6 +122,8 @@ export const projectReports: ProjectReport[] = [
     headline: 'Field research in Filadelfia, first board game concepts, debate, feedback, and intercultural night.',
     summary:
       'The second day connected the city of Filadelfia to game design. Participants collected local material, presented first ideas, discussed learning and radicalization of ideas, and opened intercultural nights with Turkey and Italy.',
+    videoUrl: 'https://youtu.be/lW8phYP1uyo',
+    videoEmbedUrl: 'https://www.youtube-nocookie.com/embed/lW8phYP1uyo',
     activities: [
       {
         title: 'Shoot the Name',
@@ -223,6 +229,8 @@ export const projectReports: ProjectReport[] = [
     headline: 'From simple rules to game design theory, podcast creation, feedback, and intercultural exchange.',
     summary:
       'The third day balanced energetic group activities, practical game experimentation, and theoretical input. Participants explored how simple rules can change a game, learned the MDA framework, recorded podcasts about games and learning, and ended the day with reflection and intercultural evenings from Romania and Bulgaria.',
+    videoUrl: 'https://youtu.be/UObXy8i8ONc',
+    videoEmbedUrl: 'https://www.youtube-nocookie.com/embed/UObXy8i8ONc',
     activities: [
       {
         title: 'Mix Sound',
@@ -306,6 +314,8 @@ export const projectReports: ProjectReport[] = [
     headline: 'Team formation, educational board game development, communication energizers, and emotional group reflection.',
     summary:
       'The fourth day focused on collaborative creation. Participants formed working groups, chose social and educational themes, learned the stages of developing a board game, and moved their ideas from abstract concepts toward concrete prototypes ready for playtesting.',
+    videoUrl: 'https://youtu.be/cZGui4he78Y',
+    videoEmbedUrl: 'https://www.youtube-nocookie.com/embed/cZGui4he78Y',
     activities: [
       {
         title: 'Hi, Ha, Ho and Movement Positions',
@@ -396,6 +406,8 @@ export const projectReports: ProjectReport[] = [
     headline: 'Prototype refinement, peer playtesting, feedback, final adjustments, and French cultural night.',
     summary:
       'The fifth day moved the teams from concept to playable prototype. The morning built energy and focus, then teams refined their games before the playtesting phase. In the afternoon, participants tested each other\'s board games, presented their design logic, collected feedback, and improved the clarity of rules, mechanics, and learning goals.',
+    videoUrl: 'https://youtu.be/aRHUafAQK0k',
+    videoEmbedUrl: 'https://www.youtube-nocookie.com/embed/aRHUafAQK0k',
     activities: [
       {
         title: 'The Invisible Bunny',

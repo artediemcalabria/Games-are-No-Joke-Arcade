@@ -35,6 +35,19 @@ export default function About() {
         </div>
       </div>
 
+      <div className="notebook-surface arcade-border-green glass-panel-green p-6 rounded-xl mt-2">
+        <h3 className="mb-4 text-sm font-arcade uppercase tracking-widest text-green-400">Participant Testimonials</h3>
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40 shadow-lg">
+          <iframe
+            className="aspect-video w-full"
+            src="https://www.youtube.com/embed/GQMVQiIVYb4"
+            title="Games Are No Joke participant testimonials"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </div>
+      </div>
+
       <div className="notebook-surface arcade-border glass-panel p-6 rounded-xl mt-2">
         <h3 className="text-sm font-arcade text-cyan-400 mb-6 uppercase tracking-widest">Partner Organisations</h3>
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -88,14 +101,6 @@ export default function About() {
             </li>
           ))}
         </ul>
-      </div>
-
-      <div className="notebook-surface arcade-border-green glass-panel-green p-6 rounded-xl">
-        <h3 className="text-sm font-arcade text-green-400 mb-4 uppercase tracking-widest">Source-Inspired Content</h3>
-        <p className="text-sm text-gray-300 leading-relaxed">
-          The app uses original Simple English learning content inspired by youth work game handbooks, gamification curricula, serious game design methods,
-          MDA, playtesting, and game designer worksheets from the provided training source folder.
-        </p>
       </div>
 
       <div className="text-center mt-4">
