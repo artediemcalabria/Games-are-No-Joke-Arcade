@@ -1,9 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, type ComponentType } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react';
 import { BrowserRouter, HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { BookOpen, Gamepad2, Volume2, VolumeX } from 'lucide-react';
+import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
+import { BookOpen, Gamepad2, LogIn, LogOut, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { NavBar } from './components/NavBar';
 import { courseInfo } from './data/course';
 import { installAudioUnlock, playSound } from './lib/audio';
+import { getFirebaseClientServices, PLAYGROUND_ADMIN_EMAIL, type FirebaseClientServices } from './lib/firebaseClient';
 import { useStore } from './store/useStore';
 
 const Home = lazyWithReload(() => import('./pages/Home'));
@@ -39,9 +41,32 @@ function AppShell() {
   const firstRoute = useRef(true);
   const { audioEnabled, appTheme, setAudioEnabled, setAppTheme } = useStore();
   const isNotebook = appTheme === 'notebook';
+  const [firebaseServices, setFirebaseServices] = useState<FirebaseClientServices | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [authMessage, setAuthMessage] = useState('');
+  const isAdmin = user?.email?.toLowerCase() === PLAYGROUND_ADMIN_EMAIL;
 
   useEffect(() => {
     installAudioUnlock();
+  }, []);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    let active = true;
+    getFirebaseClientServices()
+      .then((services) => {
+        if (!active) return;
+        setFirebaseServices(services);
+        unsubscribe = onAuthStateChanged(services.auth, setUser);
+      })
+      .catch((error) => {
+        setAuthMessage(error instanceof Error ? error.message : 'Google login is not available.');
+      });
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -56,6 +81,24 @@ function AppShell() {
     }
     playSound('nav', audioEnabled);
   }, [audioEnabled, location.pathname]);
+
+  const loginWithGoogle = async () => {
+    if (!firebaseServices) {
+      setAuthMessage('Google login is still loading. Try again in a moment.');
+      return;
+    }
+    try {
+      setAuthMessage('');
+      await signInWithPopup(firebaseServices.auth, firebaseServices.googleProvider);
+    } catch (error) {
+      setAuthMessage(formatGoogleLoginError(error));
+    }
+  };
+
+  const logout = async () => {
+    if (!firebaseServices) return;
+    await signOut(firebaseServices.auth);
+  };
 
   return (
       <div className={`min-h-screen bg-arcade-bg ${isNotebook ? 'theme-notebook' : 'theme-arcade scanlines crt-flicker'} flex flex-col items-center font-sans tracking-wide`}>
@@ -76,6 +119,25 @@ function AppShell() {
               <p className="text-[10px] text-gray-500 uppercase">{courseInfo.dates} - {courseInfo.venue}</p>
               <p className="text-[10px] text-cyan-400/80 uppercase mt-1">{courseInfo.code}</p>
               <div className="mt-2 flex flex-wrap justify-center gap-2 md:justify-end">
+                  {user ? (
+                    <button
+                      onClick={() => void logout()}
+                      className={`app-toolbar-button ${isAdmin ? 'border-green-300/50 bg-green-300/10 text-green-100' : ''}`}
+                      title={user.email ?? 'Signed in'}
+                    >
+                      {isAdmin ? <ShieldCheck className="h-4 w-4" /> : <LogOut className="h-4 w-4" />}
+                      {isAdmin ? 'Admin' : 'Sign Out'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => void loginWithGoogle()}
+                      className="app-toolbar-button"
+                      title="Sign in with Google"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      Login
+                    </button>
+                  )}
 	                <button
 	                  onClick={() => setAppTheme(isNotebook ? 'arcade' : 'notebook')}
 	                  className="app-toolbar-button theme-switch-button"
@@ -93,6 +155,7 @@ function AppShell() {
 	                  App Sound {audioEnabled ? 'On' : 'Off'}
 	                </button>
               </div>
+              {authMessage && <p className="mt-2 max-w-md text-[10px] font-bold uppercase leading-relaxed tracking-widest text-yellow-200">{authMessage}</p>}
             </div>
           </header>
 
@@ -141,4 +204,19 @@ function lazyWithReload<T extends ComponentType<unknown>>(loader: () => Promise<
 function isChunkLoadError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk|ChunkLoadError/i.test(message);
+}
+
+function formatGoogleLoginError(error: unknown) {
+  const code = isRecord(error) && typeof error.code === 'string' ? error.code : '';
+  if (code === 'auth/unauthorized-domain') {
+    return 'Google login is blocked for this domain. Add localhost and 127.0.0.1 in Firebase Authentication authorized domains.';
+  }
+  if (code === 'auth/popup-closed-by-user') {
+    return 'Google login was closed before it finished.';
+  }
+  return error instanceof Error ? error.message : 'Google login failed.';
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }

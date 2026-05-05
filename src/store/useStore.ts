@@ -31,6 +31,7 @@ export interface GameAttachment {
   size: number;
   dataUrl: string;
   uploadedAt: string;
+  storagePath?: string;
 }
 
 export interface PlaygroundGameField {
@@ -51,6 +52,7 @@ export interface PlaygroundGame {
   summary: string;
   imageDataUrl: string;
   imageSource: PrototypeImageSource;
+  imageStoragePath?: string;
   attachments: GameAttachment[];
   sections: PlaygroundGameSection[];
   fields: Record<string, string>;
@@ -255,14 +257,14 @@ export const useStore = create<ProgressState>()(
     }),
     {
       name: 'games-are-no-joke-storage',
-      version: 9,
+      version: 10,
       migrate: (persistedState) => ({
         ...(persistedState as ProgressState),
         prototypeImageDataUrl: (persistedState as Partial<ProgressState>).prototypeImageDataUrl ?? '',
         prototypeImageSource: (persistedState as Partial<ProgressState>).prototypeImageSource ?? ((persistedState as Partial<ProgressState>).prototypeImageDataUrl ? 'generated' : 'none'),
         prototypeAttachments: (persistedState as Partial<ProgressState>).prototypeAttachments ?? [],
         disabledPrototypeFields: (persistedState as Partial<ProgressState>).disabledPrototypeFields ?? [],
-        playgroundGames: (persistedState as Partial<ProgressState>).playgroundGames ?? [],
+        playgroundGames: normalizePersistedPlaygroundGames((persistedState as Partial<ProgressState>).playgroundGames),
         audioEnabled: (persistedState as Partial<ProgressState>).audioEnabled ?? true,
         appTheme: 'notebook',
         readReports: (persistedState as Partial<ProgressState>).readReports ?? [],
@@ -271,3 +273,33 @@ export const useStore = create<ProgressState>()(
     }
   )
 );
+
+function normalizePersistedPlaygroundGames(games: Partial<PlaygroundGame>[] | undefined): PlaygroundGame[] {
+  if (!Array.isArray(games)) return [];
+  return games
+    .filter((game): game is Partial<PlaygroundGame> => Boolean(game) && typeof game === 'object')
+    .map((game) => ({
+      id: typeof game.id === 'string' ? game.id : typeof game.slug === 'string' ? game.slug : `game-${Date.now()}`,
+      slug: typeof game.slug === 'string' ? game.slug : typeof game.id === 'string' ? game.id : `game-${Date.now()}`,
+      title: typeof game.title === 'string' ? game.title : 'Untitled game',
+      summary: typeof game.summary === 'string' ? game.summary : '',
+      imageDataUrl: typeof game.imageDataUrl === 'string' ? game.imageDataUrl : '',
+      imageSource: game.imageSource === 'generated' || game.imageSource === 'uploaded' ? game.imageSource : 'none',
+      imageStoragePath: typeof game.imageStoragePath === 'string' ? game.imageStoragePath : undefined,
+      attachments: Array.isArray(game.attachments) ? game.attachments.map((attachment) => ({
+        id: typeof attachment.id === 'string' ? attachment.id : `attachment-${Date.now()}`,
+        name: typeof attachment.name === 'string' ? attachment.name : 'Attachment',
+        type: typeof attachment.type === 'string' ? attachment.type : 'application/octet-stream',
+        size: typeof attachment.size === 'number' ? attachment.size : 0,
+        dataUrl: typeof attachment.dataUrl === 'string' ? attachment.dataUrl : '',
+        uploadedAt: typeof attachment.uploadedAt === 'string' ? attachment.uploadedAt : new Date().toISOString(),
+        storagePath: typeof attachment.storagePath === 'string' ? attachment.storagePath : undefined,
+      })) : [],
+      sections: Array.isArray(game.sections) ? game.sections : [],
+      fields: game.fields && typeof game.fields === 'object' && !Array.isArray(game.fields) ? game.fields : {},
+      disabledFieldIds: Array.isArray(game.disabledFieldIds) ? game.disabledFieldIds.filter((field): field is string => typeof field === 'string') : [],
+      sourceFileName: typeof game.sourceFileName === 'string' ? game.sourceFileName : '',
+      importedAt: typeof game.importedAt === 'string' ? game.importedAt : new Date().toISOString(),
+      exportedAt: typeof game.exportedAt === 'string' ? game.exportedAt : undefined,
+    }));
+}
