@@ -200,13 +200,14 @@ export default function PrototypeLab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
       });
-      const data = await response.json() as { imageDataUrl?: string; error?: string };
+	      const data = await response.json() as { imageDataUrl?: string; error?: string; model?: string; fallbackUsed?: boolean };
       if (!response.ok || !data.imageDataUrl) {
         throw new Error(data.error || 'Image generation failed.');
       }
-      const composited = await composeLogoOnImage(data.imageDataUrl, courseLogoPath);
-      updatePrototypeImage(composited, 'generated');
-      setPrototypeImageStatus('Image ready. It will stay in the prototype sheet and final PDF until you generate a new image.');
+	      const composited = await composeLogoOnImage(data.imageDataUrl, courseLogoPath);
+	      updatePrototypeImage(composited, 'generated');
+	      const modelLabel = data.model ? ` Gemini model used: ${data.model}${data.fallbackUsed ? ' (fallback).' : '.'}` : '';
+	      setPrototypeImageStatus(`Image ready. It will stay in the prototype sheet and final PDF until you generate a new image.${modelLabel}`);
     } catch (error) {
       setPrototypeImageStatus(error instanceof Error ? error.message : 'Image generation failed. Try again later.');
     } finally {
@@ -255,17 +256,21 @@ export default function PrototypeLab() {
     setIsAnalyzingGdd(true);
     setGddStatus('');
     try {
-      const fields = mode === 'ai' && coachEndpoint
-        ? await analyzeGddWithAi(coachEndpoint, source)
-        : analyzeGddOffline(source);
+	      const result = mode === 'ai' && coachEndpoint
+	        ? await analyzeGddWithAi(coachEndpoint, source)
+	        : { fields: analyzeGddOffline(source) };
+	      const fields = result.fields;
 
       if (!Object.values(fields).some((value) => value.trim())) {
         setGddStatus('No filled GDD content found. The text looks like an empty template.');
         setGddPreview(null);
       } else {
-        setGddPreview(fields);
-        const sourceLabel = loadedFrom ? ` from ${loadedFrom}` : '';
-        setGddStatus(mode === 'ai' ? `AI improved analysis ready${sourceLabel}. Review the preview before applying.` : `Offline analysis ready${sourceLabel}. Review the preview before applying.`);
+	        setGddPreview(fields);
+	        const sourceLabel = loadedFrom ? ` from ${loadedFrom}` : '';
+	        const modelLabel = 'model' in result && result.model
+	          ? ` Gemini model used: ${result.model}${result.fallbackUsed ? ' (fallback).' : '.'}`
+	          : '';
+	        setGddStatus(mode === 'ai' ? `AI improved analysis ready${sourceLabel}. Review the preview before applying.${modelLabel}` : `Offline analysis ready${sourceLabel}. Review the preview before applying.`);
       }
 	    } catch (error) {
 	      if (mode === 'ai') {
@@ -1432,7 +1437,7 @@ function roundedRect(context: CanvasRenderingContext2D, x: number, y: number, wi
   context.closePath();
 }
 
-async function analyzeGddWithAi(endpoint: string, gddText: string): Promise<PrototypeFieldMap> {
+async function analyzeGddWithAi(endpoint: string, gddText: string): Promise<{ fields: PrototypeFieldMap; model?: string; fallbackUsed?: boolean }> {
   const fieldKeys = prototypeSteps.map((step) => step.id).join(', ');
   const fieldLabels = prototypeSteps.map((step) => `${step.id}: ${step.label}`).join('\n');
   const offlineFields = analyzeGddOffline(gddText);
@@ -1470,10 +1475,14 @@ Rules:
     throw new Error(await readBackendError(response, `GDD import backend returned ${response.status}.`));
   }
 
-  const data = await response.json() as { answer?: string };
+  const data = await response.json() as { answer?: string; model?: string; fallbackUsed?: boolean };
   const answer = data.answer ?? '';
   const parsed = parseJsonFieldMap(answer);
-  return parsed ? markAiSuggestedFields(parsed, offlineFields) : offlineFields;
+  return {
+    fields: parsed ? markAiSuggestedFields(parsed, offlineFields) : offlineFields,
+    model: data.model,
+    fallbackUsed: data.fallbackUsed,
+  };
 }
 
 function compactGddSource(value: string, maxLength: number) {

@@ -72,9 +72,13 @@ app.post('/api/coach', async (request, response) => {
     return;
   }
 
-  try {
-    const answer = await callGeminiText(buildPrompt(request.body));
-    response.json({ answer: answer || 'The coach returned an empty answer. Try a more specific question.' });
+	try {
+    const result = await callGeminiText(buildPrompt(request.body));
+    response.json({
+      answer: result.answer || 'The coach returned an empty answer. Try a more specific question.',
+      model: result.model,
+      fallbackUsed: result.fallbackUsed,
+    });
   } catch (error) {
     response.status(502).json({ error: error instanceof Error ? error.message : 'Gemini did not return an answer.' });
   }
@@ -100,9 +104,13 @@ app.post('/api/prototype-image', async (request, response) => {
     return;
   }
 
-  try {
-    const imageDataUrl = await callGeminiImage(prompt);
-    response.json({ imageDataUrl });
+	try {
+    const result = await callGeminiImage(prompt);
+    response.json({
+      imageDataUrl: result.imageDataUrl,
+      model: result.model,
+      fallbackUsed: result.fallbackUsed,
+    });
   } catch (error) {
     response.status(502).json({ error: error instanceof Error ? error.message : 'Gemini could not generate the prototype image.' });
   }
@@ -138,7 +146,13 @@ async function callGeminiText(prompt) {
     const attempts = isFallbackModel(model, models[0]) ? 1 : 2;
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
       const result = await requestGeminiText(model, prompt);
-      if (result.ok) return result.answer;
+      if (result.ok) {
+        return {
+          answer: result.answer,
+          model,
+          fallbackUsed: isFallbackModel(model, models[0]),
+        };
+      }
 
       lastError = result.error;
       if (!result.retryable || attempt === attempts) break;
@@ -190,7 +204,37 @@ function delay(ms) {
 }
 
 async function callGeminiImage(prompt) {
-  const model = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const models = unique([
+    process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
+    ...(process.env.GEMINI_IMAGE_FALLBACK_MODELS || 'gemini-3.1-flash-image-preview')
+      .split(',')
+      .map((model) => model.trim())
+      .filter(Boolean),
+  ]);
+  let lastError = '';
+
+  for (const model of models) {
+    const attempts = isFallbackModel(model, models[0]) ? 1 : 2;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const result = await requestGeminiImage(model, prompt);
+      if (result.ok) {
+        return {
+          imageDataUrl: result.imageDataUrl,
+          model,
+          fallbackUsed: isFallbackModel(model, models[0]),
+        };
+      }
+
+      lastError = result.error;
+      if (!result.retryable || attempt === attempts) break;
+      await delay(900 * attempt);
+    }
+  }
+
+  throw new Error(lastError || 'Gemini image request failed.');
+}
+
+async function requestGeminiImage(model, prompt) {
   const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -204,16 +248,30 @@ async function callGeminiImage(prompt) {
 
   if (!geminiResponse.ok) {
     const text = await geminiResponse.text();
-    throw new Error(`Gemini image request failed: ${geminiResponse.status} ${text.slice(0, 180)}`);
+    const retryable = geminiResponse.status === 429 || geminiResponse.status === 500 || geminiResponse.status === 503;
+    return {
+      ok: false,
+      retryable,
+      error: retryable
+        ? `Gemini image model is busy (${geminiResponse.status}). The app retried${process.env.GEMINI_IMAGE_FALLBACK_MODELS ? ' and tried fallback image models' : ''}. ${text.slice(0, 160)}`
+        : `Gemini image request failed: ${geminiResponse.status} ${text.slice(0, 180)}`,
+    };
   }
 
   const data = await geminiResponse.json();
   const parts = data?.candidates?.[0]?.content?.parts || [];
   const imagePart = parts.find((part) => part.inlineData?.data && part.inlineData?.mimeType?.startsWith('image/'));
   if (!imagePart) {
-    throw new Error('Gemini returned no image. Add more visual prototype details.');
+    return {
+      ok: false,
+      retryable: false,
+      error: `Gemini model ${model} returned no image. Add more visual prototype details.`,
+    };
   }
-  return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+  return {
+    ok: true,
+    imageDataUrl: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`,
+  };
 }
 
 function buildPrompt(body) {
