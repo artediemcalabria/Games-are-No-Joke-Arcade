@@ -5,9 +5,10 @@ import { gameCatalog, lessons, prototypeSteps } from '../data/course';
 import { projectReports } from '../data/reports';
 
 export default function Progress() {
-  const { completedLessons, completedGames, gameTakeaways, gameNotes, coachHistory, coachNotes, readReports, gddImports, quizScores, totalScore, prototype, resetProgress } = useStore();
+  const { completedLessons, completedGames, gameTakeaways, gameNotes, coachHistory, coachNotes, readReports, gddImports, quizScores, totalScore, prototype, disabledPrototypeFields, resetProgress } = useStore();
   const completedCatalogGames = completedGames.filter((id) => gameCatalog.some((game) => game.id === id));
-  const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
+  const enabledPrototypeSteps = prototypeSteps.filter((step) => !disabledPrototypeFields.includes(step.id));
+  const completedPrototypeSteps = enabledPrototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
 
   const milestoneGroups = [
     {
@@ -43,7 +44,7 @@ export default function Progress() {
       items: [{
         id: 'prototype-card',
         name: 'Prototype Card',
-        completed: completedPrototypeSteps === prototypeSteps.length,
+        completed: completedPrototypeSteps === enabledPrototypeSteps.length,
       }],
     },
     {

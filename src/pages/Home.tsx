@@ -6,11 +6,12 @@ import { courseInfo, gameCatalog, lessons, prototypeSteps } from '../data/course
 import { projectReports } from '../data/reports';
 
 export default function Home() {
-  const { totalScore, completedLessons, completedGames, prototype, readReports } = useStore();
+  const { totalScore, completedLessons, completedGames, prototype, disabledPrototypeFields, readReports } = useStore();
   const assetBase = import.meta.env.BASE_URL;
   const completedCatalogGames = completedGames.filter((id) => gameCatalog.some((game) => game.id === id));
-  const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
-  const journeyTotal = lessons.length + projectReports.length + gameCatalog.length + prototypeSteps.length;
+  const enabledPrototypeSteps = prototypeSteps.filter((step) => !disabledPrototypeFields.includes(step.id));
+  const completedPrototypeSteps = enabledPrototypeSteps.filter((step) => prototype[step.id]?.trim()).length;
+  const journeyTotal = lessons.length + projectReports.length + gameCatalog.length + enabledPrototypeSteps.length;
   const journeyDone = completedLessons.length + readReports.length + completedCatalogGames.length + completedPrototypeSteps;
   const progressPercent = Math.round((journeyDone / journeyTotal) * 100);
   const nextGame = gameCatalog.find((game) => !completedCatalogGames.includes(game.id)) ?? gameCatalog[0];
@@ -21,7 +22,7 @@ export default function Home() {
       ? { to: '/reports', label: 'Read Project Reports', detail: 'Connect the daily activities with the prototype work.' }
     : completedCatalogGames.length < gameCatalog.length
       ? { to: '/arcade', label: 'Play Next Design Game', detail: 'Use games to feel the design ideas, not only read them.' }
-      : completedPrototypeSteps < prototypeSteps.length
+      : completedPrototypeSteps < enabledPrototypeSteps.length
         ? { to: '/prototype', label: 'Improve Prototype Card', detail: 'Turn takeaways into your first playable prototype.' }
         : { to: '/progress', label: 'Review Your Journey', detail: 'Check your learning, games, prototype, and reflection.' };
 

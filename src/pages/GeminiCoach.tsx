@@ -15,7 +15,7 @@ type CoachMode = {
 };
 
 const endpoint = normalizeAiEndpoint(import.meta.env.VITE_AI_COACH_ENDPOINT, '/api/coach');
-const healthEndpoint = endpoint.replace(/\/api\/coach$/, '/api/health');
+const healthEndpoint = endpoint ? endpoint.replace(/\/api\/coach$/, '/api/health') : '';
 
 const coachModes: CoachMode[] = [
   {
@@ -64,8 +64,10 @@ const coachModes: CoachMode[] = [
 
 function normalizeAiEndpoint(value: string | undefined, fallback: string) {
   const endpoint = String(value || '').trim();
-  if (!endpoint) return fallback;
-  if (endpoint.includes('your-worker') || endpoint.includes('your-account') || endpoint.includes('example.com')) return fallback;
+  if (!endpoint) return import.meta.env.DEV ? '' : fallback;
+  if (endpoint.includes('your-worker') || endpoint.includes('your-account') || endpoint.includes('example.com')) {
+    return import.meta.env.DEV ? '' : fallback;
+  }
   return endpoint;
 }
 
@@ -76,6 +78,7 @@ export default function GeminiCoach() {
     gameNotes,
     coachHistory,
     coachNotes,
+    disabledPrototypeFields,
     saveCoachSession,
     saveCoachNote,
     clearCoachHistory,
@@ -90,22 +93,27 @@ export default function GeminiCoach() {
   const [status, setStatus] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [targetField, setTargetField] = useState(selectedMode.focusField);
+  const enabledPrototypeSteps = prototypeSteps.filter((step) => !disabledPrototypeFields.includes(step.id));
 
-  const completedPrototypeSteps = prototypeSteps.filter((step) => prototype[step.id]?.trim());
-  const missingPrototypeSteps = prototypeSteps.filter((step) => !prototype[step.id]?.trim());
+  const completedPrototypeSteps = enabledPrototypeSteps.filter((step) => prototype[step.id]?.trim());
+  const missingPrototypeSteps = enabledPrototypeSteps.filter((step) => !prototype[step.id]?.trim());
 
   const prototypeContext = useMemo(() => {
-    const filled = prototypeSteps
+    const filled = enabledPrototypeSteps
       .map((step) => `${step.label}: ${prototype[step.id]?.trim() || '-'}`)
       .join('\n');
     return filled || 'No prototype fields filled yet.';
-  }, [prototype]);
+  }, [enabledPrototypeSteps, prototype]);
 
   useEffect(() => {
     let cancelled = false;
 
     const checkConnection = async () => {
       setConnectionStatus('checking');
+      if (!healthEndpoint) {
+        setConnectionStatus('error');
+        return;
+      }
       try {
         const response = await fetch(healthEndpoint, { headers: { Accept: 'application/json' } });
         const data = await response.json() as { ok?: boolean; geminiConfigured?: boolean; error?: string };
@@ -135,6 +143,20 @@ export default function GeminiCoach() {
   const askCoach = async (overrideQuestion?: string) => {
     const question = (overrideQuestion ?? prompt).trim();
     if (!question) return;
+
+    if (!endpoint) {
+      const fallback = ensureAnswerShape(buildFallbackAnswer(selectedMode.id, question, prototype));
+      setError('AI backend is not connected on localhost. I used an offline coaching template instead.');
+      setAnswer(fallback);
+      saveCoachSession({
+        id: createId(),
+        mode: `${selectedMode.title} (offline fallback)`,
+        question,
+        answer: fallback,
+        createdAt: new Date().toISOString(),
+      });
+      return;
+    }
 
     setIsLoading(true);
     setError('');
@@ -313,7 +335,7 @@ export default function GeminiCoach() {
                   onChange={(event) => setTargetField(event.target.value)}
                   className="mt-2 w-full rounded-lg border border-white/10 bg-black px-3 py-3 text-sm text-white"
                 >
-                  {prototypeSteps.map((step) => (
+                  {enabledPrototypeSteps.map((step) => (
                     <option key={step.id} value={step.id}>{step.label}</option>
                   ))}
                 </select>

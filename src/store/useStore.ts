@@ -22,6 +22,7 @@ export interface GddImport {
 }
 
 export type AppTheme = 'arcade' | 'notebook';
+export type PrototypeImageSource = 'generated' | 'uploaded' | 'none';
 
 interface ProgressState {
   unlockedTheories: string[];
@@ -37,6 +38,8 @@ interface ProgressState {
   totalScore: number;
   prototype: Record<string, string>;
   prototypeImageDataUrl: string;
+  prototypeImageSource: PrototypeImageSource;
+  disabledPrototypeFields: string[];
   audioEnabled: boolean;
   appTheme: AppTheme;
   unlockTheory: (id: string) => void;
@@ -51,7 +54,8 @@ interface ProgressState {
   saveGddImport: (importItem: GddImport) => void;
   saveQuizScore: (quizId: string, score: number) => void;
   updatePrototypeField: (field: string, value: string) => void;
-  updatePrototypeImage: (imageDataUrl: string) => void;
+  updatePrototypeImage: (imageDataUrl: string, source?: PrototypeImageSource) => void;
+  togglePrototypeFieldDisabled: (field: string) => void;
   setAudioEnabled: (enabled: boolean) => void;
   setAppTheme: (theme: AppTheme) => void;
   resetProgress: () => void;
@@ -73,6 +77,8 @@ export const useStore = create<ProgressState>()(
       totalScore: 0,
       prototype: {},
       prototypeImageDataUrl: '',
+      prototypeImageSource: 'none',
+      disabledPrototypeFields: [],
       audioEnabled: true,
       appTheme: 'notebook',
       
@@ -141,9 +147,16 @@ export const useStore = create<ProgressState>()(
         prototype: { ...state.prototype, [field]: value }
       })),
 
-      updatePrototypeImage: (imageDataUrl) => set({
+      updatePrototypeImage: (imageDataUrl, source = imageDataUrl ? 'generated' : 'none') => set({
         prototypeImageDataUrl: imageDataUrl,
+        prototypeImageSource: source,
       }),
+
+      togglePrototypeFieldDisabled: (field) => set((state) => ({
+        disabledPrototypeFields: state.disabledPrototypeFields.includes(field)
+          ? state.disabledPrototypeFields.filter((item) => item !== field)
+          : [...state.disabledPrototypeFields, field],
+      })),
 
       setAudioEnabled: (enabled) => set({
         audioEnabled: enabled,
@@ -166,15 +179,19 @@ export const useStore = create<ProgressState>()(
         quizScores: {},
         totalScore: 0,
         prototype: {},
-        prototypeImageDataUrl: ''
+        prototypeImageDataUrl: '',
+        prototypeImageSource: 'none',
+        disabledPrototypeFields: []
       })
     }),
     {
       name: 'games-are-no-joke-storage',
-      version: 6,
+      version: 7,
       migrate: (persistedState) => ({
         ...(persistedState as ProgressState),
         prototypeImageDataUrl: (persistedState as Partial<ProgressState>).prototypeImageDataUrl ?? '',
+        prototypeImageSource: (persistedState as Partial<ProgressState>).prototypeImageSource ?? ((persistedState as Partial<ProgressState>).prototypeImageDataUrl ? 'generated' : 'none'),
+        disabledPrototypeFields: (persistedState as Partial<ProgressState>).disabledPrototypeFields ?? [],
         audioEnabled: (persistedState as Partial<ProgressState>).audioEnabled ?? true,
         appTheme: 'notebook',
         readReports: (persistedState as Partial<ProgressState>).readReports ?? [],

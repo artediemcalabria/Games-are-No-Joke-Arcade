@@ -219,7 +219,7 @@ const nodeMorningContext: Record<StoryNodeId, MorningContext> = {
 };
 
 const morningPrompts: Record<MorningContext, string> = {
-  arrival: 'How does the morning start?',
+  arrival: 'How does the arrival afternoon start?',
   design: 'How does the team enter the work today?',
   prototype: 'How does the team handle the first pressure of the day?',
   conflict: 'How does the group face tension before it grows?',
@@ -440,8 +440,8 @@ function normalizeMorningEffects(effects: Partial<Meters>) {
 const storyNodes: Record<StoryNodeId, StoryNode> = {
   arrival: {
     id: 'arrival',
-    chapter: 'Chapter 1',
-    dayLabel: 'Day 1',
+    chapter: 'Arrival Day',
+    dayLabel: 'Before Training Day 1',
     title: 'Arrival at the Borgo',
     location: 'Residenza Antico Borgo, Filadelfia',
     speaker: 'Rocco',
@@ -508,8 +508,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'circle-connect': {
     id: 'circle-connect',
-    chapter: 'Chapter 2',
-    dayLabel: 'Day 2',
+    chapter: 'Chapter 1',
+    dayLabel: 'Training Day 1',
     title: 'The Mixed Team',
     location: 'Activity Room',
     speaker: 'Emanuel',
@@ -575,8 +575,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'circle-distance': {
     id: 'circle-distance',
-    chapter: 'Chapter 2',
-    dayLabel: 'Day 2',
+    chapter: 'Chapter 1',
+    dayLabel: 'Training Day 1',
     title: 'Quiet Notes, Loud Table',
     location: 'Activity Room',
     speaker: 'Narrator',
@@ -642,8 +642,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'circle-familiar': {
     id: 'circle-familiar',
-    chapter: 'Chapter 2',
-    dayLabel: 'Day 2',
+    chapter: 'Chapter 1',
+    dayLabel: 'Training Day 1',
     title: 'The Easy Corner',
     location: 'Coffee Break Table',
     speaker: 'Rocco',
@@ -709,8 +709,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'team-shared': {
     id: 'team-shared',
-    chapter: 'Chapter 3',
-    dayLabel: 'Day 3',
+    chapter: 'Chapter 2',
+    dayLabel: 'Training Day 2',
     title: 'A Board With Many Hands',
     location: 'Workshop Table',
     speaker: 'Sophie',
@@ -776,8 +776,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'team-solo': {
     id: 'team-solo',
-    chapter: 'Chapter 3',
-    dayLabel: 'Day 3',
+    chapter: 'Chapter 2',
+    dayLabel: 'Training Day 2',
     title: 'The Prototype in One Notebook',
     location: 'Quiet Corner',
     speaker: 'Narrator',
@@ -843,8 +843,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'team-fun': {
     id: 'team-fun',
-    chapter: 'Chapter 3',
-    dayLabel: 'Day 3',
+    chapter: 'Chapter 2',
+    dayLabel: 'Training Day 2',
     title: 'The Laughing Prototype',
     location: 'Courtyard Table',
     speaker: 'Buse Naz',
@@ -910,8 +910,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'prototype-playtest': {
     id: 'prototype-playtest',
-    chapter: 'Chapter 4',
-    dayLabel: 'Day 4',
+    chapter: 'Chapter 3',
+    dayLabel: 'Training Day 3',
     title: 'The First Test Breaks Something',
     location: 'Activity Room Floor',
     speaker: 'Tester',
@@ -977,8 +977,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'prototype-polish': {
     id: 'prototype-polish',
-    chapter: 'Chapter 4',
-    dayLabel: 'Day 4',
+    chapter: 'Chapter 3',
+    dayLabel: 'Training Day 3',
     title: 'Beautiful Cards, Unclear Turns',
     location: 'Workshop Table',
     speaker: 'Giuseppe',
@@ -1044,8 +1044,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'prototype-alone': {
     id: 'prototype-alone',
-    chapter: 'Chapter 4',
-    dayLabel: 'Night 4',
+    chapter: 'Chapter 3',
+    dayLabel: 'Training Day 3 - Night',
     title: 'The Solo Table',
     location: 'Common Room',
     speaker: 'Narrator',
@@ -1110,8 +1110,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'conflict-listen': {
     id: 'conflict-listen',
-    chapter: 'Chapter 5',
-    dayLabel: 'Day 5',
+    chapter: 'Chapter 4',
+    dayLabel: 'Training Day 4',
     title: 'Repair Through Listening',
     location: 'Courtyard',
     speaker: 'Cristina',
@@ -1168,8 +1168,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'conflict-control': {
     id: 'conflict-control',
-    chapter: 'Chapter 5',
-    dayLabel: 'Day 5',
+    chapter: 'Chapter 4',
+    dayLabel: 'Training Day 4',
     title: 'Control Costs Trust',
     location: 'Workshop Table',
     speaker: 'Kiril',
@@ -1225,8 +1225,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'conflict-avoid': {
     id: 'conflict-avoid',
-    chapter: 'Chapter 5',
-    dayLabel: 'Day 5',
+    chapter: 'Chapter 4',
+    dayLabel: 'Training Day 4',
     title: 'The Conflict Returns',
     location: 'Dinner Table',
     speaker: 'Loredana',
@@ -1282,8 +1282,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'night-repair': {
     id: 'night-repair',
-    chapter: 'Chapter 6',
-    dayLabel: 'Night 5',
+    chapter: 'Chapter 5',
+    dayLabel: 'Training Day 4 - Night',
     title: 'The Game Finds Its Shape',
     location: 'Common Room',
     speaker: 'Narrator',
@@ -1340,8 +1340,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'night-solo': {
     id: 'night-solo',
-    chapter: 'Chapter 6',
-    dayLabel: 'Night 5',
+    chapter: 'Chapter 5',
+    dayLabel: 'Training Day 4 - Night',
     title: 'Finished, But Alone',
     location: 'Activity Room',
     speaker: 'Narrator',
@@ -1397,8 +1397,8 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   'night-honest': {
     id: 'night-honest',
-    chapter: 'Chapter 6',
-    dayLabel: 'Night 5',
+    chapter: 'Chapter 5',
+    dayLabel: 'Training Day 4 - Night',
     title: 'A Prototype That May Fail',
     location: 'Common Room',
     speaker: 'Emanuel',
@@ -1455,7 +1455,7 @@ const storyNodes: Record<StoryNodeId, StoryNode> = {
   },
   showcase: {
     id: 'showcase',
-    chapter: 'Chapter 7',
+    chapter: 'Chapter 6',
     dayLabel: 'Final Day',
     title: 'The Games Are No Joke Showcase',
     location: 'Activity Room',
@@ -1696,6 +1696,7 @@ export default function FiladelfiaStoryGame() {
                 flags={flags}
                 selectedMorningChoice={selectedMorningChoice}
                 lastFeedback={lastFeedback}
+                hasPreviousFeedback={storyLog.length > 0}
                 onChooseMorning={chooseMorning}
                 onChooseEvening={chooseEvening}
               />
@@ -1752,8 +1753,8 @@ export default function FiladelfiaStoryGame() {
 }
 
 function ProtagonistSelect({ onStart }: { onStart: (profile: PlayerProfile) => void }) {
-  const [selectedParticipant, setSelectedParticipant] = useState<Participant>(featuredProfiles.andrea);
-  const [points, setPoints] = useState<ProfilePoints>(featuredProfiles.andrea.points);
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant>(featuredProfiles.slave);
+  const [points, setPoints] = useState<ProfilePoints>(featuredProfiles.slave.points);
   const pointsSpent = totalProfilePoints(points);
   const pointsLeft = profilePointBudget - pointsSpent;
   const profile = buildPlayerProfile(selectedParticipant, points);
@@ -1883,6 +1884,7 @@ function StoryStage({
   flags,
   selectedMorningChoice,
   lastFeedback,
+  hasPreviousFeedback,
   onChooseMorning,
   onChooseEvening,
 }: {
@@ -1892,6 +1894,7 @@ function StoryStage({
   flags: string[];
   selectedMorningChoice: StoryChoice | null;
   lastFeedback: string;
+  hasPreviousFeedback: boolean;
   onChooseMorning: (choice: StoryChoice) => void;
   onChooseEvening: (choice: StoryChoice) => void;
 }) {
@@ -1949,9 +1952,11 @@ function StoryStage({
             ))}
           </div>
 
-          <div className="filadelfia-consequence-card mt-4 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-100">
-            What changed: {formatText(lastFeedback, protagonist)}
-          </div>
+          {hasPreviousFeedback && !selectedMorningChoice ? (
+            <div className="filadelfia-consequence-card mt-4 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-xs font-bold leading-relaxed text-cyan-100">
+              Previous choice: {formatText(lastFeedback, protagonist)}
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3">
