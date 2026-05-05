@@ -125,7 +125,32 @@ function isAllowedOrigin(request) {
 }
 
 async function callGeminiText(prompt) {
-  const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+  const models = unique([
+    process.env.GEMINI_TEXT_MODEL || 'gemini-2.5-flash',
+    ...(process.env.GEMINI_TEXT_FALLBACK_MODELS || 'gemini-2.5-flash-lite,gemini-2.0-flash')
+      .split(',')
+      .map((model) => model.trim())
+      .filter(Boolean),
+  ]);
+  let lastError = '';
+
+  for (const model of models) {
+    const attempts = isFallbackModel(model, models[0]) ? 1 : 2;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const result = await requestGeminiText(model, prompt);
+      if (result.ok) return result.answer;
+
+      lastError = result.error;
+      if (!result.retryable || attempt === attempts) break;
+      await delay(650 * attempt);
+    }
+  }
+
+  throw new Error(lastError || 'Gemini text request failed.');
+}
+
+async function requestGeminiText(model, prompt) {
+  const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -135,11 +160,33 @@ async function callGeminiText(prompt) {
 
   if (!geminiResponse.ok) {
     const text = await geminiResponse.text();
-    throw new Error(`Gemini text request failed: ${geminiResponse.status} ${text.slice(0, 180)}`);
+    const retryable = geminiResponse.status === 429 || geminiResponse.status === 500 || geminiResponse.status === 503;
+    return {
+      ok: false,
+      retryable,
+      error: retryable
+        ? `Gemini text model is busy (${geminiResponse.status}). The app tried fallback models. ${text.slice(0, 160)}`
+        : `Gemini text request failed: ${geminiResponse.status} ${text.slice(0, 180)}`,
+    };
   }
 
   const data = await geminiResponse.json();
-  return data?.candidates?.[0]?.content?.parts?.map((part) => part.text).join('\n').trim();
+  return {
+    ok: true,
+    answer: data?.candidates?.[0]?.content?.parts?.map((part) => part.text).join('\n').trim(),
+  };
+}
+
+function unique(values) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function isFallbackModel(model, primaryModel) {
+  return model !== primaryModel;
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function callGeminiImage(prompt) {

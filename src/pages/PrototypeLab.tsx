@@ -267,12 +267,19 @@ export default function PrototypeLab() {
         const sourceLabel = loadedFrom ? ` from ${loadedFrom}` : '';
         setGddStatus(mode === 'ai' ? `AI improved analysis ready${sourceLabel}. Review the preview before applying.` : `Offline analysis ready${sourceLabel}. Review the preview before applying.`);
       }
-    } catch (error) {
-      if (mode === 'ai') {
-        const message = error instanceof Error ? error.message : 'AI request failed.';
-        setGddPreview(null);
-        setGddStatus(`${message} Use Analyze Offline to import the GDD without AI improvement.`);
-      } else {
+	    } catch (error) {
+	      if (mode === 'ai') {
+	        const message = error instanceof Error ? error.message : 'AI request failed.';
+	        const offlineFields = analyzeGddOffline(source);
+	        if (Object.values(offlineFields).some((value) => value.trim())) {
+	          setGddPreview(offlineFields);
+	          const sourceLabel = loadedFrom ? ` from ${loadedFrom}` : '';
+	          setGddStatus(`${message} Offline analysis is ready${sourceLabel}, so you can still review and apply the GDD now.`);
+	        } else {
+	          setGddPreview(null);
+	          setGddStatus(`${message} Use Analyze Offline to import the GDD without AI improvement.`);
+	        }
+	      } else {
         setGddPreview(null);
         setGddStatus('Offline analysis failed. Check that the GDD has filled headings and try again.');
       }
