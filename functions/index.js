@@ -10,6 +10,12 @@ const allowedOrigins = new Set([
   'https://games-are-no-joke.firebaseapp.com',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'http://localhost:3002',
+  'http://127.0.0.1:3002',
+  'http://localhost:3003',
+  'http://127.0.0.1:3003',
   'http://localhost:4173',
   'http://127.0.0.1:4173',
   'http://localhost:5000',
@@ -191,8 +197,9 @@ If mode is "gdd-import":
 - Keep exact keys requested by the frontend.
 - Improve the GDD text in Simple English.
 - Fill missing fields when the source gives enough context to infer them.
-- If a field is inferred or expanded by you instead of clearly present in the source, begin that field value with "AI Suggested: ".
-- Use short emoji bullets only when they improve readability.
+- If a field is not present and cannot be inferred, return an empty string for that key.
+- Do not write "AI Suggested" in any field.
+- Do not use emoji or decorative symbols. Use plain text bullets with "- " if bullets help readability.
 
 For normal coach answers, use this format:
 What I notice

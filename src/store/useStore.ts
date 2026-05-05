@@ -24,6 +24,32 @@ export interface GddImport {
 export type AppTheme = 'arcade' | 'notebook';
 export type PrototypeImageSource = 'generated' | 'uploaded' | 'none';
 
+export interface PlaygroundGameField {
+  id: string;
+  label: string;
+  value: string;
+}
+
+export interface PlaygroundGameSection {
+  title: string;
+  fields: PlaygroundGameField[];
+}
+
+export interface PlaygroundGame {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  imageDataUrl: string;
+  imageSource: PrototypeImageSource;
+  sections: PlaygroundGameSection[];
+  fields: Record<string, string>;
+  disabledFieldIds: string[];
+  sourceFileName: string;
+  importedAt: string;
+  exportedAt?: string;
+}
+
 interface ProgressState {
   unlockedTheories: string[];
   completedLessons: string[];
@@ -40,6 +66,7 @@ interface ProgressState {
   prototypeImageDataUrl: string;
   prototypeImageSource: PrototypeImageSource;
   disabledPrototypeFields: string[];
+  playgroundGames: PlaygroundGame[];
   audioEnabled: boolean;
   appTheme: AppTheme;
   unlockTheory: (id: string) => void;
@@ -56,6 +83,9 @@ interface ProgressState {
   updatePrototypeField: (field: string, value: string) => void;
   updatePrototypeImage: (imageDataUrl: string, source?: PrototypeImageSource) => void;
   togglePrototypeFieldDisabled: (field: string) => void;
+  savePlaygroundGames: (games: PlaygroundGame[]) => void;
+  removePlaygroundGame: (id: string) => void;
+  clearPlaygroundGames: () => void;
   setAudioEnabled: (enabled: boolean) => void;
   setAppTheme: (theme: AppTheme) => void;
   resetProgress: () => void;
@@ -79,6 +109,7 @@ export const useStore = create<ProgressState>()(
       prototypeImageDataUrl: '',
       prototypeImageSource: 'none',
       disabledPrototypeFields: [],
+      playgroundGames: [],
       audioEnabled: true,
       appTheme: 'notebook',
       
@@ -158,6 +189,20 @@ export const useStore = create<ProgressState>()(
           : [...state.disabledPrototypeFields, field],
       })),
 
+      savePlaygroundGames: (games) => set((state) => {
+        const bySlug = new Map(state.playgroundGames.map((game) => [game.slug || game.id, game]));
+        games.forEach((game) => bySlug.set(game.slug || game.id, game));
+        return { playgroundGames: Array.from(bySlug.values()).sort((a, b) => b.importedAt.localeCompare(a.importedAt)) };
+      }),
+
+      removePlaygroundGame: (id) => set((state) => ({
+        playgroundGames: state.playgroundGames.filter((game) => game.id !== id),
+      })),
+
+      clearPlaygroundGames: () => set({
+        playgroundGames: [],
+      }),
+
       setAudioEnabled: (enabled) => set({
         audioEnabled: enabled,
       }),
@@ -181,17 +226,19 @@ export const useStore = create<ProgressState>()(
         prototype: {},
         prototypeImageDataUrl: '',
         prototypeImageSource: 'none',
-        disabledPrototypeFields: []
+        disabledPrototypeFields: [],
+        playgroundGames: []
       })
     }),
     {
       name: 'games-are-no-joke-storage',
-      version: 7,
+      version: 8,
       migrate: (persistedState) => ({
         ...(persistedState as ProgressState),
         prototypeImageDataUrl: (persistedState as Partial<ProgressState>).prototypeImageDataUrl ?? '',
         prototypeImageSource: (persistedState as Partial<ProgressState>).prototypeImageSource ?? ((persistedState as Partial<ProgressState>).prototypeImageDataUrl ? 'generated' : 'none'),
         disabledPrototypeFields: (persistedState as Partial<ProgressState>).disabledPrototypeFields ?? [],
+        playgroundGames: (persistedState as Partial<ProgressState>).playgroundGames ?? [],
         audioEnabled: (persistedState as Partial<ProgressState>).audioEnabled ?? true,
         appTheme: 'notebook',
         readReports: (persistedState as Partial<ProgressState>).readReports ?? [],

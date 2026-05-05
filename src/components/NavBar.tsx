@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Gamepad2, BookOpen, Trophy, Info, ClipboardList, Bot, Newspaper } from 'lucide-react';
+import { Gamepad2, BookOpen, Trophy, Info, ClipboardList, Bot, Newspaper, LibraryBig } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { playSound } from '../lib/audio';
@@ -8,6 +8,7 @@ import { useStore } from '../store/useStore';
 const navItems = [
   { path: '/theory', label: 'Theory', icon: BookOpen },
   { path: '/prototype', label: 'Prototype', icon: ClipboardList },
+  { path: '/playground', label: 'Playground', icon: LibraryBig },
   { path: '/coach', label: 'AI Coach', icon: Bot },
   { path: '/arcade', label: 'Arcade', icon: Gamepad2 },
   { path: '/progress', label: 'Progress', icon: Trophy },
@@ -21,7 +22,7 @@ export function NavBar() {
 
   return (
     <nav className="notebook-surface fixed bottom-0 left-0 right-0 w-full bg-black/85 backdrop-blur-md border-t border-white/10 px-1.5 py-2 z-[70] safe-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-      <ul className="grid grid-cols-7 items-stretch gap-1 max-w-5xl mx-auto">
+      <ul className="grid grid-cols-4 items-stretch gap-1 max-w-5xl mx-auto sm:grid-cols-8">
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           return (

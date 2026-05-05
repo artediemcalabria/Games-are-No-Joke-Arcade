@@ -15,6 +15,7 @@ const Reports = lazyWithReload(() => import('./pages/Reports'));
 const Quiz = lazyWithReload(() => import('./pages/Quiz'));
 const PrototypeLab = lazyWithReload(() => import('./pages/PrototypeLab'));
 const GeminiCoach = lazyWithReload(() => import('./pages/GeminiCoach'));
+const Playground = lazyWithReload(() => import('./pages/Playground'));
 const CastleRushGame = lazyWithReload(() => import('./pages/games/CastleRushGame'));
 const YouthPassDropGame = lazyWithReload(() => import('./pages/games/YouthPassDropGame'));
 const FiladelfiaStoryGame = lazyWithReload(() => import('./pages/games/FiladelfiaStoryGame'));
@@ -100,6 +101,7 @@ function AppShell() {
               <Route path="/" element={<Home />} />
               <Route path="/theory" element={<Theory />} />
               <Route path="/prototype" element={<PrototypeLab />} />
+              <Route path="/playground" element={<Playground />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/coach" element={<GeminiCoach />} />
               <Route path="/arcade" element={<ArcadeList />} />

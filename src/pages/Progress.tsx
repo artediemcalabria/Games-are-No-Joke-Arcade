@@ -129,7 +129,7 @@ export default function Progress() {
       <section className="notebook-surface md:col-span-12 arcade-border-green glass-panel-green p-5 rounded-xl">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-arcade text-green-400">Prototype</h3>
-          <span className="text-xs font-bold text-white">{completedPrototypeSteps}/{prototypeSteps.length}</span>
+	          <span className="text-xs font-bold text-white">{completedPrototypeSteps}/{enabledPrototypeSteps.length}</span>
         </div>
         <p className="text-xs text-gray-400 mt-3">Fill the live prototype card. GDD imports: {gddImports.length}</p>
       </section>

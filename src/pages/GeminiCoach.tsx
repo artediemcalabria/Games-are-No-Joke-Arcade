@@ -374,11 +374,12 @@ export default function GeminiCoach() {
         </div>
 
         <aside className="space-y-4">
-          <PrototypeSnapshot
-            completedCount={completedPrototypeSteps.length}
-            missingSteps={missingPrototypeSteps.map((step) => step.label)}
-            prototypeContext={prototypeContext}
-          />
+	          <PrototypeSnapshot
+	            completedCount={completedPrototypeSteps.length}
+	            totalCount={enabledPrototypeSteps.length}
+	            missingSteps={missingPrototypeSteps.map((step) => step.label)}
+	            prototypeContext={prototypeContext}
+	          />
 
           <div className="notebook-surface arcade-border-green glass-panel-green rounded-xl p-5">
             <p className="text-xs text-green-300 font-bold uppercase tracking-widest">Ideas From The Games</p>
@@ -415,16 +416,17 @@ export default function GeminiCoach() {
   );
 }
 
-function PrototypeSnapshot({ completedCount, missingSteps, prototypeContext }: { completedCount: number; missingSteps: string[]; prototypeContext: string }) {
+function PrototypeSnapshot({ completedCount, totalCount, missingSteps, prototypeContext }: { completedCount: number; totalCount: number; missingSteps: string[]; prototypeContext: string }) {
+  const progress = Math.round((completedCount / Math.max(1, totalCount)) * 100);
   return (
     <div className="notebook-surface arcade-border-pink glass-panel-pink rounded-xl p-5">
       <p className="text-xs text-pink-300 font-bold uppercase tracking-widest">Prototype Snapshot</p>
       <div className="mt-3 flex items-center justify-between">
         <span className="text-sm font-bold text-white">Fields completed</span>
-        <span className="text-sm font-black text-pink-200">{completedCount}/{prototypeSteps.length}</span>
+	        <span className="text-sm font-black text-pink-200">{completedCount}/{totalCount}</span>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded bg-pink-900/30">
-        <div className="h-full bg-pink-400" style={{ width: `${Math.round((completedCount / prototypeSteps.length) * 100)}%` }} />
+	        <div className="h-full bg-pink-400" style={{ width: `${progress}%` }} />
       </div>
       <div className="notebook-card mt-4 rounded-lg border border-white/10 bg-black/45 p-3">
         <p className="text-[10px] font-bold uppercase text-gray-500">Missing fields</p>

@@ -1429,13 +1429,31 @@ async function analyzeGddWithAi(endpoint: string, gddText: string): Promise<Prot
   const fieldKeys = prototypeSteps.map((step) => step.id).join(', ');
   const fieldLabels = prototypeSteps.map((step) => `${step.id}: ${step.label}`).join('\n');
   const offlineFields = analyzeGddOffline(gddText);
+  const compactSourceText = compactGddSource(gddText, 26000);
+  const question = `Analyze the educational board-game GDD in the prototype context and return ONLY valid JSON with these exact string keys: ${fieldKeys}.
+
+Rules:
+- Use the field labels from the prototype context.
+- Improve the text in Simple English.
+- Keep the board-game idea intact.
+- Fill missing fields only when the GDD gives enough context to infer a useful answer.
+- If a field is not present and cannot be inferred, return an empty string for that key.
+- Do not write "AI Suggested" in any field.
+- Do not use emoji or decorative symbols. Use plain text bullets with "- " if bullets help readability.
+- Do not add markdown fences.`;
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       mode: 'gdd-import',
-      question: `Analyze this filled educational board-game GDD. It may be the simplified GDD or the complete GDD. Return ONLY valid JSON with these exact string keys: ${fieldKeys}.\n\nField labels:\n${fieldLabels}\n\nRules:\n- Improve the text in Simple English.\n- Keep the board-game idea intact.\n- Fill missing fields only when the GDD gives enough context to infer a useful answer.\n- If a field is not present and cannot be inferred, return an empty string for that key.\n- Do not write "AI Suggested" in any field.\n- Do not use emoji or decorative symbols. Use plain text bullets with "- " if bullets help readability.\n- Do not add markdown fences.\n\nGDD TEXT:\n${gddText.slice(0, 18000)}`,
-      prototype: {},
+      question,
+      prototype: {
+        requestedFields: prototypeSteps.map((step) => ({ id: step.id, label: step.label })),
+        fieldLabels,
+        offlineExtraction: offlineFields,
+        sourceText: compactSourceText,
+        sourceTextWasTrimmed: compactSourceText.length < gddText.length,
+      },
       gameTakeaways: {},
       gameNotes: {},
     }),
@@ -1449,6 +1467,17 @@ async function analyzeGddWithAi(endpoint: string, gddText: string): Promise<Prot
   const answer = data.answer ?? '';
   const parsed = parseJsonFieldMap(answer);
   return parsed ? markAiSuggestedFields(parsed, offlineFields) : offlineFields;
+}
+
+function compactGddSource(value: string, maxLength: number) {
+  const cleaned = removeTemplateNoise(cleanPrototypeText(value, 'plain'))
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  if (cleaned.length <= maxLength) return cleaned;
+
+  const head = cleaned.slice(0, Math.floor(maxLength * 0.72)).trim();
+  const tail = cleaned.slice(cleaned.length - Math.floor(maxLength * 0.2)).trim();
+  return `${head}\n\n[Middle of GDD trimmed by the app to stay under the AI request limit. Offline extraction is included in the request context.]\n\n${tail}`;
 }
 
 function markAiSuggestedFields(aiFields: PrototypeFieldMap, sourceFields: PrototypeFieldMap): PrototypeFieldMap {
